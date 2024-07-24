@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 import { Input } from "@/components/ui/input";
 
-export default function Security({children}: {children: React.ReactNode}) {
+export default function Security() {
   return (
     <div className="grid gap-6">
         <Card x-chunk="dashboard-04-chunk-1">
