@@ -1,113 +1,327 @@
-import Image from "next/image";
+"use client";
+import React, { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, File, ListFilter } from "lucide-react";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
-export default function Home() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Progress } from "@/components/ui/progress";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerClose,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from "@/components/ui/drawer";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+
+import { Invoice, invoiceService } from "@/lib/supabase/services/invoice";
+import InvoiceView from "@/components/molecules/InvoiceView2";
+
+export default function Dashboard() {
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [weeklyRevenue, setWeeklyRevenue] = useState(0);
+  const [monthlyRevenue, setMonthlyRevenue] = useState(0);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | undefined>();
+  const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+
+  useEffect(() => {
+    fetchInvoices();
+    fetchRevenue();
+  }, []);
+
+  const fetchInvoices = async () => {
+    const fetchedInvoices = await invoiceService.getInvoices();
+    setInvoices(fetchedInvoices);
+  };
+
+  const fetchRevenue = async () => {
+    const weeklyRev = await invoiceService.getTotalRevenue("week");
+    const monthlyRev = await invoiceService.getTotalRevenue("month");
+    setWeeklyRevenue(weeklyRev);
+    setMonthlyRevenue(monthlyRev);
+  };
+
+  const handleInvoiceSelect = async (invoiceId: string) => {
+    const invoice = await invoiceService.getInvoiceById(invoiceId);
+    if (invoice) {
+      setSelectedInvoice(invoice);
+      setIsCreatingInvoice(false);
+      setIsOpen(true);
+    }
+  };
+
+  const handleCreateInvoice = () => {
+    setSelectedInvoice(undefined);
+    setIsCreatingInvoice(true);
+    setIsOpen(true);
+  };
+
+  const handleSaveInvoice = async (invoice: Invoice) => {
+    try {
+      let savedInvoice: Invoice | null;
+
+      if (isCreatingInvoice) {
+        savedInvoice = await invoiceService.createInvoiceWithItems(invoice);
+      } else {
+        savedInvoice = await invoiceService.updateInvoiceWithItems(invoice.id, invoice);
+      }
+
+      if (!savedInvoice) {
+        throw new Error("Failed to save invoice");
+      }
+
+      setSelectedInvoice(savedInvoice);
+      setIsCreatingInvoice(false);
+      fetchInvoices();
+      setIsOpen(false);
+    } catch (error) {
+      console.error("An error occurred while saving the invoice:", error);
+    }
+  };
+
+  const WidgetsSection = () => (
+    <div className="w-full grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
+      <Card className="sm:col-span-2">
+        <CardHeader className="pb-3">
+          <CardTitle>Tus facturas</CardTitle>
+          <CardDescription className="max-w-lg text-balance leading-relaxed">
+            Dashboard de facturas
+          </CardDescription>
+        </CardHeader>
+        <CardFooter>
+          <Button onClick={handleCreateInvoice}>Crear factura</Button>
+        </CardFooter>
+      </Card>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardDescription>Esta Semana</CardDescription>
+          <CardTitle className="text-4xl">
+            ${weeklyRevenue.toFixed(2)}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-xs text-muted-foreground">
+            +{((weeklyRevenue / monthlyRevenue) * 100).toFixed(2)}% del mes
+            pasado
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Progress
+            value={(weeklyRevenue / monthlyRevenue) * 100}
+            aria-label="Incremento semanal"
+          />
+        </CardFooter>
+      </Card>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardDescription>Este Mes</CardDescription>
+          <CardTitle className="text-4xl">
+            ${monthlyRevenue.toFixed(2)}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-xs text-muted-foreground">
+            Ingresos totales del mes
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Progress value={100} aria-label="Ingresos mensuales" />
+        </CardFooter>
+      </Card>
+    </div>
+  );
+
+  interface InvoicesTableProps {
+    invoices: Invoice[];
+    onSelectInvoice: (invoiceId: string) => void;
+  }
+
+  const InvoicesTable: React.FC<InvoicesTableProps> = ({
+    invoices,
+    onSelectInvoice,
+  }) => (
+
+    <Tabs className="w-full" defaultValue="week">
+      <div className="flex items-center">
+        <TabsList>
+          <TabsTrigger value="week">Semana</TabsTrigger>
+          <TabsTrigger value="month">Mes</TabsTrigger>
+          <TabsTrigger value="year">Año</TabsTrigger>
+        </TabsList>
+        <div className="ml-auto flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-7 gap-1 text-sm">
+                <ListFilter className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only">Filtrar</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Filtrar por</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem checked>
+                Pagadas
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem>Pendientes</DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem>Anuladas</DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button size="sm" variant="outline" className="h-7 gap-1 text-sm">
+            <File className="h-3.5 w-3.5" />
+            <span className="sr-only sm:not-sr-only">Exportar</span>
+          </Button>
         </div>
       </div>
-
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+      <TabsContent value="week">
+        <Card>
+          <CardHeader className="px-7">
+            <CardTitle>Facturas</CardTitle>
+            <CardDescription>Facturas recientes de tu negocio.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Número de Factura</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead className="text-right">Subtotal</TableHead>
+                  <TableHead className="text-right">Impuesto</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead>Estado</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {invoices.map((invoice) => (
+                  <TableRow
+                    key={invoice.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => onSelectInvoice(invoice.id)}
+                  >
+                    <TableCell>{invoice.invoice_number}</TableCell>
+                    <TableCell>
+                      {new Date(invoice.date).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      {invoice.customers.name || invoice.customer_id}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      ${invoice.subtotal.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      ${invoice.tax.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      ${invoice.total.toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        className="text-xs"
+                        variant={invoice.is_proforma ? "outline" : "secondary"}
+                      >
+                        {invoice.is_proforma ? "Proforma" : "Factura"}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
+  );
+  const InvoiceFormContent = () => (
+    <div className="h-full overflow-y-auto px-4 py-6">
+      {(selectedInvoice || isCreatingInvoice) && (
+        <InvoiceView
+          invoice={selectedInvoice}
+          isEditable={isCreatingInvoice || !selectedInvoice}
+          onSave={handleSaveInvoice}
         />
+      )}
+    </div>
+  );
+
+  return (
+    <div className="flex min-h-screen w-full flex-col bg-muted/40">
+      <div className="flex flex-col sm:gap-4 p-12">
+        <main className="flex w-full flex-col items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
+          <WidgetsSection />
+          <InvoicesTable
+            invoices={invoices}
+            onSelectInvoice={handleInvoiceSelect}
+          />
+        </main>
       </div>
 
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+      {isDesktop ? (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogContent className="sm:max-w-[800px] h-[80vh]">
+            <DialogHeader>
+              <DialogTitle>{isCreatingInvoice ? "Create Invoice" : "Edit Invoice"}</DialogTitle>
+              <DialogDescription>
+                {isCreatingInvoice ? "Create a new invoice here." : "Make changes to the invoice here."}
+              </DialogDescription>
+            </DialogHeader>
+            <InvoiceFormContent />
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <Drawer open={isOpen} onOpenChange={setIsOpen}>
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>{isCreatingInvoice ? "Create Invoice" : "Edit Invoice"}</DrawerTitle>
+              <DrawerDescription>
+                {isCreatingInvoice ? "Create a new invoice here." : "Make changes to the invoice here."}
+              </DrawerDescription>
+            </DrawerHeader>
+            <InvoiceFormContent />
+            <DrawerFooter>
+              <DrawerClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DrawerClose>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      )}
+    </div>
   );
 }
