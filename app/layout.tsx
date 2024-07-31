@@ -3,7 +3,8 @@ import "./globals.css";
 import { Inter as FontSans } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { Navigation } from "@/components/molecules/Navigation";
-
+import { headers } from "next/headers";
+import { Toaster } from "@/components/ui/toaster";
 const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -19,6 +20,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const header = headers();
+  const pathname = header.get('next-url')
+  console.log("pathname", pathname)
+  const isLoginPage = pathname === '/login';
   return (
     <html lang="en">
       <body
@@ -30,6 +35,7 @@ export default function RootLayout({
       >
         <Navigation />
         {children}
+        <Toaster />
       </body>
     </html>
   );

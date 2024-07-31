@@ -41,10 +41,19 @@ export default function Invoices() {
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const isDesktop = useMediaQuery("(min-width: 768px)");
-
   useEffect(() => {
-    fetchInvoices();
-    fetchRevenue();
+    const initializeData = async () => {
+      try {
+        await invoiceService.ensureInitialized();
+        await fetchInvoices();
+        await fetchRevenue();
+      } catch (error) {
+        console.error("Error initializing data:", error);
+        // Handle the error appropriately (e.g., show an error message to the user)
+      }
+    };
+
+    initializeData();
   }, []);
 
   useEffect(() => {
@@ -138,7 +147,7 @@ export default function Invoices() {
     setFilteredInvoices(filtered);
   }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
   const handleDateSearch = () => {
-    debugger;
+
     if (dateRange.start && dateRange.end) {
       const filtered = filteredInvoices.filter(invoice => {
         const invoiceDate = new Date(invoice.date);
@@ -270,7 +279,7 @@ export default function Invoices() {
       </div>
       {isDesktop ? (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="sm:max-w-[800px] h-[90vh]">
+          <DialogContent className="sm:max-w-[900px] h-[90vh]">
             <InvoiceFormContent />
           </DialogContent>
         </Dialog>

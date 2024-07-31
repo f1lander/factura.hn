@@ -16,8 +16,6 @@ export default function Settings({children}: {children: React.ReactNode}) {
               General
             </Link>           
             <Link href="/settings/security">Seguridad</Link>
-            <Link href="/settings/support">Soporte</Link>
-  
           </nav>
           {children}
         </div>

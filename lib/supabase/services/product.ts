@@ -1,12 +1,4 @@
-// services/productService.ts
-import {
-  createClient,
-  PostgrestError,
-  SupabaseClient,
-} from "@supabase/supabase-js";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+import { BaseService, Table } from '@/lib/supabase/services/BaseService';
 
 export interface Product {
   id: string;
@@ -20,112 +12,40 @@ export interface Product {
   updated_at?: string;
 }
 
-class ProductService {
-  private supabase: SupabaseClient;
+class ProductService extends BaseService {
+  private tableName: Table = 'products';
 
-  constructor() {
-    this.supabase = createClient(supabaseUrl, supabaseAnonKey);
-  }
-
-  // Create a new product
   async createProduct(
-    product: Omit<Product, "id" | "created_at" | "updated_at">
+    product: Omit<Product, "id" | "company_id" | "created_at" | "updated_at">
   ): Promise<Product | null> {
-    const { data, error } = await this.supabase
-      .from("products")
-      .insert(product)
-      .single();
-
-    if (error) {
-      console.error("Error creating product:", error);
-      return null;
-    }
-
-    return data;
+    return this.create<Product>(this.tableName, product);
   }
 
-  // Get a product by ID
   async getProductById(id: string): Promise<Product | null> {
-    const { data, error } = await this.supabase
-      .from("products")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) {
-      console.error("Error fetching product:", error);
-      return null;
-    }
-
-    return data;
+    return this.getById<Product>(this.tableName, id);
   }
 
-  // Get all products for a company
-  async getProductsByCompany(companyId: string): Promise<Product[]> {
-    const { data, error } = await this.supabase
-      .from("products")
-      .select("*")
-      .eq("company_id", companyId);
-
-    if (error) {
-      console.error("Error fetching products:", error);
-      return [];
-    }
-
-    return data || [];
+  async getProductsByCompany(): Promise<Product[]> {
+    return this.getAll<Product>(this.tableName);
   }
 
-  // Update a product
   async updateProduct(
     id: string,
     updates: Partial<Product>
   ): Promise<Product | null> {
-    const { data, error } = await this.supabase
-      .from("products")
-      .update(updates)
-      .eq("id", id)
-      .single();
-
-    if (error) {
-      console.error("Error updating product:", error);
-      return null;
-    }
-
-    return data;
+    return this.update<Product>(this.tableName, id, updates);
   }
 
-  // Delete a product
   async deleteProduct(id: string): Promise<boolean> {
-    const { error } = await this.supabase
-      .from("products")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      console.error("Error deleting product:", error);
-      return false;
-    }
-
-    return true;
+    return this.delete(this.tableName, id);
   }
 
-  // Search products by description
-  async searchProducts(companyId: string, query: string): Promise<Product[]> {
-    const { data, error } = await this.supabase
-      .from("products")
-      .select("*")
-      .eq("company_id", companyId)
-      .ilike("description", `%${query}%`);
-
-    if (error) {
-      console.error("Error searching products:", error);
-      return [];
-    }
-
-    return data || [];
+  async searchProducts(query: string): Promise<Product[]> {
+    return this.search<Product>(this.tableName, 'description', query);
   }
 
   async updateInventory(productId: string, quantity: number): Promise<boolean> {
+
     const { data, error } = await this.supabase.rpc(
       "update_product_inventory",
       {
@@ -143,5 +63,4 @@ class ProductService {
   }
 }
 
-// Export a single instance of the service
 export const productService = new ProductService();

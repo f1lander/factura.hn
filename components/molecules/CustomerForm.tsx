@@ -61,7 +61,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ customer, onSubmit, 
             <Label htmlFor="name">Nombre</Label>
             <Input
               id="name"
-              {...register("name", { required: "Este campo es requerido" })}
+              {...register("name", { required: "El nombre es requerido" })}
             />
             {errors.name && (
               <p className="text-red-500 text-sm">{errors.name.message}</p>
@@ -72,8 +72,11 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ customer, onSubmit, 
             <Label htmlFor="rtn">RTN</Label>
             <Input
               id="rtn"
-              {...register("rtn")}
+              {...register("rtn", { required: "El RTN es requerido" })}
             />
+             {errors.rtn && (
+              <p className="text-red-500 text-sm">{errors.rtn.message}</p>
+            )}
           </div>
 
           <div>
@@ -128,30 +131,30 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ customer, onSubmit, 
                 {isAddingContact && (
                   <TableRow>
                     <TableCell>
-                      <Input 
-                        value={newContact.name} 
-                        onChange={(e) => setNewContact({...newContact, name: e.target.value})}
+                      <Input
+                        value={newContact.name}
+                        onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
                         placeholder="Nombre"
                       />
                     </TableCell>
                     <TableCell>
-                      <Input 
-                        value={newContact.position} 
-                        onChange={(e) => setNewContact({...newContact, position: e.target.value})}
+                      <Input
+                        value={newContact.position}
+                        onChange={(e) => setNewContact({ ...newContact, position: e.target.value })}
                         placeholder="Posición"
                       />
                     </TableCell>
                     <TableCell>
-                      <Input 
-                        value={newContact.email} 
-                        onChange={(e) => setNewContact({...newContact, email: e.target.value})}
+                      <Input
+                        value={newContact.email}
+                        onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
                         placeholder="Email"
                       />
                     </TableCell>
                     <TableCell>
-                      <Input 
-                        value={newContact.phone} 
-                        onChange={(e) => setNewContact({...newContact, phone: e.target.value})}
+                      <Input
+                        value={newContact.phone}
+                        onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
                         placeholder="Teléfono"
                       />
                     </TableCell>

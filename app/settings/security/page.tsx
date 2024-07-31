@@ -1,37 +1,29 @@
-import Link from "next/link";
+// app/security/page.tsx
+import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
+import SecurityContent from '@/components/molecules/SecurityContent';
 
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+export default async function SecurityPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
 
-import { Input } from "@/components/ui/input";
+  const supabase = createClient();
 
-export default function Security() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  console.log(searchParams)
+  const isResettingPassword =
+    searchParams.access_token &&
+    searchParams.type === 'recovery';
+
   return (
-    <div className="grid gap-6">
-        <Card x-chunk="dashboard-04-chunk-1">
-          <CardHeader>
-            <CardTitle>My cuenta</CardTitle>
-            <CardDescription>
-              Used to identify your store in the marketplace.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form>
-              <Input placeholder="Store Name" />
-            </form>
-          </CardContent>
-          <CardFooter className="border-t px-6 py-4">
-            <Button>Save</Button>
-          </CardFooter>
-        </Card>       
-      </div>
+    <SecurityContent
+      user={user}
+      isResettingPassword={!!isResettingPassword}
+    />
   );
 }
