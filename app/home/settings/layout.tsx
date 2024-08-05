@@ -12,10 +12,10 @@ export default function Settings({children}: {children: React.ReactNode}) {
             className="grid gap-4 text-sm text-muted-foreground"
             x-chunk="dashboard-04-chunk-0"
           >
-            <Link href="/settings" className="font-semibold text-primary">
+            <Link href="/home/settings" className="font-semibold text-primary">
               General
             </Link>           
-            <Link href="/settings/security">Seguridad</Link>
+            <Link href="/home/settings/security">Seguridad</Link>
           </nav>
           {children}
         </div>

@@ -6,7 +6,7 @@ import { login, signup } from '@/lib/supabase/auth';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from 'next/navigation';
 import { toast } from '@/components/ui/use-toast';
 
@@ -32,8 +32,8 @@ const LoginPage: React.FC = () => {
           description: 'Redirigiendo a la página de facturas...',
         });
         setTimeout(() => {
-          window.location.replace('/invoices');
-        }, 2000); // 2 seconds delay
+          window.location.replace('/home');
+        }, 100); // 2 seconds delay
       } else {
         toast({
           title: 'Creando cuenta...',
@@ -45,8 +45,8 @@ const LoginPage: React.FC = () => {
           description: 'Redirigiendo a la página de configuración...',
         });
         setTimeout(() => {
-          window.location.replace('/settings');
-        }, 2000); // 2 seconds delay
+          window.location.replace('/home/settings');
+        }, 1000); // 2 seconds delay
       }
     } catch (error) {
       console.error('Authentication error:', error);
@@ -59,7 +59,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="h-[94dvh] w-full bg-gradient-to-b from-gray-100 to-gray-200 flex items-center justify-center p-4">
+    <div className="h-[100dvh] w-full bg-gradient-to-b from-gray-100 to-gray-200 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center space-x-2 mb-4">
@@ -68,10 +68,7 @@ const LoginPage: React.FC = () => {
           </div>
           <CardTitle className="text-2xl font-bold text-center">
             {isLogin ? 'Iniciar Sesión en tu Cuenta' : 'Crear una Cuenta'}
-          </CardTitle>
-          <CardDescription className="text-center">
-            {isLogin ? 'Ingresa tus credenciales para acceder a tu cuenta' : 'Regístrate para comenzar a gestionar tus facturas'}
-          </CardDescription>
+          </CardTitle>        
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>

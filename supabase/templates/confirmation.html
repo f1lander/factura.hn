@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirma tu cuenta en factura.hn</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo svg {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+        }
+        .logo-text {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m18 5-2.414-2.414A2 2 0 0 0 14.172 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2"/>
+                <path d="M21.378 12.626a1 1 0 0 0-3.004-3.004l-4.01 4.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/>
+                <path d="M8 18h1"/>
+            </svg>
+            <span class="logo-text">factura.hn</span>
+        </div>
+        <h1>Confirma tu cuenta</h1>
+        <p>Gracias por registrarte en factura.hn. Para completar el proceso de registro y activar tu cuenta, por favor haz clic en el siguiente botón:</p>
+        <p>
+            <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email" class="button">Confirmar mi correo electrónico</a>
+        </p>
+        <p>Si el botón no funciona, puedes copiar y pegar el siguiente enlace en tu navegador:</p>
+        <p>{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email</p>
+        <p>Si no has solicitado esta confirmación en factura.hn, puedes ignorar este mensaje.</p>
+        <div class="footer">
+            <p>Este es un mensaje automático de factura.hn, por favor no respondas a este correo.</p>
+            <p>&copy; 2024 factura.hn. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>

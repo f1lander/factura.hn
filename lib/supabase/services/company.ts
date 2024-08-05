@@ -6,6 +6,8 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 export interface Company {
   id: string;
   user_id: string;
+  ceo_name: string;
+  ceo_lastname: string;
   name: string;
   rtn: string;
   address0: string;

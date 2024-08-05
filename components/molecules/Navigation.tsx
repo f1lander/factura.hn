@@ -19,10 +19,10 @@ import { User } from "@supabase/auth-js";
 import { logout } from "@/lib/supabase/auth";
 
 const navItems = [
-  { href: "/invoices", label: "Facturas" },
-  { href: "/products", label: "Productos" },
-  { href: "/customers", label: "Clientes" },
-  { href: "/settings", label: "Configuracion" },
+  { href: "/home", label: "Facturas" },
+  { href: "/home/products", label: "Productos" },
+  { href: "/home/customers", label: "Clientes" },
+  { href: "/home/settings", label: "Configuracion" },
 ];
 
 export function Navigation() {
@@ -149,7 +149,7 @@ export function Navigation() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">              
                 <DropdownMenuItem>
-                  <Link href="/settings">Mi cuenta</Link>
+                  <Link href="/home/settings">Mi cuenta</Link>
                 </DropdownMenuItem>             
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
@@ -159,7 +159,7 @@ export function Navigation() {
             </DropdownMenu>
           </>
         ) : (
-          <Link href="/login" className="btn btn-ghost sign-in-btn">
+          <Link href="/auth/login" className="btn btn-ghost sign-in-btn">
             Iniciar Sesión
           </Link>
         )}

@@ -25,7 +25,7 @@ const SecurityContent: React.FC<SecurityContentProps> = ({ user, isResettingPass
         });
         try {
             const { error } = await supabase.auth.resetPasswordForEmail(user?.email || '', {
-                redirectTo: `${window.location.origin}/settings/security`,
+                redirectTo: `${window.location.origin}/home/settings/security`,
             });
             if (error) throw error;
             toast({

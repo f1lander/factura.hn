@@ -15,17 +15,17 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // Check if the route requires company data
-  const requiresCompanyData = ['/invoices', '/products', '/customers'].some(path =>
+  const requiresCompanyData = ['/home', '/home/products', '/home/customers'].some(path =>
     request.nextUrl.pathname.startsWith(path)
   );
 
   if (!user) {
     if (
-      !request.nextUrl.pathname.startsWith('/login') &&
+      !request.nextUrl.pathname.startsWith('/auth/login') &&
       !request.nextUrl.pathname.startsWith('/auth')
     ) {
       // No user, redirect to the login page
-      const loginUrl = new URL('/login', request.url)
+      const loginUrl = new URL('/auth/login', request.url)
       return NextResponse.redirect(loginUrl)
     }
   } else if (requiresCompanyData) {
@@ -38,7 +38,7 @@ export async function middleware(request: NextRequest) {
 
     if (error || !company) {
       // No company data found, redirect to company setup
-      const settingsUrl = new URL('/settings', request.url)
+      const settingsUrl = new URL('/home/settings', request.url)
       return NextResponse.redirect(settingsUrl)
     }
   }

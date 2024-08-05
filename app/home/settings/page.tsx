@@ -6,7 +6,7 @@ export default async function Settings() {
   const { isAuthenticated, user, company, error } = await getAuthAndCompanyData();
 
   if (!isAuthenticated || !user) {
-    redirect("/login");
+    redirect("/auth/login");
   }
 
   if (error) {
