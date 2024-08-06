@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
@@ -9,25 +10,54 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { LoginLink, LogoutLink } from "@kinde-oss/kinde-auth-nextjs/components";
-import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
-import { useEffect, useState } from "react";
+import supabaseClient from "@/lib/supabase/client";
+import { User } from "@supabase/auth-js";
+import { logout } from "@/lib/supabase/auth";
 
 const navItems = [
-  { href: "/invoices", label: "Facturas" },
-  { href: "/products", label: "Productos" },
-  { href: "/customers", label: "Clientes" },
-  { href: "/settings", label: "Configuracion" },
+  { href: "/home", label: "Facturas" },
+  { href: "/home/products", label: "Productos" },
+  { href: "/home/customers", label: "Clientes" },
+  { href: "/home/settings", label: "Configuracion" },
 ];
 
 export function Navigation() {
   const pathname = usePathname();
-  const { user, getUser } = useKindeBrowserClient();
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const supabase = supabaseClient();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      setIsLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setIsLoading(false);
+    };
+
+    fetchUser();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  const handleSignOut = async () => {
+    setIsLoading(true);
+    await logout();
+    setUser(null);
+    setIsLoading(false);
+  };
 
   return (
     <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
@@ -93,9 +123,11 @@ export function Navigation() {
         </SheetContent>
       </Sheet>
       <div className="profile-menu flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4 justify-end">
-        {user ? (
+        {isLoading ? (
+          <p>Cargando...</p>
+        ) : user ? (
           <>
-            <p className="font-medium">Bienvenido, {user.given_name || 'Usuario'}</p>
+            <p className="font-medium">Bienvenido, {user.user_metadata.full_name || user.email}</p>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -103,9 +135,9 @@ export function Navigation() {
                   size="icon"
                   className="rounded-full"
                 >
-                  {user.picture ? (
+                  {user.user_metadata.avatar_url ? (
                     <img
-                      src={user.picture}
+                      src={user.user_metadata.avatar_url}
                       alt="Profile"
                       className="h-8 w-8 rounded-full"
                     />
@@ -115,24 +147,21 @@ export function Navigation() {
                   <span className="sr-only">Toggle user menu</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
-                <DropdownMenuSeparator />
+              <DropdownMenuContent align="end">              
                 <DropdownMenuItem>
-                  <Link href="/settings">Configuraciones</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>Support</DropdownMenuItem>
+                  <Link href="/home/settings">Mi cuenta</Link>
+                </DropdownMenuItem>             
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <LogoutLink>Logout</LogoutLink>
+                <DropdownMenuItem onClick={handleSignOut}>
+                  Cerrar Sesión
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </>
         ) : (
-          <LoginLink className="btn btn-ghost sign-in-btn">
-            Sign in
-          </LoginLink>
+          <Link href="/auth/login" className="btn btn-ghost sign-in-btn">
+            Iniciar Sesión
+          </Link>
         )}
       </div>
     </header>

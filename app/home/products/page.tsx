@@ -21,11 +21,8 @@ export default function ProductsPage() {
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
-      const company = await companyService.getCompany();
-      if (!company || !company.id) {
-        throw new Error("No company found");
-      }
-      const fetchedProducts = await productService.getProductsByCompany(company.id);
+
+      const fetchedProducts = await productService.getProductsByCompany();
       setProducts(fetchedProducts);
     } catch (err) {
       console.error("Error fetching products:", err);
@@ -47,17 +44,13 @@ export default function ProductsPage() {
 
   const handleFormSubmit = async (data: Partial<Product>) => {
     try {
-      const company = await companyService.getCompany();
-      if (!company || !company.id) {
-        throw new Error("No company found");
-      }
+
 
       if (selectedProduct) {
         await productService.updateProduct(selectedProduct.id!, data);
       } else {
         await productService.createProduct({
           ...data,
-          company_id: company.id,
         } as Product);
       }
       fetchProducts();
@@ -74,7 +67,7 @@ export default function ProductsPage() {
   };
 
   if (isLoading) {
-    return <div className="p-12">Loading...</div>;
+    return <div className="p-12">Cargando...</div>;
   }
 
   if (error) {

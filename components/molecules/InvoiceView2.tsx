@@ -41,6 +41,7 @@ import { Product, productService } from "@/lib/supabase/services/product";
 import { Company, companyService } from "@/lib/supabase/services/company";
 import { numberToWords } from "@/lib/utils";
 import { getStatusBadge } from "./InvoicesTable";
+import { useAccount } from "@/lib/hooks";
 
 interface InvoiceViewProps {
   invoice?: Invoice;
@@ -55,9 +56,9 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
 }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [company, setCompany] = useState<Company | null>(null);
-  const [lastInvoiceNumber, setLastInvoiceNumber] = useState<string | null>(null);
+  const [lastInvoiceNumber, setLastInvoiceNumber] = useState<string | undefined>();
 
+  const { company } = useAccount();
   const { control, handleSubmit, watch, setValue } = useForm<Invoice>({
     defaultValues: invoice || {
       company_id: "",
@@ -92,33 +93,25 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
 
   useEffect(() => {
     const fetchData = async () => {
-      const fetchedCompany = await companyService.getCompany();
-      if (fetchedCompany) {
-        setCompany(fetchedCompany);
-        setValue("company_id", fetchedCompany.id);
+      const fetchedCustomers = await customerService.getCustomersByCompany(
+      );
+      const fetchedProducts = await productService.getProductsByCompany(
+      );
+      setCustomers(fetchedCustomers);
+      setProducts(fetchedProducts);
 
-        const fetchedCustomers = await customerService.getCustomersByCompany(
-          fetchedCompany.id
-        );
-        const fetchedProducts = await productService.getProductsByCompany(
-          fetchedCompany.id
-        );
-        setCustomers(fetchedCustomers);
-        setProducts(fetchedProducts);
-
-        // Fetch the last invoice number
-        const lastInvoice = await invoiceService.getLastInvoice(fetchedCompany.id);
-        if (lastInvoice) {
-          setLastInvoiceNumber(lastInvoice);
-        } else {
-          // If no last invoice, use the range_invoice1 from company
-          setLastInvoiceNumber(fetchedCompany.range_invoice1);
-        }
+      // Fetch the last invoice number
+      const lastInvoice = await invoiceService.getLastInvoice();
+      if (lastInvoice) {
+        setLastInvoiceNumber(lastInvoice);
+      } else {
+        // If no last invoice, use the range_invoice1 from company
+        setLastInvoiceNumber(company?.range_invoice1);
       }
     };
 
     fetchData();
-  }, [setValue]);
+  }, [setValue, company]);
 
   useEffect(() => {
     if (lastInvoiceNumber && !invoice) {

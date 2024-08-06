@@ -1,8 +1,4 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-
-// Ensure you have these environment variables set
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+import { BaseService, Table } from '@/lib/supabase/services/BaseService';
 
 // Contact type definition
 export interface Contact {
@@ -24,88 +20,32 @@ export interface Customer {
   updated_at?: string;
 }
 
-class CustomerService {
-  private supabase: SupabaseClient;
-
-  constructor() {
-    this.supabase = createClient(supabaseUrl, supabaseAnonKey);
-  }
+class CustomerService extends BaseService {
+  private tableName: Table = 'customers';
 
   // Create a new customer
-  async createCustomer(customer: Omit<Customer, 'id' | 'created_at' | 'updated_at'>): Promise<Customer | null> {
-    const { data, error } = await this.supabase
-      .from('customers')
-      .insert(customer)
-      .single();
-
-    if (error) {
-      console.error('Error creating customer:', error);
-      return null;
-    }
-
-    return data;
+  async createCustomer(customer: Omit<Customer, 'id' | 'company_id' | 'created_at' | 'updated_at'>): Promise<Customer | null> {
+    return this.create<Customer>(this.tableName, customer);
   }
 
   // Get a customer by ID
   async getCustomerById(id: string): Promise<Customer | null> {
-    const { data, error } = await this.supabase
-      .from('customers')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      console.error('Error fetching customer:', error);
-      return null;
-    }
-
-    return data;
+    return this.getById<Customer>(this.tableName, id);
   }
 
-  // Get all customers for a company
-  async getCustomersByCompany(companyId: string): Promise<Customer[]> {
-    const { data, error } = await this.supabase
-      .from('customers')
-      .select('*')
-      .eq('company_id', companyId);
-
-    if (error) {
-      console.error('Error fetching customers:', error);
-      return [];
-    }
-
-    return data || [];
+  // Get all customers for the company
+  async getCustomersByCompany(): Promise<Customer[]> {
+    return this.getAll<Customer>(this.tableName);
   }
 
   // Update a customer
   async updateCustomer(id: string, updates: Partial<Customer>): Promise<Customer | null> {
-    const { data, error } = await this.supabase
-      .from('customers')
-      .update(updates)
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      console.error('Error updating customer:', error);
-      return null;
-    }
-
-    return data;
+    return this.update<Customer>(this.tableName, id, updates);
   }
 
   // Delete a customer
   async deleteCustomer(id: string): Promise<boolean> {
-    const { error } = await this.supabase
-      .from('customers')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Error deleting customer:', error);
-      return false;
-    }
-
-    return true;
+    return this.delete(this.tableName, id);
   }
 
   // Add a contact to a customer
@@ -135,6 +75,22 @@ class CustomerService {
       index === contactIndex ? updatedContact : contact
     );
     return this.updateCustomer(customerId, { contacts: updatedContacts });
+  }
+
+  // Search customers by name or email
+  async searchCustomers(query: string): Promise<Customer[]> {
+    const { data, error } = await this.supabase
+      .from(this.tableName)
+      .select('*')
+      .eq('company_id', this.companyId)
+      .or(`name.ilike.%${query}%,email.ilike.%${query}%`);
+
+    if (error) {
+      console.error('Error searching customers:', error);
+      return [];
+    }
+
+    return data as Customer[];
   }
 }
 

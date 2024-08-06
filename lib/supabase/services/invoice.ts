@@ -1,13 +1,5 @@
-// services/invoiceService.ts
-import {
-  createClient,
-  PostgrestError,
-  SupabaseClient,
-} from "@supabase/supabase-js";
-import { randomUUID } from "crypto";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+import { BaseService, Table } from './BaseService';
+import { PostgrestError } from "@supabase/supabase-js";
 
 export interface Invoice {
   id: string;
@@ -49,12 +41,8 @@ export interface InvoiceItem {
   updated_at: string;
 }
 
-class InvoiceService {
-  private supabase: SupabaseClient;
-
-  constructor() {
-    this.supabase = createClient(supabaseUrl, supabaseAnonKey);
-  }
+class InvoiceService extends BaseService {
+  private tableName: Table = 'invoices';
 
   async searchInvoices(
     searchTerm: string,
@@ -63,12 +51,13 @@ class InvoiceService {
     statuses?: string[]
   ): Promise<Invoice[]> {
     let query = this.supabase
-      .from("invoices")
+      .from(this.tableName)
       .select(`
         *,
         customers (rtn, name, email),
         invoice_items (*)
       `)
+      .eq('company_id', this.companyId)
       .or(`invoice_number.ilike.%${searchTerm}%,customers.name.ilike.%${searchTerm}%,invoice_items.description.ilike.%${searchTerm}%`)
       .order("date", { ascending: false });
 
@@ -100,9 +89,10 @@ class InvoiceService {
 
   async updateInvoicesStatus(invoiceIds: string[], newStatus: string): Promise<void | PostgrestError> {
     const { error } = await this.supabase
-      .from('invoices')
+      .from(this.tableName)
       .update({ status: newStatus })
-      .in('id', invoiceIds);
+      .in('id', invoiceIds)
+      .eq('company_id', this.companyId);
 
     if (error) {
       console.error("Error updating invoice statuses:", error);
@@ -111,8 +101,9 @@ class InvoiceService {
   }
 
   async getInvoices(): Promise<Invoice[]> {
+
     const { data, error } = await this.supabase
-      .from("invoices")
+      .from(this.tableName)
       .select(`
         *,
         customers (rtn, name, email),
@@ -127,6 +118,7 @@ class InvoiceService {
           updated_at
         )
       `)
+      .eq('company_id', this.companyId)
       .order("date", { ascending: false });
 
     if (error) {
@@ -139,15 +131,14 @@ class InvoiceService {
 
   async getInvoiceById(id: string): Promise<Invoice | null> {
     const { data, error } = await this.supabase
-      .from("invoices")
-      .select(
-        `
+      .from(this.tableName)
+      .select(`
         *,
         customers (rtn, name, email),
         invoice_items (*)
-      `
-      )
+      `)
       .eq("id", id)
+      .eq('company_id', this.companyId)
       .single();
 
     if (error) {
@@ -162,7 +153,6 @@ class InvoiceService {
         name: data.customers.name,
         email: data.customers.email,
       },
-
       items: data.invoice_items,
     };
   }
@@ -172,22 +162,15 @@ class InvoiceService {
     let startDate: Date;
 
     if (period === "week") {
-      startDate = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() - 7
-      );
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
     } else {
-      startDate = new Date(
-        now.getFullYear(),
-        now.getMonth() - 1,
-        now.getDate()
-      );
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
     }
 
     const { data, error } = await this.supabase
-      .from("invoices")
+      .from(this.tableName)
       .select("total")
+      .eq('company_id', this.companyId)
       .gte("date", startDate.toISOString())
       .lte("date", now.toISOString());
 
@@ -203,11 +186,10 @@ class InvoiceService {
   }
 
   async createInvoiceWithItems(invoice: Omit<Invoice, "id" | "created_at" | "updated_at">): Promise<Invoice | null> {
-    debugger;
-    const { invoice_items: invoiceItems, ...rest } = invoice
+    const { invoice_items: invoiceItems, ...rest } = invoice;
     const { data, error } = await this.supabase
-      .from("invoices")
-      .insert({ ...rest })
+      .from(this.tableName)
+      .insert({ ...rest, company_id: this.companyId })
       .select()
       .single();
 
@@ -238,11 +220,12 @@ class InvoiceService {
 
   async updateInvoiceWithItems(id: string, updates: Partial<Invoice>): Promise<Invoice | null> {
     const { invoice_items, ...invoiceUpdates } = updates;
-    debugger;
+
     const { error } = await this.supabase
-      .from("invoices")
+      .from(this.tableName)
       .update(invoiceUpdates)
-      .eq("id", id);
+      .eq("id", id)
+      .eq('company_id', this.companyId);
 
     if (error) {
       console.error("Error updating invoice:", error);
@@ -281,76 +264,34 @@ class InvoiceService {
   async createInvoice(
     invoiceData: Omit<Invoice, "id" | "created_at" | "updated_at">
   ): Promise<Invoice | null> {
-    const { data, error } = await this.supabase
-      .from("invoices")
-      .insert({ ...invoiceData })
-      .single();
-
-    if (error) {
-      console.error("Error creating invoice:", error);
-      return null;
-    }
-
-    return data;
+    return this.create<Invoice>(this.tableName, invoiceData);
   }
 
   async updateInvoice(
     id: string,
     updates: Partial<Invoice>
-  ): Promise<PostgrestError | true> {
-    const { error } = await this.supabase
-      .from("invoices")
-      .update(updates)
-      .eq("id", id)
-      .single();
-
-    if (error) {
-      console.error("Error updating invoice:", error);
-      return error;
-    }
-
-    return true;
+  ): Promise<Invoice | null> {
+    return this.update(this.tableName, id, updates);
   }
 
   async createInvoiceItem(
     invoiceItemData: Omit<InvoiceItem, "id" | "created_at" | "updated_at">
   ): Promise<InvoiceItem | null> {
-    const { data, error } = await this.supabase
-      .from("invoice_items")
-      .insert({ ...invoiceItemData })
-      .single();
-
-    if (error) {
-      console.error("Error creating invoice item:", error);
-      return null;
-    }
-
-    return data;
+    return this.create<InvoiceItem>("invoice_items", invoiceItemData);
   }
 
   async updateInvoiceItem(
     id: string,
     updates: Partial<InvoiceItem>
-  ): Promise<PostgrestError | true> {
-    const { error } = await this.supabase
-      .from("invoice_items")
-      .update(updates)
-      .eq("id", id)
-      .single();
-
-    if (error) {
-      console.error("Error updating invoice item:", error);
-      return error;
-    }
-
-    return true;
+  ): Promise<InvoiceItem | null> {
+    return this.update("invoice_items", id, updates);
   }
 
-  async getLastInvoice(companyId: string): Promise<string | null> {
+  async getLastInvoice(): Promise<string | null> {
     const { data, error } = await this.supabase
-      .from("invoices")
+      .from(this.tableName)
       .select("invoice_number")
-      .eq("company_id", companyId)
+      .eq("company_id", this.companyId)
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
@@ -363,7 +304,5 @@ class InvoiceService {
     return data.invoice_number;
   }
 }
-
-
 
 export const invoiceService = new InvoiceService();

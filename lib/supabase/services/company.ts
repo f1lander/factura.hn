@@ -1,4 +1,3 @@
-// services/companyService.ts
 import { createClient, PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -6,6 +5,9 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export interface Company {
   id: string;
+  user_id: string;
+  ceo_name: string;
+  ceo_lastname: string;
   name: string;
   rtn: string;
   address0: string;
@@ -26,12 +28,18 @@ class CompanyService {
     this.supabase = createClient(supabaseUrl, supabaseAnonKey);
   }
 
-  async getCompany(): Promise<Company | null> {
+  async getCompany(userId: string): Promise<Company | null> {
+
+    if (!userId) {
+      console.error("No authenticated user found");
+      return null;
+    }
+
     const { data, error } = await this.supabase
       .from("companies")
       .select("*")
+      .eq("user_id", userId)
       .single();
-
     if (error) {
       console.error("Error fetching company:", error);
       return null;
@@ -39,10 +47,11 @@ class CompanyService {
 
     return data;
   }
+
   async createCompany(
-    companyData: Omit<Company, "id">
+    companyData: Omit<Company, "id" | "user_id">
   ): Promise<Company | null> {
-    const { data: user } = await this.supabase.auth.getUser();
+    const { data: { user } } = await this.supabase.auth.getUser();
     if (!user) {
       console.error("No authenticated user found");
       return null;
@@ -50,7 +59,7 @@ class CompanyService {
 
     const { data, error } = await this.supabase
       .from("companies")
-      .insert({ ...companyData })
+      .insert({ ...companyData, user_id: user.id })
       .single();
 
     if (error) {
@@ -63,7 +72,7 @@ class CompanyService {
 
   async updateCompany(
     id: string,
-    updates: Partial<Company>
+    updates: Partial<Omit<Company, "id" | "user_id">>
   ): Promise<PostgrestError | true> {
     const { error } = await this.supabase
       .from("companies")
@@ -74,20 +83,6 @@ class CompanyService {
     if (error) {
       console.error("Error updating company:", error);
       return error;
-    }
-
-    return true;
-  }
-
-  async login(email: string, password: string) {
-    const { error } = await this.supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      console.error("Error logging in:", error);
-      return null;
     }
 
     return true;

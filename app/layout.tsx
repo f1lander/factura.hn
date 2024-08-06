@@ -2,11 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Inter as FontSans } from "next/font/google";
 import { cn } from "@/lib/utils";
-import { Navigation } from "@/components/molecules/Navigation";
-
 const fontSans = FontSans({
   subsets: ["latin"],
-  variable: "--font-sans",
 });
 
 export const metadata: Metadata = {
@@ -19,16 +16,16 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+ 
   return (
     <html lang="en">
       <body
         suppressHydrationWarning={true}
         className={cn(
-          "min-h-screen bg-background font-sans antialiased",
-          fontSans.variable
+          "min-h-screen bg-background antialiased",
+          fontSans.className
         )}
       >
-        <Navigation />
         {children}
       </body>
     </html>

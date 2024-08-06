@@ -168,18 +168,6 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
         onDateRangeChange(startDate, date);
     };
 
-    // const handleStatusChange = (status: string) => {
-
-    //     const dbStatus = statusMap[status] || status.toLowerCase();
-
-    //     const updatedStatuses = selectedStatuses.includes(dbStatus)
-    //         ? selectedStatuses.filter(s => s !== dbStatus)
-    //         : [...selectedStatuses, dbStatus];
-
-    //     setSelectedStatuses(updatedStatuses);
-    //     onStatusFilterChange(updatedStatuses);
-    // };
-
     const handleStatusChange = (status: string) => {
         const dbStatus = statusMap[status] || status.toLowerCase();
         const updatedStatuses = selectedStatuses.includes(dbStatus)
