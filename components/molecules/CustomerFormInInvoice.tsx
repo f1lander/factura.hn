@@ -3,10 +3,10 @@ import { Control, Controller } from 'react-hook-form';
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { InvoiceFormData } from '@/components/molecules/InvoiceView2'; // You might need to adjust this import
 
+// adjust later the type of control
 interface CustomerFormFieldsProps {
-    control: Control<InvoiceFormData>;
+    control: Control<any>;
 }
 
 export const CustomerFormFields: React.FC<CustomerFormFieldsProps> = ({ control }) => {

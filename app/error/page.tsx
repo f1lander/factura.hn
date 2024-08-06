@@ -4,11 +4,7 @@ import { AlertCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface AuthErrorPageProps {
-  errorMessage?: string;
-}
-
-const AuthErrorPage: React.FC<AuthErrorPageProps> = ({ errorMessage = "An error occurred during authentication." }) => {
+export default function AuthErrorPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-red-50 to-red-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -20,7 +16,7 @@ const AuthErrorPage: React.FC<AuthErrorPageProps> = ({ errorMessage = "An error 
             Authentication Error
           </CardTitle>
           <CardDescription className="text-center text-red-600">
-            {errorMessage}
+            An error occurred during authentication
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -39,5 +35,3 @@ const AuthErrorPage: React.FC<AuthErrorPageProps> = ({ errorMessage = "An error 
     </div>
   );
 };
-
-export default AuthErrorPage;

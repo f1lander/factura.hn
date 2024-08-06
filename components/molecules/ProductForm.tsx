@@ -103,7 +103,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onC
                 valueAsNumber: true,
                 required: !isService ? "Cantidad en Stock es requerida para productos" : false,
                 min: { value: 0, message: "La cantidad debe ser mayor o igual a 0" },
-                validate: (value) => isService || value || "La cantidad debe ser mayor que 0 para productos"
+                validate: (value) => isService || !!value || "La cantidad debe ser mayor que 0 para productos"
               })}
               type="number"
               placeholder="Cantidad en Stock"
