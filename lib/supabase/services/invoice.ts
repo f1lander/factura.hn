@@ -26,7 +26,11 @@ export interface Invoice {
     rtn: string;
   };
   invoice_items: InvoiceItem[];
-  status: 'pending' | 'paid' | 'cancelled'
+  status: 'pending' | 'paid' | 'cancelled';
+  // New fields
+  generated_invoice_id?: string | null;
+  s3_key?: string | null;
+  s3_url?: string | null;
 }
 
 export interface InvoiceItem {

@@ -67,3 +67,7 @@ export function numberToWords(number: number): string {
 
   return result.trim() + ' con 00/100';
 }
+
+export function numberToCurrency(number: number): string {
+  return number.toFixed(2);
+}

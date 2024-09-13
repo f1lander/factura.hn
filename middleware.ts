@@ -19,6 +19,8 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(path)
   );
 
+  console.log('requiresCompanyData', requiresCompanyData);
+
   if (!user) {
     if (
       !request.nextUrl.pathname.startsWith('/auth/login') &&
@@ -28,7 +30,7 @@ export async function middleware(request: NextRequest) {
       const loginUrl = new URL('/auth/login', request.url)
       return NextResponse.redirect(loginUrl)
     }
-  } else if (requiresCompanyData) {
+  } else if(!request.nextUrl.pathname.startsWith('/home/settings')) {
     // User is authenticated, check for company data
     const { data: company, error } = await supabase
       .from('companies')
@@ -36,10 +38,13 @@ export async function middleware(request: NextRequest) {
       .eq('user_id', user.id)
       .single();
 
-    if (error || !company) {
+    console.log('company', company);
+
+    if (requiresCompanyData && company === null) {
+      console.log('No company data found, redirect to company setup');
       // No company data found, redirect to company setup
-      const settingsUrl = new URL('/home/settings', request.url)
-      return NextResponse.redirect(settingsUrl)
+      return NextResponse.redirect(new URL('/home/settings', request.url));
+
     }
   }
 
