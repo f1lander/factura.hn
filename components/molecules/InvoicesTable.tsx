@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { CheckCircle, ChevronLeft, ChevronRight, File, ListFilter, Search, XCircle, FilterXIcon } from "lucide-react";
+import { CheckCircle, ChevronLeft, ChevronRight, File, ListFilter, Search, XCircle, FilterXIcon, Eye } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,14 +11,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-// import {
-//     DropdownMenu,
-//     DropdownMenuCheckboxItem,
-//     DropdownMenuContent,
-//     DropdownMenuLabel,
-//     DropdownMenuSeparator,
-//     DropdownMenuTrigger,
-// } from "@/components/ui/dropdown-menu";
+
 import {
     Table,
     TableBody,
@@ -36,6 +29,15 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription, DialogHeader, DialogFooter } from "@/components/ui/dialog";
 import { Toggle } from "@/components/ui/toggle";
+
+import { Company, companyService } from "@/lib/supabase/services/company";
+import axios from "axios";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { useAccount } from "@/lib/hooks";
+import { useRouter } from "next/navigation";
+
+
 const statusMap: { [key: string]: string } = {
     'Pagadas': 'paid',
     'Pendientes': 'pending',
@@ -74,6 +76,7 @@ export interface InvoicesTableProps {
     onExport: () => void;
     onDateSearch: () => void;
     onUpdateStatus: (invoiceIds: string[], newStatus: string) => void;
+    onUpdateInvoice: (invoice: Invoice) => void;
 }
 
 const InvoiceStatusButtons = ({ selectedInvoices, onUpdateStatus }: { selectedInvoices: string[], onUpdateStatus: (newStatus: string) => void; }) => {
@@ -145,19 +148,20 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
     onExport,
     onDateSearch,
     onUpdateStatus,
+    onUpdateInvoice
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [startDate, setStartDate] = useState<Date | undefined>();
     const [endDate, setEndDate] = useState<Date | undefined>();
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>(['pending']);
     const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
-
+    const { company } = useAccount();
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newSearchTerm = e.target.value;
         setSearchTerm(newSearchTerm);
         onSearch(newSearchTerm);
     };
-
+    const router = useRouter()
     const handleStartDateChange = (date: Date | undefined) => {
         setStartDate(date);
         onDateRangeChange(date, endDate);
@@ -216,6 +220,116 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
         const endIndex = startIndex + itemsPerPage;
         return invoices.slice(startIndex, endIndex);
     };
+
+    const handleExport = async (invoice: Invoice) => {
+        try {
+            // Get the company info          
+            if (!company) {
+                throw new Error("Company information not found");
+            }
+
+            // Prepare the data for the serverless function
+            const data = {
+                data: [{
+                    invoice_number: invoice.invoice_number,
+                    rtn: invoice.customers.rtn,
+                    company: invoice.customers.name,
+                    proforma: invoice.is_proforma,
+                    enabled: true,
+                    email: invoice.customers.email,
+                    items: invoice.invoice_items.map(item => ({
+                        description: item.description,
+                        qty: item.quantity,
+                        cost: item.unit_cost,
+                        discount: item.discount
+                    }))
+                }],
+                company_info: {
+                    id: company.id,
+                    name: company.name,
+                    rtn: company.rtn,
+                    address0: company.address0,
+                    address1: company.address1,
+                    address2: company.address2,
+                    phone: company.phone,
+                    cai: company.cai,
+                    limitDate: company.limit_date,
+                    rangeInvoice1: company.range_invoice1,
+                    rangeInvoice2: company.range_invoice2,
+                    email: company.email
+                },
+                s3_bucket: process.env.NEXT_PUBLIC_S3_BUCKET,
+                template_url: process.env.NEXT_PUBLIC_TEMPLATE_URL,
+                s3_access_key: process.env.NEXT_PUBLIC_S3_ACCESS_KEY,
+                s3_secret_key: process.env.NEXT_PUBLIC_S3_SECRET_KEY
+            };
+
+            // Call the serverless function
+            const response = await axios.post(
+                "https://faas-nyc1-2ef2e6cc.doserverless.co/api/v1/namespaces/fn-2164fb70-5030-4209-be12-ab2611474d36/actions/factura/render-pdf",
+                data,
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Basic ${process.env.NEXT_PUBLIC_SERVERLESS_AUTH_TOKEN}`
+                    },
+                    params: {
+                        blocking: true,
+                        result: true
+                    }
+                }
+            );
+
+            const result = JSON.parse(response.data.body);
+
+            // Update invoice data with S3 information
+            const generatedInvoice = result.generated_invoices[0];
+            if (generatedInvoice) {
+                const updatedInvoice = {
+                    ...invoice,
+                    generated_invoice_id: generatedInvoice.invoice_id,
+                    s3_key: generatedInvoice.s3_key,
+                    s3_url: generatedInvoice.s3_url
+                };
+                onUpdateInvoice(updatedInvoice);
+
+                // Generate presigned URL for immediate download
+                const s3Client = new S3Client({
+                    region: "nyc3",
+                    credentials: {
+                        accessKeyId: process.env.NEXT_PUBLIC_S3_ACCESS_KEY!,
+                        secretAccessKey: process.env.NEXT_PUBLIC_S3_SECRET_KEY!
+                    },
+                    endpoint: "https://nyc3.digitaloceanspaces.com"
+                });
+
+                const command = new GetObjectCommand({
+                    Bucket: process.env.NEXT_PUBLIC_S3_BUCKET,
+                    Key: generatedInvoice.s3_key
+                });
+
+                const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+
+                // Trigger download
+                const link = document.createElement('a');
+                link.href = presignedUrl;
+                link.download = `${generatedInvoice.invoice_id}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+        } catch (error) {
+            console.error("Error exporting invoice:", error);
+            // Handle error (e.g., show an error message to the user)
+        }
+    };
+
+    const handleViewInvoice = (invoice: Invoice) => {
+        router.push(`/home/invoices/${invoice.id}`);
+    };
+
+
     return (
         <div className="flex w-full flex-col gap-4">
             <div className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4 w-full">
@@ -268,69 +382,12 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
                                 {label}
                             </Toggle>
                         ))}
-
-                        {/* <div className="flex items-center gap-2">
-                            <Button size="sm" variant="outline" className="h-8 gap-1 text-sm" onClick={onExport}>
-                                <File className="h-3.5 w-3.5" />
-                                <span className="hidden sm:inline">Exportar</span>
-                            </Button>
-                        </div> */}
                     </div>
                 </CardHeader>
-                {/* <div className="flex flex-col items-start gap-2 md:flex-row md:items-center">
-                        <div className="flex items-end gap-2">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm" className="h-8 gap-1 text-sm border-blue-300">
-                                        <ListFilter className="h-3.5 w-3.5" />
-                                        <span className="sr-only sm:not-sr-only ">Estado Factura</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Filtrar por</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuCheckboxItem
-                                        checked={selectedStatuses.includes('pending')}
-                                        onCheckedChange={() => handleStatusChange('pending')}
-                                    >
-                                        Pendientes
-                                    </DropdownMenuCheckboxItem>
-                                    <DropdownMenuCheckboxItem
-                                        checked={selectedStatuses.includes('paid')}
-                                        onCheckedChange={() => handleStatusChange('paid')}
-                                    >
-                                        Pagadas
-                                    </DropdownMenuCheckboxItem>
-                                    <DropdownMenuCheckboxItem
-                                        checked={selectedStatuses.includes('cancelled')}
-                                        onCheckedChange={() => handleStatusChange('cancelled')}
-                                    >
-                                        Anuladas
-                                    </DropdownMenuCheckboxItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            <Button size="sm" variant="outline" className="h-8 gap-1 text-sm" onClick={onExport}>
-                                <File className="h-3.5 w-3.5" />
-                                <span className="sr-only sm:not-sr-only">Exportar</span>
-                            </Button>
-                        </div>
-                        <span className="text-sm font-medium">Mostrando estados de facturas:</span>
-                        <div className="flex gap-2">
-                            {selectedStatuses.map(status => getStatusBadge(status))}
-                        </div>
-                    </div> */}
-
                 <CardContent>
-                    <InvoiceStatusButtons selectedInvoices={selectedInvoices} onUpdateStatus={handleUpdateStatus} />
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[50px]">
-                                    <Checkbox
-                                        checked={selectedInvoices.length === invoices.length}
-                                        onCheckedChange={handleSelectAllChange}
-                                    />
-                                </TableHead>
                                 <TableHead>Número de Factura</TableHead>
                                 <TableHead>Fecha</TableHead>
                                 <TableHead>Cliente</TableHead>
@@ -338,38 +395,29 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
                                 <TableHead className="text-right">Impuesto</TableHead>
                                 <TableHead className="text-right">Total</TableHead>
                                 <TableHead>Estado</TableHead>
+                                <TableHead>Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {getCurrentPageItems().map((invoice) => (
-                                <TableRow
-                                    key={invoice.id}
-                                    className="cursor-pointer hover:bg-muted/50"
-                                >
+                                <TableRow key={invoice.id}>
+                                    <TableCell>{invoice.invoice_number}</TableCell>
+                                    <TableCell>{new Date(invoice.date).toLocaleDateString()}</TableCell>
+                                    <TableCell>{invoice.customers.name || invoice.customer_id}</TableCell>
+                                    <TableCell className="text-right">${invoice.subtotal.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right">${invoice.tax.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right">${invoice.total.toFixed(2)}</TableCell>
+                                    <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                                     <TableCell>
-                                        <Checkbox
-                                            checked={selectedInvoices.includes(invoice.id)}
-                                            onCheckedChange={(checked) => handleInvoiceSelect(invoice.id, checked as boolean)}
-                                        />
-                                    </TableCell>
-                                    <TableCell onClick={() => onSelectInvoice(invoice.id)}>{invoice.invoice_number}</TableCell>
-                                    <TableCell onClick={() => onSelectInvoice(invoice.id)}>
-                                        {new Date(invoice.date).toLocaleDateString()}
-                                    </TableCell>
-                                    <TableCell onClick={() => onSelectInvoice(invoice.id)}>
-                                        {invoice.customers.name || invoice.customer_id}
-                                    </TableCell>
-                                    <TableCell className="text-right" onClick={() => onSelectInvoice(invoice.id)}>
-                                        ${invoice.subtotal.toFixed(2)}
-                                    </TableCell>
-                                    <TableCell className="text-right" onClick={() => onSelectInvoice(invoice.id)}>
-                                        ${invoice.tax.toFixed(2)}
-                                    </TableCell>
-                                    <TableCell className="text-right" onClick={() => onSelectInvoice(invoice.id)}>
-                                        ${invoice.total.toFixed(2)}
-                                    </TableCell>
-                                    <TableCell onClick={() => onSelectInvoice(invoice.id)}>
-                                        {getStatusBadge(invoice.status)}
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => handleViewInvoice(invoice)}
+                                            className="h-8 w-8 p-0"
+                                        >
+                                            <Eye className="h-4 w-4" />
+                                            <span className="sr-only">Ver</span>
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))}

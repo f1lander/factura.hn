@@ -195,6 +195,48 @@ export default function Invoices() {
     }
   }, [fetchInvoices]);
 
+  const handleUpdateInvoice = useCallback(async (updatedInvoice: Invoice) => {
+    try {
+      // Update the invoice in the database
+      const result = await invoiceService.updateInvoiceWithItems(updatedInvoice.id, updatedInvoice);
+
+      if (result) {
+        // If the update was successful, update the local state
+        setAllInvoices(prevInvoices =>
+          prevInvoices.map(invoice =>
+            invoice.id === updatedInvoice.id ? updatedInvoice : invoice
+          )
+        );
+
+        // Also update filteredInvoices to immediately reflect the change in the UI
+        setFilteredInvoices(prevInvoices =>
+          prevInvoices.map(invoice =>
+            invoice.id === updatedInvoice.id ? updatedInvoice : invoice
+          )
+        );
+
+        toast({
+          title: "Success",
+          description: `Invoice ${updatedInvoice.invoice_number} has been updated successfully.`,
+        });
+
+        // If the updated invoice is currently selected, update the selectedInvoice state
+        if (selectedInvoice && selectedInvoice.id === updatedInvoice.id) {
+          setSelectedInvoice(updatedInvoice);
+        }
+      } else {
+        throw new Error('Failed to update invoice');
+      }
+    } catch (error) {
+      console.error('Error updating invoice:', error);
+      toast({
+        title: "Error",
+        description: `Failed to update invoice ${updatedInvoice.invoice_number}. Please try again.`,
+        variant: "destructive",
+      });
+    }
+  }, [setAllInvoices, setFilteredInvoices, selectedInvoice, setSelectedInvoice]);
+
   // Widgets Section
   const WidgetsSection = () => (
     <div className="w-full grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -274,6 +316,7 @@ export default function Invoices() {
             onExport={handleExport}
             onDateSearch={handleDateSearch}
             onUpdateStatus={handleUpdateStatus}
+            onUpdateInvoice={handleUpdateInvoice}
           />
         </main>
       </div>
