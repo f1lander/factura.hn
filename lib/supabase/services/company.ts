@@ -1,7 +1,6 @@
-import { createClient, PostgrestError, SupabaseClient } from "@supabase/supabase-js";
+import { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+import supabaseClient from "../client";
 
 export interface Company {
   id: string;
@@ -25,7 +24,7 @@ class CompanyService {
   private supabase: SupabaseClient;
 
   constructor() {
-    this.supabase = createClient(supabaseUrl, supabaseAnonKey);
+    this.supabase = supabaseClient()
   }
 
   async getCompany(userId: string): Promise<Company | null> {
@@ -61,6 +60,7 @@ class CompanyService {
       .from("companies")
       .insert({ ...companyData, user_id: user.id })
       .single();
+    console.log(data, error)
 
     if (error) {
       console.error("Error creating company:", error);
