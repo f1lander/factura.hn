@@ -51,12 +51,11 @@ export async function middleware(request: NextRequest) {
 
     console.log("company", company);
 
-    // If you're trying to access a route that
     if (requiresCompanyData && company === null) {
       console.log("No company data found, redirect to company setup");
-      // No company data found, redirect to company setup
-      return NextResponse.redirect(new URL("/home/settings", request.url));
-      // this is the place where we should do something for
+      const urlWithQuery = new URL("/home/settings", request.url);
+      urlWithQuery.searchParams.set("showToast", "companySetupRequired");
+      return NextResponse.redirect(urlWithQuery);
     }
   }
 

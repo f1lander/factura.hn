@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   Card,
@@ -12,30 +12,43 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  companyService,
-  Company,
-} from "@/lib/supabase/services/company";
+import { companyService, Company } from "@/lib/supabase/services/company";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import { useSearchParams } from "next/navigation";
 
 interface CompanyDataFormProps {
   initialCompany: Company | null;
 }
 
-export default function CompanyDataForm({ initialCompany }: CompanyDataFormProps) {
+export default function CompanyDataForm({
+  initialCompany,
+}: CompanyDataFormProps) {
+  const [companyToastRendered, setCompanyToastRendered] = useState(false);
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  if (
+    searchParams.get("showToast") === "companySetupRequired" &&
+    !companyToastRendered
+  ) {
+    console.log("the param for showToast is: ", searchParams.get("showToast"));
+    toast({
+      title: "debes agregar datos de compañia",
+      description: "debes agregar datos de compañia",
+    });
+    setCompanyToastRendered(true);
+  }
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<Omit<Company, 'id' | 'user_id'>>({
+  } = useForm<Omit<Company, "id" | "user_id">>({
     defaultValues: initialCompany || undefined,
   });
 
-  const onSubmit = async (data: Omit<Company, 'id' | 'user_id'>) => {
+  const onSubmit = async (data: Omit<Company, "id" | "user_id">) => {
     try {
       let result;
       if (initialCompany) {
@@ -47,7 +60,8 @@ export default function CompanyDataForm({ initialCompany }: CompanyDataFormProps
       if (result) {
         toast({
           title: "Éxito",
-          description: "Los datos de la compañía se han guardado correctamente.",
+          description:
+            "Los datos de la compañía se han guardado correctamente.",
         });
       } else {
         throw new Error("Failed to save company data");
@@ -56,7 +70,8 @@ export default function CompanyDataForm({ initialCompany }: CompanyDataFormProps
       console.error("Error saving company data:", error);
       toast({
         title: "Error",
-        description: "Ocurrió un error al guardar los datos. Por favor, intente de nuevo.",
+        description:
+          "Ocurrió un error al guardar los datos. Por favor, intente de nuevo.",
         variant: "destructive",
       });
     }
@@ -67,7 +82,9 @@ export default function CompanyDataForm({ initialCompany }: CompanyDataFormProps
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>
-            {initialCompany ? "Datos generales de la compañía" : "Crear nueva compañía"}
+            {initialCompany
+              ? "Datos generales de la compañía"
+              : "Crear nueva compañía"}
           </CardTitle>
           <CardDescription>
             {initialCompany
@@ -89,12 +106,13 @@ export default function CompanyDataForm({ initialCompany }: CompanyDataFormProps
           </div>
           <div className="grid grid-cols-2 space-x-2">
             <div>
-
               <Label htmlFor="ceo_name">Nombre (Gerente)</Label>
 
               <Input
                 id="ceo_name"
-                {...register("ceo_name", { required: "Este campo es requerido" })}
+                {...register("ceo_name", {
+                  required: "Este campo es requerido",
+                })}
               />
               {errors.name && (
                 <p className="text-red-500 text-sm">{errors.name.message}</p>
@@ -105,7 +123,9 @@ export default function CompanyDataForm({ initialCompany }: CompanyDataFormProps
 
               <Input
                 id="ceo_lastname"
-                {...register("ceo_lastname", { required: "Este campo es requerido" })}
+                {...register("ceo_lastname", {
+                  required: "Este campo es requerido",
+                })}
               />
               {errors.name && (
                 <p className="text-red-500 text-sm">{errors.name.message}</p>
@@ -126,12 +146,14 @@ export default function CompanyDataForm({ initialCompany }: CompanyDataFormProps
 
           <div>
             <Label htmlFor="address0">Dirección línea 1</Label>
-            <Textarea id="address0" {...register("address0", {
-              required: "Este campo es requerido"
-            })} />
+            <Textarea
+              id="address0"
+              {...register("address0", {
+                required: "Este campo es requerido",
+              })}
+            />
           </div>
           <div className="grid grid-cols-2 space-x-2">
-
             <div>
               <Label htmlFor="phone">Teléfono</Label>
               <Input id="phone" {...register("phone")} />
@@ -174,9 +196,10 @@ export default function CompanyDataForm({ initialCompany }: CompanyDataFormProps
               {...register("cai", {
                 required: "Este campo es requerido",
                 pattern: {
-                  value: /^[0-9A-F]{6}-[0-9A-F]{12}-[0-9A-F]{6}-[0-9A-F]{6}-[0-9A-F]{2}$/,
-                  message: "El formato del CAI no es válido"
-                }
+                  value:
+                    /^[0-9A-F]{6}-[0-9A-F]{12}-[0-9A-F]{6}-[0-9A-F]{6}-[0-9A-F]{2}$/,
+                  message: "El formato del CAI no es válido",
+                },
               })}
             />
             {errors.cai && (
