@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Menu, CircleUser, FileInputIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,10 @@ export function Navigation() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const supabase = supabaseClient();
+  const searchParams = useSearchParams();
+  let hasCompanyData: boolean = true;
+  if (searchParams.get("showToast") === "companySetupRequired")
+    hasCompanyData = false;
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -64,9 +68,15 @@ export function Navigation() {
   };
 
   return (
-    <header className="stick flex flex-col">
+    <header className="sticky flex flex-col top-0">
       {/*<header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">*/}
-      <div>Aquí es donde va a ir el banner</div>
+      {!hasCompanyData ? (
+        <div className="flex items-center justify-center bg-[#E57373] py-2">
+          Por favor, ingresa tus datos de compañía
+        </div>
+      ) : (
+        <></>
+      )}
       <div className="flex top-0 h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6 z-50">
           <Link
