@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import {
   Card,
@@ -16,7 +16,6 @@ import { companyService, Company } from "@/lib/supabase/services/company";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Textarea } from "@/components/ui/textarea";
-import { useSearchParams } from "next/navigation";
 
 interface CompanyDataFormProps {
   initialCompany: Company | null;
@@ -25,20 +24,7 @@ interface CompanyDataFormProps {
 export default function CompanyDataForm({
   initialCompany,
 }: CompanyDataFormProps) {
-  const [companyToastRendered, setCompanyToastRendered] = useState(false);
   const { toast } = useToast();
-  const searchParams = useSearchParams();
-  if (
-    searchParams.get("showToast") === "companySetupRequired" &&
-    !companyToastRendered
-  ) {
-    console.log("the param for showToast is: ", searchParams.get("showToast"));
-    toast({
-      title: "debes agregar datos de compañia",
-      description: "debes agregar datos de compañia",
-    });
-    setCompanyToastRendered(true);
-  }
 
   const {
     register,
