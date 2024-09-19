@@ -254,20 +254,30 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
             <Card>
                 <CardHeader className="px-7 flex flex-col items-start justify-between md:flex-row md:items-center">
                     <CardTitle className="w-full">Facturas recientes</CardTitle>
-                    <div className="flex flex-col items-start gap-2 md:flex-row md:items-center md:justify-between">
-                        {Object.entries(statusMap).map(([label, value]) => (
-                            <Toggle
-                                key={value}
-                                pressed={selectedStatuses.includes(value)}
-                                onPressedChange={() => handleStatusChange(label)}
-                                className={`h-8 px-3 py-1 transition-colors duration-200 ${selectedStatuses.includes(value)
-                                    ? `bg-${statusColors[label].dark} text-white hover:bg-${statusColors[label].dark}/90`
-                                    : `bg-${statusColors[label].light} text-${statusColors[label].dark} hover:bg-${statusColors[label].light}/80`
-                                    }`}
-                            >
-                                {label}
-                            </Toggle>
-                        ))}
+                    <div className="flex flex-row items-start gap-2  md:items-center md:justify-between">
+                        <Toggle
+                            pressed={selectedStatuses.includes("paid")}
+                            onPressedChange={() => handleStatusChange('paid')}
+                            className="h-8 px-3 py-1 transition-colors duration-200 bg-green-500 text-white hover:bg-green-500/90"
+                        >
+                            Pagadas
+                        </Toggle>
+                        <Toggle
+                            pressed={selectedStatuses.includes("pending")}
+                            onPressedChange={() => handleStatusChange('pending')}
+                            className="h-8 px-3 py-1 transition-colors duration-200 bg-yellow-500 text-white hover:bg-yellow-500/90"
+                        >
+                            Pendientes
+                        </Toggle>
+                        <Toggle
+                            pressed={selectedStatuses.includes("cancelled")}
+                            onPressedChange={() => handleStatusChange('cancelled')}
+                            className="h-8 px-3 py-1 transition-colors duration-200 bg-red-500 text-white hover:bg-red-500/90"
+                        >
+                            Anuladas
+                        </Toggle>
+
+
 
                         {/* <div className="flex items-center gap-2">
                             <Button size="sm" variant="outline" className="h-8 gap-1 text-sm" onClick={onExport}>
