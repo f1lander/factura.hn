@@ -138,11 +138,20 @@ export default function CompanyDataForm({
                 required: "Este campo es requerido",
               })}
             />
+            {errors.address0 && (
+              <p className="text-red-500 text-sm">{errors.address0.message}</p>
+            )}
           </div>
           <div className="grid grid-cols-2 space-x-2">
             <div>
               <Label htmlFor="phone">Teléfono</Label>
-              <Input id="phone" {...register("phone")} />
+              <Input
+                id="phone"
+                {...register("phone", { required: "Este campo es requerido" })}
+              />
+              {errors.phone && (
+                <p className="text-red-500 text-sm">{errors.phone.message}</p>
+              )}
             </div>
 
             <div>
@@ -195,17 +204,48 @@ export default function CompanyDataForm({
 
           <div>
             <Label htmlFor="limit_date">Fecha límite</Label>
-            <Input id="limit_date" type="date" {...register("limit_date")} />
+            <Input
+              id="limit_date"
+              type="date"
+              {...register("limit_date", {
+                required: "Este campo es requerido",
+              })}
+            />
+            {errors.limit_date && (
+              <p className="text-red-500 text-sm">
+                {errors.limit_date.message}
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-2 space-x-2">
             <div>
               <Label htmlFor="range_invoice1">Rango de factura inicio</Label>
-              <Input id="range_invoice1" {...register("range_invoice1")} />
+              <Input
+                id="range_invoice1"
+                {...register("range_invoice1", {
+                  required: "Este campo es requerido",
+                })}
+              />
+              {errors.range_invoice1 && (
+                <p className="text-red-500 text-sm">
+                  {errors.range_invoice1.message}
+                </p>
+              )}
             </div>
 
             <div>
               <Label htmlFor="range_invoice2">Rango de factura fin</Label>
-              <Input id="range_invoice2" {...register("range_invoice2")} />
+              <Input
+                id="range_invoice2"
+                {...register("range_invoice2", {
+                  required: "Este campo es requerido",
+                })}
+              />
+              {errors.range_invoice2 && (
+                <p className="text-red-500 text-sm">
+                  {errors.range_invoice2.message}
+                </p>
+              )}
             </div>
           </div>
         </CardContent>
