@@ -183,7 +183,7 @@ export default function CompanyDataForm({
                 required: "Este campo es requerido",
                 pattern: {
                   value:
-                    /^[0-9A-F]{6}-[0-9A-F]{12}-[0-9A-F]{6}-[0-9A-F]{6}-[0-9A-F]{2}$/,
+                   /^[0-9A-Fa-f]{6}-[0-9A-Fa-f]{12}-[0-9A-Fa-f]{6}-[0-9A-Fa-f]{6}-[0-9A-Fa-f]{2}$/,
                   message: "El formato del CAI no es válido",
                 },
               })}

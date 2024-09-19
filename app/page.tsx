@@ -133,14 +133,13 @@ export default function Dashboard() {
         <CardHeader className="pb-2">
           <CardDescription>Esta Semana</CardDescription>
           <CardTitle className="text-4xl">
-            ${weeklyRevenue.toFixed(2)}
+            ${isNaN(weeklyRevenue) ? "0.00" : weeklyRevenue.toFixed(2)}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-xs text-muted-foreground">
-            +{((weeklyRevenue / monthlyRevenue) * 100).toFixed(2)}% del mes
-            pasado
-          </div>
+            <div className="text-xs text-muted-foreground">
+            +{(isNaN(weeklyRevenue) || isNaN(monthlyRevenue)) ? "0.00" : ((weeklyRevenue / monthlyRevenue) * 100).toFixed(2)}% del mes dsdsdpasado
+            </div>
         </CardContent>
         <CardFooter>
           <Progress

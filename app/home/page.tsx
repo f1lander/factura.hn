@@ -213,13 +213,18 @@ export default function Invoices() {
         <CardHeader className="pb-2">
           <CardDescription>Esta Semana</CardDescription>
           <CardTitle className="text-4xl">
-            ${weeklyRevenue.toFixed(2)}
+            ${isNaN(weeklyRevenue) ? "0.00" : weeklyRevenue.toFixed(2)}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-xs text-muted-foreground">
-            +{((weeklyRevenue / monthlyRevenue) * 100).toFixed(2)}% del mes
-            pasado
+            {(() => {
+              if (isNaN(weeklyRevenue) || isNaN(monthlyRevenue) || monthlyRevenue === 0) {
+                return "0.00";
+              }
+              const percentage = (weeklyRevenue / monthlyRevenue) * 100;
+              return isFinite(percentage) ? percentage.toFixed(2) : "0.00";
+            })()}% del mes pasado
           </div>
         </CardContent>
         <CardFooter>

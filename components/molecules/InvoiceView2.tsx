@@ -42,6 +42,7 @@ import { Company, companyService } from "@/lib/supabase/services/company";
 import { numberToWords } from "@/lib/utils";
 import { getStatusBadge } from "./InvoicesTable";
 import { useAccount } from "@/lib/hooks";
+import { generateAndGetSignedPdfUrl } from "@/app/actions";
 
 interface InvoiceViewProps {
   invoice?: Invoice;
@@ -57,6 +58,54 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [lastInvoiceNumber, setLastInvoiceNumber] = useState<string | undefined>();
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    setIsDownloading(true);
+    try {
+      const pdfUrl = await generateAndGetSignedPdfUrl({
+        data: {
+          invoice_number: invoice?.invoice_number,
+          rtn: invoice?.customers.rtn,
+          company: invoice?.customers.name,
+          proforma: invoice?.is_proforma,
+          enabled: true,
+          email: invoice?.customers.email,
+          items: invoice?.invoice_items.map(item => ({
+            description: item.description,
+            qty: item.quantity,
+            cost: item.unit_cost,
+            discount: item.discount
+          }))
+        },
+        company_info: {
+          id: company?.id,
+          name: company?.name,
+          rtn: company?.rtn,
+          address0: company?.address0,
+          address1: company?.address1,
+          address2: company?.address2,
+          phone: company?.phone,
+          cai: company?.cai,
+          limitDate: company?.limit_date,
+          rangeInvoice1: company?.range_invoice1,
+          rangeInvoice2: company?.range_invoice2,
+          email: company?.email
+        }
+      });
+
+      debugger;
+
+      // Open the PDF in a new tab
+      window.open(pdfUrl, '_blank');
+    } catch (error) {
+      debugger;
+      console.error('Error downloading PDF:', error);
+      // You might want to show an error message to the user here
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const { company } = useAccount();
   const { control, handleSubmit, watch, setValue } = useForm<Invoice>({
@@ -237,7 +286,7 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
                     <DiscountInput index={index} control={control} />
                   </TableCell>
                   <TableCell>
-                    ${calculateItemTotal(index, watchInvoiceItems)}
+                  {`Lps. ${calculateItemTotal(index, watchInvoiceItems)}`}
                   </TableCell>
                   <TableCell>
                     <Button
@@ -268,7 +317,7 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
               <UnitCostInput index={index} control={control} />
               <DiscountInput index={index} control={control} />
               <div className="mt-2">
-                Total: ${calculateItemTotal(index, watchInvoiceItems)}
+                {`Total: Lps. ${calculateItemTotal(index, watchInvoiceItems)}`}
               </div>
               <Button
                 type="button"
@@ -277,7 +326,7 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
                 onClick={() => remove(index)}
                 className="mt-2"
               >
-                Remove
+                Quitar
               </Button>
             </div>
           ))}
@@ -345,13 +394,13 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
                 <TableCell>{item.description}</TableCell>
                 <TableCell className="text-right">{item.quantity}</TableCell>
                 <TableCell className="text-right">
-                  ${item.unit_cost.toFixed(2)}
+                  {`Lps. ${item.unit_cost.toFixed(2)}`}
                 </TableCell>
                 <TableCell className="text-right">
-                  ${item.discount.toFixed(2)}
+                  {`Lps. ${item.discount.toFixed(2)}`}
                 </TableCell>
                 <TableCell className="text-right">
-                  ${(item.quantity * item.unit_cost - item.discount).toFixed(2)}
+                  {`Lps. ${(item.quantity * item.unit_cost - item.discount).toFixed(2)}`}
                 </TableCell>
               </TableRow>
             ))}
@@ -365,35 +414,35 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
           <dl className="grid gap-1">
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Subtotal:</dt>
-              <dd>${watch("subtotal").toFixed(2)}</dd>
+              <dd>{`Lps. ${watch("subtotal").toFixed(2)}`}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Exonerado:</dt>
-              <dd>${watch("tax_exonerado").toFixed(2)}</dd>
+              <dd>{`Lps. ${watch("tax_exonerado").toFixed(2)}`}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Exento:</dt>
-              <dd>${watch("tax_exento").toFixed(2)}</dd>
+              <dd>{`Lps. ${watch("tax_exento").toFixed(2)}`}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Gravado 15%:</dt>
-              <dd>${watch("tax_gravado_15").toFixed(2)}</dd>
+              <dd>{`Lps. ${watch("tax_gravado_15").toFixed(2)}`}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Gravado 18%:</dt>
-              <dd>${watch("tax_gravado_18").toFixed(2)}</dd>
+              <dd>{`Lps. ${watch("tax_gravado_18").toFixed(2)}`}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">ISV 15%:</dt>
-              <dd>${watch("tax").toFixed(2)}</dd>
+              <dd>{`Lps. ${watch("tax").toFixed(2)}`}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">ISV 18%:</dt>
-              <dd>${watch("tax_18").toFixed(2)}</dd>
+              <dd>{`Lps. ${watch("tax_18").toFixed(2)}`}</dd>
             </div>
             <div className="flex items-center justify-between font-semibold">
               <dt>Total:</dt>
-              <dd>${watch("total").toFixed(2)}</dd>
+              <dd>{`Lps. ${watch("total").toFixed(2)}`}</dd>
             </div>
           </dl>
         </div>
@@ -410,15 +459,24 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
 
   return (
     <Card className="card-invoice overflow-hidden border-none shadow-none rounded-sm">
-      <CardHeader className="flex flex-row items-start bg-muted/50">
+      <CardHeader className="flex flex-row items-start justify-between bg-muted/50">
         <div className="grid gap-0.5">
           <CardTitle className="group flex items-center gap-2 text-lg">
-            {isEditable ? "Crear Factura" : `Número de Factura ${watch("invoice_number")}`}
+            {isEditable ? "Crear Factura" : `Número de Factura ${invoice?.invoice_number}`}
           </CardTitle>
           <CardDescription>
-            Fecha: {new Date(watch("date")).toLocaleDateString()}
+            Fecha: {new Date(invoice?.date || '').toLocaleDateString()}
           </CardDescription>
         </div>
+        {!isEditable && (
+          <Button
+            onClick={handleDownloadPdf}
+            disabled={isDownloading}
+            size="sm"
+          >
+            {isDownloading ? 'Descargando...' : 'Descargar PDF'}
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="p-6 text-sm">
         {isEditable ? renderEditableContent() : renderReadOnlyContent()}
