@@ -16,6 +16,7 @@ import { companyService, Company } from "@/lib/supabase/services/company";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import supabase from "@/lib/supabase/client";
 
 interface CompanyDataFormProps {
   initialCompany: Company | null;
@@ -30,17 +31,24 @@ export default function CompanyDataForm({
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<Omit<Company, "id" | "user_id">>({
+  } = useForm<Omit<Company, "id">>({
     defaultValues: initialCompany || undefined,
   });
 
-  const onSubmit = async (data: Omit<Company, "id" | "user_id">) => {
+  const onSubmit = async (data: Omit<Company, "id">) => {
     try {
+      const { data: userData } = await supabase().auth.getUser();
+      data.user_id = userData.user!.id;
       let result;
       if (initialCompany) {
-        result = await companyService.updateCompany(initialCompany.id, data);
+        result = await companyService.updateCompany(initialCompany!.id, data);
       } else {
+        console.log("since there's no company, we're running the code here");
         result = await companyService.createCompany(data);
+        console.log(
+          "our result after creating the brand new company is: ",
+          result,
+        );
       }
 
       if (result) {
@@ -50,6 +58,7 @@ export default function CompanyDataForm({
             "Los datos de la compañía se han guardado correctamente.",
         });
       } else {
+        console.log("The value of result was: ", result);
         throw new Error("Failed to save company data");
       }
     } catch (error) {
