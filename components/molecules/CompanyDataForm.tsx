@@ -100,8 +100,10 @@ export default function CompanyDataForm({
                   required: "Este campo es requerido",
                 })}
               />
-              {errors.name && (
-                <p className="text-red-500 text-sm">{errors.name.message}</p>
+              {errors.ceo_name && (
+                <p className="text-red-500 text-sm">
+                  {errors.ceo_name.message}
+                </p>
               )}
             </div>
             <div>
@@ -113,8 +115,10 @@ export default function CompanyDataForm({
                   required: "Este campo es requerido",
                 })}
               />
-              {errors.name && (
-                <p className="text-red-500 text-sm">{errors.name.message}</p>
+              {errors.ceo_lastname && (
+                <p className="text-red-500 text-sm">
+                  {errors.ceo_lastname.message}
+                </p>
               )}
             </div>
           </div>
@@ -146,8 +150,12 @@ export default function CompanyDataForm({
             <div>
               <Label htmlFor="phone">Teléfono</Label>
               <Input
+                type="number"
                 id="phone"
-                {...register("phone", { required: "Este campo es requerido" })}
+                {...register("phone", {
+                  required: "Este campo es requerido",
+                  valueAsNumber: true,
+                })}
               />
               {errors.phone && (
                 <p className="text-red-500 text-sm">{errors.phone.message}</p>
