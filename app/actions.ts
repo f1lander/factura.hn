@@ -1,7 +1,8 @@
+'use server'
 import axios from 'axios';
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { S3 } from "@aws-sdk/client-s3";
+import { S3Client } from "@aws-sdk/client-s3";
 import https from 'https';
 
 const agent = new https.Agent({  
@@ -10,22 +11,20 @@ const agent = new https.Agent({
 
 axios.defaults.httpsAgent = agent;
 
-export const getS3 = () => {
-  const accessparams = {
-    forcePathStyle: false, // Configures to use subdomain/virtual calling format.
-    endpoint: 'https://nyc3.digitaloceanspaces.com',
-    region: 'us-east-1',
-    credentials: {
-      accessKeyId: process.env.SPACES_KEY || '',
-      secretAccessKey: process.env.SPACES_SECRET || ''
-    }
-  };
-  const s3 = new S3(accessparams);
-  return s3;
-};
+const getS3 = () => new S3Client({
+  region: "us-east-1",  // Change this to match your DigitalOcean Spaces region
+  endpoint: "https://nyc3.digitaloceanspaces.com",
+  credentials: {
+    accessKeyId: process.env.S3_ACCESS_KEY || '',
+    secretAccessKey: process.env.S3_SECRET_KEY || '',
+  },
+  forcePathStyle: true  // This is important for DigitalOcean Spaces compatibility
+});
 
 export async function generateAndGetSignedPdfUrl(formData: any) {
-  debugger;
+  console.log('s3 access key', process.env.S3_ACCESS_KEY);
+  console.log('s3 secret key', process.env.S3_SECRET_KEY);
+  console.log('api authorization', process.env.API_AUTHORIZATION);
   const endpoint = 'https://faas-nyc1-2ef2e6cc.doserverless.co/api/v1/namespaces/fn-2164fb70-5030-4209-be12-ab2611474d36/actions/factura/render-pdf?blocking=true&result=true';
 
   try {
@@ -34,12 +33,12 @@ export async function generateAndGetSignedPdfUrl(formData: any) {
       company_info: formData.company_info,
       s3_bucket: 'factura-hn',
       template_url: 'https://factura-hn.nyc3.digitaloceanspaces.com/templates/default_template2.html',
-      s3_access_key: process.env.NEXT_PUBLIC_S3_ACCESS_KEY,
-      s3_secret_key: process.env.NEXT_PUBLIC_S3_SECRET_KEY,
+      s3_access_key: process.env.S3_ACCESS_KEY,
+      s3_secret_key: process.env.S3_SECRET_KEY,
     }, {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': process.env.NEXT_PUBLIC_API_AUTHORIZATION || '',
+        'Authorization': `Basic ${process.env.API_AUTHORIZATION}`,
       },
     });
 
@@ -73,7 +72,7 @@ export async function generateAndGetSignedPdfUrl(formData: any) {
 
     const command = new GetObjectCommand(params);
     const presignedUrl = await getSignedUrl(getS3(), command, { expiresIn: 3600 * 24 });
-
+    console.log('presignedUrl', presignedUrl);
     return presignedUrl;
   } catch (error) {
     console.error('Error in generateAndGetSignedPdfUrl:', error);
