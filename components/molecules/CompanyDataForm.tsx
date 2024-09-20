@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import {
   Card,
@@ -17,6 +18,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import supabase from "@/lib/supabase/client";
+import { usePhoto } from "@/hooks/usePhoto";
+import CloudIcon from "./icons/CloudIcon";
 
 interface CompanyDataFormProps {
   initialCompany: Company | null;
@@ -26,6 +29,8 @@ export default function CompanyDataForm({
   initialCompany,
 }: CompanyDataFormProps) {
   const { toast } = useToast();
+
+  const { photo, handleFileChange, handleDrop, handleDragOver } = usePhoto();
 
   const {
     register,
@@ -88,6 +93,43 @@ export default function CompanyDataForm({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/*Here it goes!*/}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="something">Logo de la compañía</Label>
+            <div className="flex">
+              <div className="relative w-[50%] h-auto z-0">
+                <Image
+                  src={photo !== null ? photo : "/placeholder.jpg"}
+                  alt="concierto-coldplay"
+                  fill
+                  style={{ objectFit: "contain" }}
+                />
+              </div>
+              <label htmlFor="coverImage" className="flex w-1/3">
+                <div
+                  className="flex flex-col justify-center items-center gap-2 w-full border-dashed border-2 border-gray-300 p-4 rounded-[14px]"
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                >
+                  <input
+                    id="coverImage"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  <CloudIcon />
+                  <span className="font-medium text-sm text-[#2A302D]">
+                    Selecciona un archivo o arrástralo
+                  </span>
+                  <span className="font-normal text-[11px] text-[#6B736F]">
+                    JPG, PNG
+                  </span>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <div>
             <Label htmlFor="name">Nombre de la compañía</Label>
 
@@ -209,7 +251,7 @@ export default function CompanyDataForm({
                 required: "Este campo es requerido",
                 pattern: {
                   value:
-                   /^[0-9A-Fa-f]{6}-[0-9A-Fa-f]{12}-[0-9A-Fa-f]{6}-[0-9A-Fa-f]{6}-[0-9A-Fa-f]{2}$/,
+                    /^[0-9A-Fa-f]{6}-[0-9A-Fa-f]{12}-[0-9A-Fa-f]{6}-[0-9A-Fa-f]{6}-[0-9A-Fa-f]{2}$/,
                   message: "El formato del CAI no es válido",
                 },
               })}
