@@ -18,6 +18,7 @@ export interface Company {
   range_invoice1: string;
   range_invoice2: string;
   email: string;
+  company_logo: string;
 }
 
 class CompanyService {
