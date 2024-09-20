@@ -45,6 +45,7 @@ export default function CompanyDataForm({
       const { data: userData } = await supabase().auth.getUser();
       data.user_id = userData.user!.id;
       let result;
+      data.company_logo = ""; // we can't upload an entire data url to a PostgreSQL row, so I'll leave it empty for now
       if (initialCompany) {
         result = await companyService.updateCompany(initialCompany!.id, data);
       } else {
@@ -113,6 +114,9 @@ export default function CompanyDataForm({
                 >
                   <input
                     id="coverImage"
+                    {...register("company_logo", {
+                      required: "Necesitas un logo para tu compañía",
+                    })}
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
@@ -128,6 +132,11 @@ export default function CompanyDataForm({
                 </div>
               </label>
             </div>
+            {errors.company_logo && (
+              <p className="text-red-500 text-sm bottom-0">
+                {errors.company_logo.message}
+              </p>
+            )}
           </div>
 
           <div>
