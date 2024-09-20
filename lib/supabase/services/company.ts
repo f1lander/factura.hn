@@ -24,11 +24,10 @@ class CompanyService {
   private supabase: SupabaseClient;
 
   constructor() {
-    this.supabase = supabaseClient()
+    this.supabase = supabaseClient();
   }
 
   async getCompany(userId: string): Promise<Company | null> {
-
     if (!userId) {
       console.error("No authenticated user found");
       return null;
@@ -48,9 +47,11 @@ class CompanyService {
   }
 
   async createCompany(
-    companyData: Omit<Company, "id" | "user_id">
+    companyData: Omit<Company, "id">,
   ): Promise<Company | null> {
-    const { data: { user } } = await this.supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await this.supabase.auth.getUser();
     if (!user) {
       console.error("No authenticated user found");
       return null;
@@ -59,20 +60,19 @@ class CompanyService {
     const { data, error } = await this.supabase
       .from("companies")
       .insert({ ...companyData, user_id: user.id })
-      .single();
-    console.log(data, error)
+      .select("*");
 
     if (error) {
       console.error("Error creating company:", error);
       return null;
     }
 
-    return data;
+    return data as unknown as Company;
   }
 
   async updateCompany(
     id: string,
-    updates: Partial<Omit<Company, "id" | "user_id">>
+    updates: Partial<Omit<Company, "id" | "user_id">>,
   ): Promise<PostgrestError | true> {
     const { error } = await this.supabase
       .from("companies")

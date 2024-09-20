@@ -6,9 +6,6 @@ export function createClient() {
   // read the incoming cookies. Let's print them all!
   const cookieStore = cookies();
 
-  console.log("All the incoming cookies are the following:");
-  console.log(cookieStore.getAll());
-
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
