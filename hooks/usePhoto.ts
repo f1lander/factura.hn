@@ -1,15 +1,13 @@
 import { ChangeEvent, useState } from "react";
 
 export function usePhoto() {
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photo, setPhoto] = useState<string | null>(null);
 
   const readFile = (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       if (e.target?.result) {
-        setPhotos((prevPhotos: string[]) => {
-          return [...prevPhotos, e.target?.result as string];
-        });
+        setPhoto(e.target?.result as string);
       }
     };
     reader.readAsDataURL(file);
@@ -41,7 +39,7 @@ export function usePhoto() {
     handleFileChange,
     handleDrop,
     handleDragOver,
-    photos,
-    setPhotos,
+    photo,
+    setPhoto,
   };
 }
