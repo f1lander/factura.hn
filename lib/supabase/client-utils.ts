@@ -1,10 +1,9 @@
-// app/lib/getAuthAndCompanyData.ts
-import { createClient } from "@/lib/supabase/server";
 
-import { companyService } from "@/lib/supabase/services/company";
 
-export async function getAuthAndCompanyData() {
-  const supabase = createClient();
+import createServerClient from "@/lib/supabase/client";
+import { companyService } from "./services/company";
+export async function getAuthAndCompanyDataClient() {
+  const supabase = createServerClient();
   
   try {
     // Check authentication

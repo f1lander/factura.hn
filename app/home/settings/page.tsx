@@ -1,22 +1,65 @@
-import { getAuthAndCompanyData } from "@/lib/supabase/utils";
+"use client";
+
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useToast } from "@/components/ui/use-toast";
 import CompanyDataForm from "@/components/molecules/CompanyDataForm";
-import { redirect } from "next/navigation";
+import { getAuthAndCompanyDataClient } from "@/lib/supabase/client-utils";
+import { Company } from "@/lib/supabase/services/company";
 
-export default async function Settings() {
-  const { isAuthenticated, user, company, error } =
-    await getAuthAndCompanyData();
+export default function Settings() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [company, setCompany] = useState<Company | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const { toast } = useToast();
 
-  if (!isAuthenticated || !user) {
-    redirect("/auth/login");
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const { isAuthenticated, user, company, error } = await getAuthAndCompanyDataClient();
+
+        if (!isAuthenticated || !user) {
+          router.push("/auth/login");
+          return;
+        }
+
+        if (error) {
+          throw new Error("Failed to load user or company data");
+        }
+
+        setCompany(company);
+
+        if (!company) {
+          toast({
+            title: "Company Information Required",
+            description: "Please add information about your company to continue.",
+            duration: 5000,
+          });
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+        toast({
+          title: "Error",
+          description: "Failed to load user or company data. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadData();
+  }, [router, toast]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
 
   if (error) {
-    // You might want to handle this error more gracefully
-    throw new Error("Failed to load user or company data");
+    return <div>Error: {error}</div>;
   }
 
-  // maybe this is the place where I should add the toaster and tell the user they need to
-  // add information about the company
   return (
     <div className="container mx-auto">
       <CompanyDataForm initialCompany={company} />
