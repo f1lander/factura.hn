@@ -50,7 +50,7 @@ class CompanyService {
 
   async createCompany(
     companyData: Omit<Company, "id">,
-  ): Promise<Company | null> {
+  ): Promise<Company[] | null> {
     const {
       data: { user },
     } = await this.supabase.auth.getUser();
