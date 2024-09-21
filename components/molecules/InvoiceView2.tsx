@@ -42,7 +42,8 @@ import { Company, companyService } from "@/lib/supabase/services/company";
 import { numberToWords } from "@/lib/utils";
 import { getStatusBadge } from "./InvoicesTable";
 import { useAccount } from "@/lib/hooks";
-import { generateAndGetSignedPdfUrl } from "@/app/actions";
+import { renderPdf, getSignedPdfUrl } from "@/app/do-functions";
+import { toast } from "@/components/ui/use-toast";
 
 interface InvoiceViewProps {
   invoice?: Invoice;
@@ -63,50 +64,89 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
   const handleDownloadPdf = async () => {
     setIsDownloading(true);
     try {
-      const pdfUrl = await generateAndGetSignedPdfUrl({
-        data: {
-          invoice_number: invoice?.invoice_number,
-          rtn: invoice?.customers.rtn,
-          company: invoice?.customers.name,
-          proforma: invoice?.is_proforma,
-          enabled: true,
-          email: invoice?.customers.email,
-          items: invoice?.invoice_items.map(item => ({
-            description: item.description,
-            qty: item.quantity,
-            cost: item.unit_cost,
-            discount: item.discount
-          }))
-        },
-        company_info: {
-          id: company?.id,
-          name: company?.name,
-          rtn: company?.rtn,
-          address0: company?.address0,
-          address1: company?.address1,
-          address2: company?.address2,
-          phone: company?.phone,
-          cai: company?.cai,
-          limitDate: company?.limit_date,
-          rangeInvoice1: company?.range_invoice1,
-          rangeInvoice2: company?.range_invoice2,
-          email: company?.email
+
+      let s3Url = invoice?.s3_url;
+      let s3Key = invoice?.s3_key;
+
+      if (!s3Key && !s3Url) {
+        const renderResult = await renderPdf({
+          data: {
+            invoice_number: invoice?.invoice_number,
+            rtn: invoice?.customers.rtn,
+            company: invoice?.customers.name,
+            proforma: invoice?.is_proforma,
+            enabled: true,
+            email: invoice?.customers.email,
+            items: invoice?.invoice_items.map(item => ({
+              description: item.description,
+              qty: item.quantity,
+              cost: item.unit_cost,
+              discount: item.discount
+            }))
+          },
+          company_info: {
+            id: company?.id,
+            name: company?.name,
+            rtn: company?.rtn,
+            address0: company?.address0,
+            address1: company?.address1,
+            address2: company?.address2,
+            phone: company?.phone,
+            cai: company?.cai,
+            limitDate: company?.limit_date,
+            rangeInvoice1: company?.range_invoice1,
+            rangeInvoice2: company?.range_invoice2,
+            email: company?.email,
+            template_url: company?.template_url ?? 'https://factura-hn.nyc3.digitaloceanspaces.com/templates/default_template2.html',
+          }
+        });
+
+        s3Key = renderResult.s3_key;
+        s3Url = renderResult.s3_url
+
+        // Update the invoice with the new S3 data
+        if (invoice && invoice.id) {
+          debugger;
+          const updatedInvoice = await invoiceService.updateInvoice(invoice.id, {
+            s3_url: s3Url,
+            s3_key: s3Key
+          });
+
+          console.log('Updated invoice:', updatedInvoice);
+
+        } else {
+          throw new Error('El ID de la factura no es válido');
         }
-      });
+      }
 
-      debugger;
+      if (s3Url && s3Key) {
+        // Get the presigned URL
+        const presignedUrlData = await getSignedPdfUrl({
+          s3_url: s3Url,
+          s3_key: s3Key
+        });
 
-      // Open the PDF in a new tab
-      window.open(pdfUrl, '_blank');
+        const { presigned_url } = JSON.parse(presignedUrlData);
+        console.log('Presigned URL:', presigned_url);
+        // Open the PDF in a new tab
+        window.open(presigned_url, '_blank');
+      } else {
+        throw new Error('Ocurrio un error al obtener la URL de la factura');
+      }
+
+
     } catch (error) {
-      debugger;
-      console.error('Error downloading PDF:', error);
+      console.error('Error descargando la factura PDF:', error);
       // You might want to show an error message to the user here
+      toast({
+        title: "Error",
+        description: "Error descargando la factura PDF.",
+        variant: "destructive",
+      });
     } finally {
       setIsDownloading(false);
     }
   };
-
   const { company } = useAccount();
   const { control, handleSubmit, watch, setValue } = useForm<Invoice>({
     defaultValues: invoice || {
@@ -286,7 +326,7 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
                     <DiscountInput index={index} control={control} />
                   </TableCell>
                   <TableCell>
-                  {`Lps. ${calculateItemTotal(index, watchInvoiceItems)}`}
+                    {`Lps. ${calculateItemTotal(index, watchInvoiceItems)}`}
                   </TableCell>
                   <TableCell>
                     <Button

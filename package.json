@@ -1,5 +1,5 @@
 {
-  "name": "chekku-admin-web",
+  "name": "factura.hn",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,8 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.654.0",
-    "@aws-sdk/s3-request-presigner": "^3.654.0",
     "@kinde-oss/kinde-auth-nextjs": "^2.3.5",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-checkbox": "^1.1.0",
@@ -29,7 +27,6 @@
     "@radix-ui/react-tooltip": "^1.1.1",
     "@supabase/ssr": "^0.4.0",
     "@supabase/supabase-js": "^2.44.4",
-    "aws-amplify": "^6.4.3",
     "axios": "^1.7.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
