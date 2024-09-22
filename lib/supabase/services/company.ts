@@ -69,7 +69,7 @@ class CompanyService {
       return null;
     }
 
-    return data as unknown as Company;
+    return data as unknown as Company[];
   }
 
   async updateCompany(

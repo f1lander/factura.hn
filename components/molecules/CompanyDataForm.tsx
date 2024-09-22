@@ -41,20 +41,60 @@ export default function CompanyDataForm({
   });
 
   const onSubmit = async (data: Omit<Company, "id">) => {
+    // Get file type, extension, and extract image itself
+    data.logo_url = "";
+    const fileType = photo!.split(";")[0].split(":")[1];
+    const fileExtension = fileType.split("/")[1];
+    const imageData = photo!.replace(/^data:image\/\w+;base64,/, "");
+    const buffer = Buffer.from(imageData, "base64");
     try {
+      // 1. Get the user data for including user id inside company data
       const { data: userData } = await supabase().auth.getUser();
       data.user_id = userData.user!.id;
       let result;
-      data.company_logo = ""; // we can't upload an entire data url to a PostgreSQL row, so I'll leave it empty for now
       if (initialCompany) {
         result = await companyService.updateCompany(initialCompany!.id, data);
       } else {
+        // Here's the code to be executed when there's a new company
         console.log("since there's no company, we're running the code here");
         result = await companyService.createCompany(data);
-        console.log(
-          "our result after creating the brand new company is: ",
-          result,
-        );
+        if (result) {
+          // at this point we already have available info about the company
+          // The next step is to upload the photo
+          const { data: uploadedPhoto, error: uploadPhotoError } =
+            await supabase()
+              .storage.from("company-logos")
+              .upload(
+                `public/company_${result[0].id}.${fileExtension}`,
+                buffer,
+                {
+                  cacheControl: "3600",
+                  contentType: fileType,
+                },
+              );
+          if (!uploadPhotoError) {
+            console.log(
+              "Yo, it went pretty well. The data var is: ",
+              uploadedPhoto,
+            );
+            // for uploading, you need the company id
+            const isCorrectlyUpdated = await companyService.updateCompany(
+              result[0].id,
+              {
+                logo_url: uploadedPhoto.path,
+              },
+            );
+            if (isCorrectlyUpdated) {
+              console.log("We've updated it correctly dude");
+            } else {
+              console.log(
+                "There was an error trying to update the company with the logo path",
+              );
+            }
+          }
+        } else {
+          console.log("Man, we had some sort of error, please correct it...");
+        }
       }
 
       if (result) {
@@ -114,7 +154,7 @@ export default function CompanyDataForm({
                 >
                   <input
                     id="coverImage"
-                    {...register("company_logo", {
+                    {...register("logo_url", {
                       required: "Necesitas un logo para tu compañía",
                     })}
                     type="file"
@@ -132,9 +172,9 @@ export default function CompanyDataForm({
                 </div>
               </label>
             </div>
-            {errors.company_logo && (
+            {errors.logo_url && (
               <p className="text-red-500 text-sm bottom-0">
-                {errors.company_logo.message}
+                {errors.logo_url.message}
               </p>
             )}
           </div>
