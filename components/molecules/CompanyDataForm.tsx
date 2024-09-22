@@ -37,13 +37,14 @@ export default function CompanyDataForm({
 
   const onSubmit = async (data: Omit<Company, "id">) => {
     try {
-      const { data: userData } = await supabase().auth.getUser();
-      data.user_id = userData.user!.id;
+      const {
+        data: { user },
+      } = await supabase().auth.getUser();
+      data.user_id = user?.id!;
       let result;
       if (initialCompany) {
         result = await companyService.updateCompany(initialCompany!.id, data);
       } else {
-        console.log("since there's no company, we're running the code here");
         result = await companyService.createCompany(data);
         console.log(
           "our result after creating the brand new company is: ",
@@ -209,7 +210,7 @@ export default function CompanyDataForm({
                 required: "Este campo es requerido",
                 pattern: {
                   value:
-                   /^[0-9A-Fa-f]{6}-[0-9A-Fa-f]{12}-[0-9A-Fa-f]{6}-[0-9A-Fa-f]{6}-[0-9A-Fa-f]{2}$/,
+                  /^[0-9A-Fa-f]+(-[0-9A-Fa-f]+)*$/,
                   message: "El formato del CAI no es válido",
                 },
               })}

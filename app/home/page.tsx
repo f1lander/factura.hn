@@ -16,6 +16,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
 } from "@/components/ui/dialog";
 
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -25,6 +26,10 @@ import InvoiceView from "@/components/molecules/InvoiceView2";
 import { InvoicesTable } from "@/components/molecules/InvoicesTable";
 import { useDebounce, useMediaQuery } from "@/lib/hooks";
 import { toast } from "@/components/ui/use-toast";
+import { DialogTitle } from "@radix-ui/react-dialog";
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
+import InvoiceDashboardCharts from "@/components/organisms/InvoiceDashboardCharts";
+import MonthlyGoalProgressWidget from "@/components/molecules/MonthlyGoalProgressWidget";
 
 export default function Invoices() {
   const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
@@ -36,7 +41,7 @@ export default function Invoices() {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<{ start: Date | undefined; end: Date | undefined }>({ start: undefined, end: undefined });
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(["pending"]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(["pending", "paid", "cancelled"]);
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
@@ -44,7 +49,6 @@ export default function Invoices() {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        await invoiceService.ensureInitialized();
         await fetchInvoices();
         await fetchRevenue();
       } catch (error) {
@@ -69,12 +73,14 @@ export default function Invoices() {
   const fetchRevenue = async () => {
     const weeklyRev = await invoiceService.getTotalRevenue("week");
     const monthlyRev = await invoiceService.getTotalRevenue("month");
+    console.log("Weekly Revenue:", weeklyRev);
+    console.log("Monthly Revenue:", monthlyRev);
     setWeeklyRevenue(weeklyRev);
     setMonthlyRevenue(monthlyRev);
   };
 
-  const handleInvoiceSelect = async (invoiceId: string) => {
-    const invoice = await invoiceService.getInvoiceById(invoiceId);
+  const handleInvoiceSelect = async (invoice: Invoice) => {
+
     if (invoice) {
       setSelectedInvoice(invoice);
       setIsCreatingInvoice(false);
@@ -196,62 +202,72 @@ export default function Invoices() {
   }, [fetchInvoices]);
 
   // Widgets Section
-  const WidgetsSection = () => (
-    <div className="w-full grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card className="sm:col-span-2">
-        <CardHeader className="pb-3">
-          <CardTitle>Tus facturas</CardTitle>
-          <CardDescription className="max-w-lg text-balance leading-relaxed">
-            Dashboard de facturas
-          </CardDescription>
-        </CardHeader>
-        <CardFooter>
-          <Button onClick={handleCreateInvoice}>Crear factura</Button>
-        </CardFooter>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardDescription>Esta Semana</CardDescription>
-          <CardTitle className="text-4xl">
-            ${isNaN(weeklyRevenue) ? "0.00" : weeklyRevenue.toFixed(2)}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-xs text-muted-foreground">
-            {(() => {
-              if (isNaN(weeklyRevenue) || isNaN(monthlyRevenue) || monthlyRevenue === 0) {
-                return "0.00";
-              }
-              const percentage = (weeklyRevenue / monthlyRevenue) * 100;
-              return isFinite(percentage) ? percentage.toFixed(2) : "0.00";
-            })()}% del mes pasado
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Progress
-            value={(weeklyRevenue / monthlyRevenue) * 100}
-            aria-label="Incremento semanal"
-          />
-        </CardFooter>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardDescription>Este Mes</CardDescription>
-          <CardTitle className="text-4xl">
-            ${monthlyRevenue.toFixed(2)}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-xs text-muted-foreground">
-            Ingresos totales del mes
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Progress value={100} aria-label="Ingresos mensuales" />
-        </CardFooter>
-      </Card>
-    </div>
-  );
+  const WidgetsSection = () => {
+    const currentDate = new Date();
+    const oneWeekAgo = new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+
+    const weeklyRevenue = filteredInvoices
+      .filter(invoice => new Date(invoice.date) >= oneWeekAgo)
+      .reduce((sum, invoice) => sum + invoice.total, 0);
+
+    const monthlyRevenue = filteredInvoices
+      .filter(invoice => new Date(invoice.date) >= firstDayOfMonth)
+      .reduce((sum, invoice) => sum + invoice.total, 0);
+
+    const weeklyPercentage = monthlyRevenue !== 0 ? (weeklyRevenue / monthlyRevenue) * 100 : 0;
+    
+    return (
+      <div className="w-full grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="sm:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle>Tus facturas</CardTitle>
+            <CardDescription className="max-w-lg text-balance leading-relaxed">
+              Dashboard de facturas
+            </CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Button onClick={handleCreateInvoice}>Crear factura</Button>
+          </CardFooter>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Esta Semana</CardDescription>
+            <CardTitle className="text-4xl">
+              {`Lps. ${weeklyRevenue.toFixed(2)}`}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-xs text-muted-foreground">
+              {weeklyPercentage.toFixed(2)}% del mes actual
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Progress
+              value={weeklyPercentage}
+              aria-label="Incremento semanal"
+            />
+          </CardFooter>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Este Mes</CardDescription>
+            <CardTitle className="text-4xl">
+              {`Lps. ${monthlyRevenue.toFixed(2)}`}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-xs text-muted-foreground">
+              Ingresos totales del mes
+            </div>
+          </CardContent>
+          {/* <CardFooter>
+            <Progress value={100} aria-label="Ingresos mensuales" />
+          </CardFooter> */}
+        </Card>
+      </div>
+    );
+  };
 
   const InvoiceFormContent = () => (
     <div className="h-full overflow-y-auto px-4 py-6 px-0">
@@ -270,13 +286,14 @@ export default function Invoices() {
       <div className="flex flex-col p-6 sm:gap-4 lg:p-12">
         <main className="flex w-full flex-col items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
           <WidgetsSection />
+          <InvoiceDashboardCharts invoices={filteredInvoices} />
           <InvoicesTable
             invoices={filteredInvoices}
             onSelectInvoice={handleInvoiceSelect}
             onSearch={handleSearch}
             onDateRangeChange={handleDateRangeChange}
             onStatusFilterChange={handleStatusFilterChange}
-            onExport={handleExport}
+            selectedStatuses={selectedStatuses}
             onDateSearch={handleDateSearch}
             onUpdateStatus={handleUpdateStatus}
           />
@@ -285,6 +302,11 @@ export default function Invoices() {
       {isDesktop ? (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogContent className="sm:max-w-[900px] h-[90vh]">
+            <DialogHeader>
+              <VisuallyHidden.Root>
+                <DialogTitle></DialogTitle>
+              </VisuallyHidden.Root>
+            </DialogHeader>
             <InvoiceFormContent />
           </DialogContent>
         </Dialog>

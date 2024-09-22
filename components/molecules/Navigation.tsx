@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Menu, CircleUser } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -70,10 +70,6 @@ export function Navigation() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const supabase = supabaseClient();
-  const searchParams = useSearchParams();
-  let hasCompanyData: boolean = true;
-  if (searchParams.get("showToast") === "companySetupRequired")
-    hasCompanyData = false;
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -108,13 +104,13 @@ export function Navigation() {
   };
 
   return (
-    <header className="sticky flex flex-col top-0">
-      {!hasCompanyData && (
+    <header className="sticky flex flex-col top-0 z-50">
+      {/* {!hasCompanyData && (
         <Banner
           message="Por favor, ingresa tus datos de compañía"
           variant="error"
         />
-      )}
+      )} */}
       <div className="flex top-0 h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
         <nav className="hidden flex-col gap-6 text-lg items-end font-medium md:flex md:flex-row md:gap-5 md:text-sm lg:gap-6 z-50">
           <Link
