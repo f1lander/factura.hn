@@ -98,8 +98,8 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
             rangeInvoice1: company?.range_invoice1,
             rangeInvoice2: company?.range_invoice2,
             email: company?.email,
-            template_url: company?.template_url ?? 'https://factura-hn.nyc3.digitaloceanspaces.com/templates/default_template2.html',
-          }
+          },
+          template_url:`https://factura-hn.nyc3.digitaloceanspaces.com/templates/${company?.template_url ?? 'default_template2.html'}`,
         });
 
         s3Key = renderResult.s3_key;
@@ -163,7 +163,9 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
       setIsDownloading(false);
     }
   };
+
   const { company } = useAccount();
+
   const { control, register, handleSubmit, watch, setValue, formState: { isSubmitting, isDirty, isValid, errors } } = useForm<Invoice>({
     defaultValues: invoice || {
       company_id: "",
