@@ -20,7 +20,8 @@ import { logout } from "@/lib/supabase/auth";
 import Banner from "./Banner";
 
 const navItems = [
-  { href: "/home", label: "Facturas" },
+  { href: "/home/", label: "Dashboard" },
+  { href: "/home/invoices", label: "Facturas" },
   { href: "/home/products", label: "Productos" },
   { href: "/home/customers", label: "Clientes" },
   { href: "/home/settings", label: "Configuracion" },

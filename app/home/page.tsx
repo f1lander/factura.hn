@@ -12,48 +12,28 @@ import {
 } from "@/components/ui/card";
 
 import { Progress } from "@/components/ui/progress";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-} from "@/components/ui/dialog";
-
-import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-
 import { Invoice, invoiceService } from "@/lib/supabase/services/invoice";
-import InvoiceView from "@/components/molecules/InvoiceView2";
-import { InvoicesTable } from "@/components/molecules/InvoicesTable";
-import { useDebounce, useMediaQuery } from "@/lib/hooks";
-import { toast } from "@/components/ui/use-toast";
-import { DialogTitle } from "@radix-ui/react-dialog";
-import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
+import { useDebounce } from "@/lib/hooks";
 import InvoiceDashboardCharts from "@/components/organisms/InvoiceDashboardCharts";
-import MonthlyGoalProgressWidget from "@/components/molecules/MonthlyGoalProgressWidget";
+import Link from "next/link";
+import { FileText, PencilIcon, PlusCircleIcon } from "lucide-react";
+import GenericEmptyState from "@/components/molecules/GenericEmptyState";
 
-export default function Invoices() {
+export default function Dashboard() {
   const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
-  const [weeklyRevenue, setWeeklyRevenue] = useState(0);
-  const [monthlyRevenue, setMonthlyRevenue] = useState(0);
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | undefined>();
-  const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<{ start: Date | undefined; end: Date | undefined }>({ start: undefined, end: undefined });
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>(["pending", "paid", "cancelled"]);
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
-
-  const isDesktop = useMediaQuery("(min-width: 768px)");
   useEffect(() => {
     const initializeData = async () => {
       try {
         await fetchInvoices();
-        await fetchRevenue();
+
       } catch (error) {
         console.error("Error initializing data:", error);
-        // Handle the error appropriately (e.g., show an error message to the user)
       }
     };
 
@@ -70,64 +50,6 @@ export default function Invoices() {
     setFilteredInvoices(fetchedInvoices);
   };
 
-  const fetchRevenue = async () => {
-    const weeklyRev = await invoiceService.getTotalRevenue("week");
-    const monthlyRev = await invoiceService.getTotalRevenue("month");
-    console.log("Weekly Revenue:", weeklyRev);
-    console.log("Monthly Revenue:", monthlyRev);
-    setWeeklyRevenue(weeklyRev);
-    setMonthlyRevenue(monthlyRev);
-  };
-
-  const handleInvoiceSelect = async (invoice: Invoice) => {
-
-    if (invoice) {
-      setSelectedInvoice(invoice);
-      setIsCreatingInvoice(false);
-      setIsOpen(true);
-    }
-  };
-
-  const handleCreateInvoice = () => {
-    setSelectedInvoice(undefined);
-    setIsCreatingInvoice(true);
-    setIsOpen(true);
-  };
-
-  const handleSaveInvoice = async (invoice: Invoice) => {
-    try {
-      let savedInvoice: Invoice | null;
-
-      if (isCreatingInvoice) {
-        savedInvoice = await invoiceService.createInvoiceWithItems(invoice);
-      } else {
-        savedInvoice = await invoiceService.updateInvoiceWithItems(invoice.id, invoice);
-      }
-
-      if (!savedInvoice) {
-        throw new Error("Failed to save invoice");
-      }
-
-      setSelectedInvoice(savedInvoice);
-      setIsCreatingInvoice(false);
-      fetchInvoices();
-      setIsOpen(false);
-    } catch (error) {
-      console.error("An error occurred while saving the invoice:", error);
-    }
-  };
-
-  const handleSearch = (searchTerm: string) => {
-    setSearchTerm(searchTerm);
-  };
-
-  const handleDateRangeChange = (startDate: Date | undefined, endDate: Date | undefined) => {
-    setDateRange({ start: startDate, end: endDate });
-  };
-
-  const handleStatusFilterChange = (statuses: string[]) => {
-    setSelectedStatuses(statuses);
-  };
   const applyFilters = useCallback(() => {
     let filtered = allInvoices;
 
@@ -163,43 +85,6 @@ export default function Invoices() {
     }
   };
 
-  const handleExport = async () => {
-    try {
-      // This is a placeholder for the actual export logic
-      console.log("Exporting invoices:", filteredInvoices);
-
-      // Simulate file download
-      const blob = new Blob([JSON.stringify(filteredInvoices, null, 2)], { type: 'application/json' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'invoices-export.json';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error exporting invoices:', error);
-    }
-  };
-
-  const handleUpdateStatus = useCallback(async (invoiceIds: string[], newStatus: string) => {
-    try {
-      await invoiceService.updateInvoicesStatus(invoiceIds, newStatus);
-      // Refresh the invoices list after updating
-      fetchInvoices();
-      toast({
-        title: "Status Updated",
-        description: `Successfully updated ${invoiceIds.length} invoice(s) to ${newStatus}`,
-      });
-    } catch (error) {
-      console.error("Error updating invoice statuses:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update invoice statuses. Please try again.",
-        variant: "destructive",
-      });
-    }
-  }, [fetchInvoices]);
 
   // Widgets Section
   const WidgetsSection = () => {
@@ -216,7 +101,7 @@ export default function Invoices() {
       .reduce((sum, invoice) => sum + invoice.total, 0);
 
     const weeklyPercentage = monthlyRevenue !== 0 ? (weeklyRevenue / monthlyRevenue) * 100 : 0;
-    
+
     return (
       <div className="w-full grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="sm:col-span-2">
@@ -227,7 +112,7 @@ export default function Invoices() {
             </CardDescription>
           </CardHeader>
           <CardFooter>
-            <Button onClick={handleCreateInvoice}>Crear factura</Button>
+            <Link className="bg-[#00A1D4] text-lg w-56 p-4 rounded-md text-white font-semibold flex gap-4" href="/home/invoices"><PencilIcon />Ir a Facturas</Link>
           </CardFooter>
         </Card>
         <Card>
@@ -269,59 +154,28 @@ export default function Invoices() {
     );
   };
 
-  const InvoiceFormContent = () => (
-    <div className="h-full overflow-y-auto px-4 py-6 px-0">
-      {(selectedInvoice || isCreatingInvoice) && (
-        <InvoiceView
-          invoice={selectedInvoice}
-          isEditable={isCreatingInvoice || !selectedInvoice}
-          onSave={handleSaveInvoice}
-        />
-      )}
-    </div>
-  );
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <div className="flex flex-col p-6 sm:gap-4 lg:p-12">
         <main className="flex w-full flex-col items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-          <WidgetsSection />
-          <InvoiceDashboardCharts invoices={filteredInvoices} />
-          <InvoicesTable
-            invoices={filteredInvoices}
-            onSelectInvoice={handleInvoiceSelect}
-            onSearch={handleSearch}
-            onDateRangeChange={handleDateRangeChange}
-            onStatusFilterChange={handleStatusFilterChange}
-            selectedStatuses={selectedStatuses}
-            onDateSearch={handleDateSearch}
-            onUpdateStatus={handleUpdateStatus}
-          />
+          {filteredInvoices.length === 0 ? (
+            <>
+              <WidgetsSection />
+              <div className="w-full items-center">
+                <GenericEmptyState
+                  icon={FileText}
+                  title="No tienes facturas aún"
+                  description="Comienza a crear facturas para tus clientes y visualiza tu progreso."            
+                /></div>
+            </>) : (
+
+
+            <InvoiceDashboardCharts invoices={filteredInvoices} />
+
+          )}
         </main>
       </div>
-      {isDesktop ? (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="sm:max-w-[900px] h-[90vh]">
-            <DialogHeader>
-              <VisuallyHidden.Root>
-                <DialogTitle></DialogTitle>
-              </VisuallyHidden.Root>
-            </DialogHeader>
-            <InvoiceFormContent />
-          </DialogContent>
-        </Dialog>
-      ) : (
-        <Drawer open={isOpen} onOpenChange={setIsOpen}>
-          <DrawerContent>
-            <InvoiceFormContent />
-            <DrawerFooter>
-              <DrawerClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DrawerClose>
-            </DrawerFooter>
-          </DrawerContent>
-        </Drawer>
-      )}
     </div>
   );
 }

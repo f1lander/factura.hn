@@ -22,7 +22,8 @@ import { CustomerForm } from "@/components/molecules/CustomerForm";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon, Trash2Icon, Users } from "lucide-react";
+import GenericEmptyState from "@/components/molecules/GenericEmptyState";
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -139,69 +140,82 @@ export default function CustomersPage() {
   if (error) {
     return <div className="p-12">Error: {error}</div>;
   }
-
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <div className="flex flex-col sm:gap-4 p-12">
         <main className="flex flex-col xl:flex-row items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
           <div className={`w-full ${isFormVisible ? 'xl:w-1/2' : 'xl:w-full'} transition-all duration-300 ease-in-out`}>
-            <Card className="w-full">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Clientes</CardTitle>
-                  <CardDescription>Gestiona tus clientes aquí</CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleDeleteClick}
-                    variant="destructive"
-                    disabled={selectedCustomers.length === 0}
-                  >
-                    <Trash2Icon />
-                    Eliminar
-                  </Button>
-                  <Button onClick={handleCreateCustomer}><PlusIcon />Nuevo</Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[50px]">
-                        <Checkbox
-                          checked={selectedCustomers.length === customers.length}
-                          onCheckedChange={handleSelectAll}
-                        />
-                      </TableHead>
-                      <TableHead>Nombre</TableHead>
-                      <TableHead>RTN</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Contactos</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {customers.map((customer) => (
-                      <TableRow
-                        key={customer.id}
-                        className="cursor-pointer hover:bg-muted/50"
+            {customers.length === 0 ? (
+              <GenericEmptyState
+                icon={Users}
+                title="No tienes clientes aún"
+                description="Comienza agregando tus clientes para empezar a facturar"
+                buttonText="Agregar Cliente"
+                onAction={handleCreateCustomer}
+              />
+            ) : (
+              <Card className="w-full">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Clientes</CardTitle>
+                    <CardDescription>Gestiona tus clientes aquí</CardDescription>
+                  </div>
+                  {customers.length > 0 && (
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleDeleteClick}
+                        variant="destructive"
+                        disabled={selectedCustomers.length === 0}
                       >
-                        <TableCell>
+                        <Trash2Icon />
+                        Eliminar
+                      </Button>
+                      <Button onClick={handleCreateCustomer}><PlusIcon />Nuevo</Button>
+                    </div>
+                  )}
+                </CardHeader>
+                <CardContent>
+
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[50px]">
                           <Checkbox
-                            checked={selectedCustomers.includes(customer.id!)}
-                            onCheckedChange={() => handleCheckboxChange(customer.id!)}
-                            onClick={(e) => e.stopPropagation()}
+                            checked={selectedCustomers.length === customers.length}
+                            onCheckedChange={handleSelectAll}
                           />
-                        </TableCell>
-                        <TableCell onClick={() => handleCustomerSelect(customer)}>{customer.name}</TableCell>
-                        <TableCell onClick={() => handleCustomerSelect(customer)}>{customer.rtn}</TableCell>
-                        <TableCell onClick={() => handleCustomerSelect(customer)}>{customer.email}</TableCell>
-                        <TableCell onClick={() => handleCustomerSelect(customer)}>{customer.contacts?.length || 0}</TableCell>
+                        </TableHead>
+                        <TableHead>Nombre</TableHead>
+                        <TableHead>RTN</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Contactos</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                    </TableHeader>
+                    <TableBody>
+                      {customers.map((customer) => (
+                        <TableRow
+                          key={customer.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                        >
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedCustomers.includes(customer.id!)}
+                              onCheckedChange={() => handleCheckboxChange(customer.id!)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </TableCell>
+                          <TableCell onClick={() => handleCustomerSelect(customer)}>{customer.name}</TableCell>
+                          <TableCell onClick={() => handleCustomerSelect(customer)}>{customer.rtn}</TableCell>
+                          <TableCell onClick={() => handleCustomerSelect(customer)}>{customer.email}</TableCell>
+                          <TableCell onClick={() => handleCustomerSelect(customer)}>{customer.contacts?.length || 0}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+
+                </CardContent>
+              </Card>
+            )}
           </div>
           {isFormVisible && (
             <div className="w-full xl:w-1/2 transition-all duration-300 ease-in-out">

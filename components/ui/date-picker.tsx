@@ -17,10 +17,10 @@ interface DatePickerProps {
 }
 
 export function DatePicker({ onChange, className }: DatePickerProps) {
-  const [date, setDate] = React.useState<Date>()
+  const [date, setDate] = React.useState<Date>(new Date())
 
   const handleDateChange = (newDate: Date | undefined) => {
-    setDate(newDate)
+    setDate(newDate || new Date())
     if (onChange) {
       onChange(newDate)
     }
