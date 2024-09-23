@@ -1,3 +1,4 @@
+'use client';
 import React, { useState, useEffect } from "react";
 import {
   useForm,
@@ -41,10 +42,9 @@ import { Product, productService } from "@/lib/supabase/services/product";
 import { Company, companyService } from "@/lib/supabase/services/company";
 import { numberToWords } from "@/lib/utils";
 import { getStatusBadge } from "./InvoicesTable";
-import { useAccount } from "@/lib/hooks";
 import { renderPdf, getSignedPdfUrl } from "@/app/do-functions";
 import { toast } from "@/components/ui/use-toast";
-import { Label } from "../ui/label";
+import { Label } from "../ui/label"; 
 
 interface InvoiceViewProps {
   invoice?: Invoice;
@@ -59,6 +59,7 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
 }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [company, setCompany] = useState<Company | null>(null);
   const [lastInvoiceNumber, setLastInvoiceNumber] = useState<string | undefined>();
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -70,6 +71,11 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
       let s3Key = invoice?.s3_key;
 
       if (!s3Key && !s3Url) {
+
+        if(!company) {
+          throw new Error('No se pudo obtener la información de la empresa');
+        }        
+
         const renderResult = await renderPdf({
           data: {
             invoice_number: invoice?.invoice_number,
@@ -99,7 +105,7 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
             rangeInvoice2: company?.range_invoice2,
             email: company?.email,
           },
-          template_url:`https://factura-hn.nyc3.digitaloceanspaces.com/templates/${company?.template_url ?? 'default_template2.html'}`,
+          template_url: `https://factura-hn.nyc3.digitaloceanspaces.com/templates/${company?.template_url ?? 'default_template2.html'}`,
         });
 
         s3Key = renderResult.s3_key;
@@ -164,7 +170,7 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
     }
   };
 
-  const { company } = useAccount();
+  // const { company } = useAccount();
 
   const { control, register, handleSubmit, watch, setValue, formState: { isSubmitting, isDirty, isValid, errors } } = useForm<Invoice>({
     defaultValues: invoice || {
@@ -204,8 +210,11 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
       );
       const fetchedProducts = await productService.getProductsByCompany(
       );
+
+      const company = await companyService.getCompanyById();
       setCustomers(fetchedCustomers);
       setProducts(fetchedProducts);
+      setCompany(company);
 
       // Fetch the last invoice number
       const lastInvoice = await invoiceService.getLastInvoice();
@@ -218,7 +227,7 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
     };
 
     fetchData();
-  }, [setValue, company]);
+  }, []);
 
   useEffect(() => {
     if (lastInvoiceNumber && !invoice) {

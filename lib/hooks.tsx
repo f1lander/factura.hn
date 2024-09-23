@@ -44,7 +44,6 @@ export function useAccount() {
   useEffect(() => {
     const checkAuthAndFetchCompany = async () => {
       try {
-        ;
         setIsLoading(true);
         // Check authentication
         const { data: { user }, error: authError } = await supabase.auth.getUser();

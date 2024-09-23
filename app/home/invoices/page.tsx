@@ -24,26 +24,33 @@ import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, Dr
 import { Invoice, invoiceService } from "@/lib/supabase/services/invoice";
 import InvoiceView from "@/components/molecules/InvoiceView2";
 import { InvoicesTable } from "@/components/molecules/InvoicesTable";
-import { useDebounce, useMediaQuery } from "@/lib/hooks";
+import { useAccount, useDebounce, useMediaQuery } from "@/lib/hooks";
 import { toast } from "@/components/ui/use-toast";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
-import InvoiceDashboardCharts from "@/components/organisms/InvoiceDashboardCharts";
-import MonthlyGoalProgressWidget from "@/components/molecules/MonthlyGoalProgressWidget";
 import { PlusCircleIcon } from "lucide-react";
 
 export default function Invoices() {
   const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [weeklyRevenue, setWeeklyRevenue] = useState(0);
-  const [monthlyRevenue, setMonthlyRevenue] = useState(0);
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | undefined>();
+  const [monthlyRevenue, setMonthlyRevenue] = useState(0); const [selectedInvoice, setSelectedInvoice] = useState<Invoice | undefined>();
   const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<{ start: Date | undefined; end: Date | undefined }>({ start: undefined, end: undefined });
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>(["pending", "paid", "cancelled"]);
+  const { company } = useAccount();
+  const [isContentReady, setIsContentReady] = useState(false);
 
+  useEffect(() => {
+    if (isOpen && company) {
+      setIsContentReady(true);
+    } else {
+      setIsContentReady(false);
+    }
+  }, [isOpen, company]);
+  console.log("Company:", company);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -270,18 +277,6 @@ export default function Invoices() {
     );
   };
 
-  const InvoiceFormContent = () => (
-    <div className="h-full overflow-y-auto px-4 py-6 px-0">
-      {(selectedInvoice || isCreatingInvoice) && (
-        <InvoiceView
-          invoice={selectedInvoice}
-          isEditable={isCreatingInvoice || !selectedInvoice}
-          onSave={handleSaveInvoice}
-        />
-      )}
-    </div>
-  );
-
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <div className="flex flex-col p-6 sm:gap-4 lg:p-12">
@@ -299,7 +294,7 @@ export default function Invoices() {
           />
         </main>
       </div>
-      {isDesktop ? (
+      {/* {isDesktop ? ( */}
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogContent className="sm:max-w-[900px] h-[90vh]">
             <DialogHeader>
@@ -307,13 +302,30 @@ export default function Invoices() {
                 <DialogTitle></DialogTitle>
               </VisuallyHidden.Root>
             </DialogHeader>
-            <InvoiceFormContent />
+            {isContentReady && <div className="h-full overflow-y-auto px-4 py-6 px-0">
+              {(selectedInvoice || isCreatingInvoice) && company && (
+                <InvoiceView
+                  invoice={selectedInvoice}
+                  isEditable={isCreatingInvoice || !selectedInvoice}
+                  onSave={handleSaveInvoice}
+                />
+              )}
+            </div>}
+            {!isContentReady && <div className="flex items-center justify-center h-full">Loading...</div>}
           </DialogContent>
         </Dialog>
-      ) : (
+      {/* ) : (
         <Drawer open={isOpen} onOpenChange={setIsOpen}>
           <DrawerContent>
-            <InvoiceFormContent />
+            <div className="h-full overflow-y-auto px-4 py-6 px-0">
+              {(selectedInvoice || isCreatingInvoice) && company && (
+                <InvoiceView
+                  invoice={selectedInvoice}
+                  isEditable={isCreatingInvoice || !selectedInvoice}
+                  onSave={handleSaveInvoice}
+                />
+              )}
+            </div>
             <DrawerFooter>
               <DrawerClose asChild>
                 <Button variant="outline">Cancel</Button>
@@ -321,7 +333,7 @@ export default function Invoices() {
             </DrawerFooter>
           </DrawerContent>
         </Drawer>
-      )}
+      )} */}
     </div>
   );
 }
