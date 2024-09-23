@@ -1,5 +1,5 @@
-import { SupabaseClient, User } from "@supabase/supabase-js";
-import supabase from "../client"; // Import your existing client
+import { SupabaseClient } from "@supabase/supabase-js";
+import supabase from "../client";  // Import your existing client
 
 export type Table =
   | "companies"
@@ -11,80 +11,48 @@ export type Table =
 
 export class BaseService {
   protected supabase: SupabaseClient;
-  private user: User | null = null;
-  public companyId: string | null = null;
-  private initializationPromise: Promise<void> | null = null;
+  private companyIdPromise: Promise<string | null> | null = null;
 
   constructor() {
     this.supabase = supabase();
-    //this.initializationPromise = this.initializeAuth();
   }
 
-  protected async initializeAuth(): Promise<void> {
-    try {
-      if (!this.user) {
-        const {
-          data: { user },
-          error: userError,
-        } = await this.supabase.auth.getUser();
-        if (userError) throw userError;
-        this.user = user;
-      }
-
-      if (this.user && !this.companyId) {
-        const { data, error: companyError } = await this.supabase
-          .from("companies")
-          .select("id")
-          .eq("user_id", this.user.id)
-          .single();
-
-        if (companyError) {
-          if (companyError.code === "PGRST116") {
-            // No company found for this user
-            console.warn(
-              "No company found for the user. They might need to create one.",
-            );
-            this.companyId = null;
-          } else {
-            throw companyError;
-          }
-        } else {
-          this.companyId = data.id;
-        }
-      }
-
-      if (!this.user) {
-        throw new Error("User not authenticated");
-      }
-    } catch (error) {
-      console.error("Error in initialization:", error);
-      this.initializationPromise = null; // Reset so we can try again
-      throw error;
+  protected async ensureCompanyId(): Promise<string | null> {
+    if (this.companyIdPromise === null) {
+      this.companyIdPromise = this.fetchCompanyId();
     }
+    return this.companyIdPromise;
   }
 
-  public async ensureInitialized(): Promise<void> {
-    if (!this.initializationPromise) {
-      this.initializationPromise = this.initializeAuth();
+  private async fetchCompanyId(): Promise<string | null> {
+    const { data: { user } } = await this.supabase.auth.getUser();
+    if (!user) {
+      console.error("No authenticated user found");
+      return null;
     }
-    await this.initializationPromise;
-  }
 
-  protected async requireCompany(): Promise<void> {
-    await this.ensureInitialized();
-    if (!this.companyId) {
-      throw new Error(
-        "Company not found. User needs to create or select a company.",
-      );
+    const { data, error } = await this.supabase
+      .from('companies')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching company:', error);
+      return null;
     }
+
+    return data?.id || null;
   }
 
   protected async getAll<T>(table: Table): Promise<T[]> {
-    await this.requireCompany();
+    const companyId = await this.ensureCompanyId();
+    if (!companyId) return [];
+
     const { data, error } = await this.supabase
       .from(table)
-      .select("*")
-      .eq("company_id", this.companyId);
+      .select('*')
+      .eq('company_id', companyId);
 
     if (error) {
       console.error(`Error fetching ${table}:`, error);
@@ -95,12 +63,14 @@ export class BaseService {
   }
 
   protected async getById<T>(table: Table, id: string): Promise<T | null> {
-    await this.requireCompany();
+    const companyId = await this.ensureCompanyId();
+    if (!companyId) return null;
+
     const { data, error } = await this.supabase
       .from(table)
-      .select("*")
-      .eq("id", id)
-      .eq("company_id", this.companyId)
+      .select('*')
+      .eq('id', id)
+      .eq('company_id', companyId)
       .single();
 
     if (error) {
@@ -112,10 +82,12 @@ export class BaseService {
   }
 
   protected async create<T>(table: Table, item: Partial<T>): Promise<T | null> {
-    await this.requireCompany();
+    const companyId = await this.ensureCompanyId();
+    if (!companyId) return null;
+
     const { data, error } = await this.supabase
       .from(table)
-      .insert({ ...item, company_id: this.companyId })
+      .insert({ ...item, company_id: companyId })
       .single();
 
     if (error) {
@@ -126,17 +98,15 @@ export class BaseService {
     return data as T;
   }
 
-  protected async update<T>(
-    table: Table,
-    id: string,
-    updates: Partial<T>,
-  ): Promise<T | null> {
-    await this.requireCompany();
+  protected async update<T>(table: Table, id: string, updates: Partial<T>): Promise<T | null> {
+    const companyId = await this.ensureCompanyId();
+    if (!companyId) return null;
+
     const { data, error } = await this.supabase
       .from(table)
       .update(updates)
-      .eq("id", id)
-      .eq("company_id", this.companyId)
+      .eq('id', id)
+      .eq('company_id', companyId)
       .single();
 
     if (error) {
@@ -148,12 +118,14 @@ export class BaseService {
   }
 
   protected async delete(table: Table, id: string): Promise<boolean> {
-    await this.requireCompany();
+    const companyId = await this.ensureCompanyId();
+    if (!companyId) return false;
+
     const { error } = await this.supabase
       .from(table)
       .delete()
-      .eq("id", id)
-      .eq("company_id", this.companyId);
+      .eq('id', id)
+      .eq('company_id', companyId);
 
     if (error) {
       console.error(`Error deleting ${table}:`, error);
@@ -163,16 +135,14 @@ export class BaseService {
     return true;
   }
 
-  protected async search<T>(
-    table: Table,
-    column: string,
-    query: string,
-  ): Promise<T[]> {
-    await this.requireCompany();
+  protected async search<T>(table: Table, column: string, query: string): Promise<T[]> {
+    const companyId = await this.ensureCompanyId();
+    if (!companyId) return [];
+
     const { data, error } = await this.supabase
       .from(table)
-      .select("*")
-      .eq("company_id", this.companyId)
+      .select('*')
+      .eq('company_id', companyId)
       .ilike(column, `%${query}%`);
 
     if (error) {
@@ -182,4 +152,3 @@ export class BaseService {
 
     return data as T[];
   }
-}

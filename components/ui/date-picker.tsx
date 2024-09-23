@@ -17,10 +17,10 @@ interface DatePickerProps {
 }
 
 export function DatePicker({ onChange, className }: DatePickerProps) {
-  const [date, setDate] = React.useState<Date>()
+  const [date, setDate] = React.useState<Date>(new Date())
 
   const handleDateChange = (newDate: Date | undefined) => {
-    setDate(newDate)
+    setDate(newDate || new Date())
     if (onChange) {
       onChange(newDate)
     }
@@ -38,7 +38,7 @@ export function DatePicker({ onChange, className }: DatePickerProps) {
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, "PPP") : <span>Pick a date</span>}
+          {date ? format(date, "PPP") : <span>Seleccione fecha</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">

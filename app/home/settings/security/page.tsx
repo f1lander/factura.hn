@@ -1,7 +1,6 @@
-// app/security/page.tsx
-import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import SecurityContent from '@/components/molecules/SecurityContent';
+import { Suspense } from 'react';
 
 export default async function SecurityPage({
   searchParams,
@@ -15,15 +14,16 @@ export default async function SecurityPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  console.log(searchParams)
   const isResettingPassword =
     searchParams.access_token &&
     searchParams.type === 'recovery';
 
   return (
-    <SecurityContent
-      user={user}
-      isResettingPassword={!!isResettingPassword}
-    />
+    <Suspense fallback={<div>Loading...</div>}>
+      <SecurityContent
+        user={user}
+        isResettingPassword={!!isResettingPassword}
+      />
+    </Suspense>
   );
 }

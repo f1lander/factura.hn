@@ -44,6 +44,7 @@ import { getStatusBadge } from "./InvoicesTable";
 import { useAccount } from "@/lib/hooks";
 import { renderPdf, getSignedPdfUrl } from "@/app/do-functions";
 import { toast } from "@/components/ui/use-toast";
+import { Label } from "../ui/label";
 
 interface InvoiceViewProps {
   invoice?: Invoice;
@@ -97,8 +98,8 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
             rangeInvoice1: company?.range_invoice1,
             rangeInvoice2: company?.range_invoice2,
             email: company?.email,
-            template_url: company?.template_url ?? 'https://factura-hn.nyc3.digitaloceanspaces.com/templates/default_template2.html',
-          }
+          },
+          template_url:`https://factura-hn.nyc3.digitaloceanspaces.com/templates/${company?.template_url ?? 'default_template2.html'}`,
         });
 
         s3Key = renderResult.s3_key;
@@ -106,7 +107,7 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
 
         // Update the invoice with the new S3 data
         if (invoice && invoice.id) {
-          debugger;
+          ;
           const updatedInvoice = await invoiceService.updateInvoice(invoice.id, {
             s3_url: s3Url,
             s3_key: s3Key
@@ -127,9 +128,24 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
         });
 
         const { presigned_url } = JSON.parse(presignedUrlData);
-        console.log('Presigned URL:', presigned_url);
-        // Open the PDF in a new tab
-        window.open(presigned_url, '_blank');
+        // Create a temporary anchor element
+        const link = document.createElement('a');
+        link.href = presigned_url;
+        link.download = `${invoice?.invoice_number}-${s3Key}.pdf`; // Set a default filename
+        document.body.appendChild(link);
+
+        // Trigger the download
+        link.click();
+
+        // Clean up
+        document.body.removeChild(link);
+
+        toast({
+          title: "Success",
+          description: "Tu facse descargó correctamente.",
+          duration: 3000,
+        });
+
       } else {
         throw new Error('Ocurrio un error al obtener la URL de la factura');
       }
@@ -147,8 +163,10 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
       setIsDownloading(false);
     }
   };
+
   const { company } = useAccount();
-  const { control, handleSubmit, watch, setValue } = useForm<Invoice>({
+
+  const { control, register, handleSubmit, watch, setValue, formState: { isSubmitting, isDirty, isValid, errors } } = useForm<Invoice>({
     defaultValues: invoice || {
       company_id: "",
       customer_id: "",
@@ -249,6 +267,16 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
     onSave(data);
   };
 
+  const validateInvoiceNumber = (value: string) => {
+    const regex = /^\d{3}-\d{3}-\d{2}-\d{8}$/;
+    if (!regex.test(value)) {
+      return "El número de factura debe tener el formato 000-000-00-00000000";
+    }
+    return true;
+  };
+
+  console.log(errors)
+
   const renderEditableContent = () => (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="grid gap-4">
@@ -258,7 +286,7 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
           render={({ field }) => (
             <Select onValueChange={field.onChange} value={field.value}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a customer" />
+                <SelectValue placeholder="Seleccione cliente" />
               </SelectTrigger>
               <SelectContent>
                 {customers.map((customer) => (
@@ -269,6 +297,7 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
               </SelectContent>
             </Select>
           )}
+
         />
         <Controller
           name="date"
@@ -279,13 +308,28 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
             />
           )}
         />
-        <Controller
-          name="invoice_number"
-          control={control}
-          render={({ field }) => (
-            <Input {...field} placeholder="Número de Factura" disabled />
-          )}
-        />
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <div className="flex flex-col gap-2">
+              <Label className="whitespace-nowrap">Última factura</Label>
+              <Input value={lastInvoiceNumber} disabled />
+            </div>
+          </div>
+          <div className="flex-1">
+            <div className="flex flex-col gap-2">
+              <Label className="whitespace-nowrap">Nueva factura</Label>
+              <Input
+                id="name"
+                {...register("invoice_number", { required: "Este campo es requerido", validate: validateInvoiceNumber })}
+              />
+              {
+                errors.invoice_number && (
+                  <p className="text-red-500 text-sm">{errors.invoice_number.message}</p>
+                )
+              }
+            </div>
+          </div>
+        </div>
       </div>
       <Separator className="my-4" />
       <div className="grid gap-4">
@@ -294,7 +338,7 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
             <TableHeader>
               <TableRow>
                 <TableHead>Producto</TableHead>
-                <TableHead>Description</TableHead>
+                <TableHead>Descripción</TableHead>
                 <TableHead>Cantidad</TableHead>
                 <TableHead>Precio</TableHead>
                 <TableHead>Descuento</TableHead>
@@ -390,7 +434,7 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
           Agregar Producto o Servicio
         </Button>
       </div>
-      <Button type="submit" className="mt-4" disabled={!customers}>
+      <Button type="submit" className="mt-4" disabled={!isDirty || !isValid}>
         Generar Factura
       </Button>
     </form>
@@ -421,7 +465,7 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Description</TableHead>
+              <TableHead>Descripción</TableHead>
               <TableHead className="text-right">Cantidad</TableHead>
               <TableHead className="text-right">Precio</TableHead>
               <TableHead className="text-right">Descuento</TableHead>
@@ -505,7 +549,7 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
             {isEditable ? "Crear Factura" : `Número de Factura ${invoice?.invoice_number}`}
           </CardTitle>
           <CardDescription>
-            Fecha: {new Date(invoice?.date || '').toLocaleDateString()}
+            Fecha: {isEditable ? new Date().toLocaleDateString() : new Date(invoice?.date || '').toLocaleDateString()}
           </CardDescription>
         </div>
         {!isEditable && (
@@ -576,7 +620,7 @@ const ProductSelect = ({
         value={field.value}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Select a product" />
+          <SelectValue placeholder="Seleccione producto" />
         </SelectTrigger>
         <SelectContent>
           {products.map((product) => (
@@ -595,7 +639,7 @@ const DescriptionInput = ({ index, control }: InputProps) => (
     name={`invoice_items.${index}.description`}
     control={control}
     render={({ field }) => (
-      <Input {...field} placeholder="Description" className="mt-2" />
+      <Input {...field} placeholder="Descripción" className="mt-2" />
     )}
   />
 );

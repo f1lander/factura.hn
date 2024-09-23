@@ -48,15 +48,14 @@ export default function CompanyDataForm({
     const imageData = photo!.replace(/^data:image\/\w+;base64,/, "");
     const buffer = Buffer.from(imageData, "base64");
     try {
-      // 1. Get the user data for including user id inside company data
-      const { data: userData } = await supabase().auth.getUser();
-      data.user_id = userData.user!.id;
+      const {
+        data: { user },
+      } = await supabase().auth.getUser();
+      data.user_id = user?.id!;
       let result;
       if (initialCompany) {
         result = await companyService.updateCompany(initialCompany!.id, data);
       } else {
-        // Here's the code to be executed when there's a new company
-        console.log("since there's no company, we're running the code here");
         result = await companyService.createCompany(data);
         if (result) {
           // at this point we already have available info about the company
@@ -300,7 +299,7 @@ export default function CompanyDataForm({
                 required: "Este campo es requerido",
                 pattern: {
                   value:
-                    /^[0-9A-Fa-f]{6}-[0-9A-Fa-f]{12}-[0-9A-Fa-f]{6}-[0-9A-Fa-f]{6}-[0-9A-Fa-f]{2}$/,
+                  /^[0-9A-Fa-f]+(-[0-9A-Fa-f]+)*$/,
                   message: "El formato del CAI no es válido",
                 },
               })}

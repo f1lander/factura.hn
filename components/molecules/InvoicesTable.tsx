@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { CheckCircle, ChevronLeft, ChevronRight, File, ListFilter, Search, XCircle, FilterXIcon } from "lucide-react";
+import { CheckCircle, ChevronLeft, ChevronRight, Search, XCircle, FilterXIcon } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 import { Badge } from "@/components/ui/badge";
@@ -55,11 +55,11 @@ export const getStatusBadge = (status: string) => {
 
 export interface InvoicesTableProps {
 	invoices: Invoice[];
-	onSelectInvoice: (invoiceId: string) => void;
+	onSelectInvoice: (invoice: Invoice) => void;
 	onSearch: (searchTerm: string) => void;
 	onDateRangeChange: (startDate: Date | undefined, endDate: Date | undefined) => void;
 	onStatusFilterChange: (statuses: string[]) => void;
-	onExport: () => void;
+	selectedStatuses: string[];
 	onDateSearch: () => void;
 	onUpdateStatus: (invoiceIds: string[], newStatus: string) => void;
 }
@@ -130,14 +130,15 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
 	onSearch,
 	onDateRangeChange,
 	onStatusFilterChange,
-	onExport,
 	onDateSearch,
 	onUpdateStatus,
+	selectedStatuses
 }) => {
+	console.log("invoices", invoices);
 	const [searchTerm, setSearchTerm] = useState('');
 	const [startDate, setStartDate] = useState<Date | undefined>();
 	const [endDate, setEndDate] = useState<Date | undefined>();
-	const [selectedStatuses, setSelectedStatuses] = useState<string[]>(['pending']);
+	
 	const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
 
 	const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,11 +158,11 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
 	};
 
 	const handleStatusChange = (status: string) => {
+		console.log("selectedStatuses", selectedStatuses);
 		const dbStatus = statusMap[status] || status.toLowerCase();
 		const updatedStatuses = selectedStatuses.includes(dbStatus)
 			? selectedStatuses.filter(s => s !== dbStatus)
 			: [...selectedStatuses, dbStatus];
-		setSelectedStatuses(updatedStatuses);
 		onStatusFilterChange(updatedStatuses);
 	};
 
@@ -265,59 +266,8 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
 							Anuladas
 						</Toggle>
 
-
-
-						{/* <div className="flex items-center gap-2">
-                            <Button size="sm" variant="outline" className="h-8 gap-1 text-sm" onClick={onExport}>
-                                <File className="h-3.5 w-3.5" />
-                                <span className="hidden sm:inline">Exportar</span>
-                            </Button>
-                        </div> */}
 					</div>
 				</CardHeader>
-				{/* <div className="flex flex-col items-start gap-2 md:flex-row md:items-center">
-                        <div className="flex items-end gap-2">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm" className="h-8 gap-1 text-sm border-blue-300">
-                                        <ListFilter className="h-3.5 w-3.5" />
-                                        <span className="sr-only sm:not-sr-only ">Estado Factura</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Filtrar por</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuCheckboxItem
-                                        checked={selectedStatuses.includes('pending')}
-                                        onCheckedChange={() => handleStatusChange('pending')}
-                                    >
-                                        Pendientes
-                                    </DropdownMenuCheckboxItem>
-                                    <DropdownMenuCheckboxItem
-                                        checked={selectedStatuses.includes('paid')}
-                                        onCheckedChange={() => handleStatusChange('paid')}
-                                    >
-                                        Pagadas
-                                    </DropdownMenuCheckboxItem>
-                                    <DropdownMenuCheckboxItem
-                                        checked={selectedStatuses.includes('cancelled')}
-                                        onCheckedChange={() => handleStatusChange('cancelled')}
-                                    >
-                                        Anuladas
-                                    </DropdownMenuCheckboxItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            <Button size="sm" variant="outline" className="h-8 gap-1 text-sm" onClick={onExport}>
-                                <File className="h-3.5 w-3.5" />
-                                <span className="sr-only sm:not-sr-only">Exportar</span>
-                            </Button>
-                        </div>
-                        <span className="text-sm font-medium">Mostrando estados de facturas:</span>
-                        <div className="flex gap-2">
-                            {selectedStatuses.map(status => getStatusBadge(status))}
-                        </div>
-                    </div> */}
-
 				<CardContent>
 					<InvoiceStatusButtons selectedInvoices={selectedInvoices} onUpdateStatus={handleUpdateStatus} />
 					<EnhancedInvoiceTable
@@ -328,59 +278,7 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
 						handleInvoiceSelect={handleInvoiceSelect}
 						getCurrentPageItems={getCurrentPageItems}
 						getStatusBadge={getStatusBadge} />
-					{/* <Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead className="w-[50px]">
-									<Checkbox
-										checked={selectedInvoices.length === invoices.length}
-										onCheckedChange={handleSelectAllChange}
-									/>
-								</TableHead>
-								<TableHead>Número de Factura</TableHead>
-								<TableHead>Fecha</TableHead>
-								<TableHead>Cliente</TableHead>
-								<TableHead className="text-right">Subtotal</TableHead>
-								<TableHead className="text-right">Impuesto</TableHead>
-								<TableHead className="text-right">Total</TableHead>
-								<TableHead>Estado</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{getCurrentPageItems().map((invoice) => (
-								<TableRow
-									key={invoice.id}
-									className="cursor-pointer hover:bg-muted/50"
-								>
-									<TableCell>
-										<Checkbox
-											checked={selectedInvoices.includes(invoice.id)}
-											onCheckedChange={(checked) => handleInvoiceSelect(invoice.id, checked as boolean)}
-										/>
-									</TableCell>
-									<TableCell onClick={() => onSelectInvoice(invoice.id)}>{invoice.invoice_number}</TableCell>
-									<TableCell onClick={() => onSelectInvoice(invoice.id)}>
-										{new Date(invoice.date).toLocaleDateString()}
-									</TableCell>
-									<TableCell onClick={() => onSelectInvoice(invoice.id)}>
-										{invoice.customers.name || invoice.customer_id}
-									</TableCell>
-									<TableCell className="text-right" onClick={() => onSelectInvoice(invoice.id)}>
-										${invoice.subtotal.toFixed(2)}
-									</TableCell>
-									<TableCell className="text-right" onClick={() => onSelectInvoice(invoice.id)}>
-										${invoice.tax.toFixed(2)}
-									</TableCell>
-									<TableCell className="text-right" onClick={() => onSelectInvoice(invoice.id)}>
-										${invoice.total.toFixed(2)}
-									</TableCell>
-									<TableCell onClick={() => onSelectInvoice(invoice.id)}>
-										{getStatusBadge(invoice.status)}
-									</TableCell>
-								</TableRow>
-							))}
-						</TableBody>
-					</Table> */}
+
 				</CardContent>
 				<CardFooter className="flex items-center justify-between">
 					<div>
@@ -447,36 +345,36 @@ const EnhancedInvoiceTable = ({ invoices, selectedInvoices, onSelectInvoice, han
 					<TableRow
 						key={invoice.id}
 						className="cursor-pointer hover:bg-muted/50 transition-colors"
+						onClick={() => onSelectInvoice(invoice)}
 					>
-						<TableCell className="py-4">
+						<TableCell className="py-4" onClick={(e) => e.stopPropagation()}>
 							<Checkbox
 								checked={selectedInvoices.includes(invoice.id)}
 								onCheckedChange={(checked) => handleInvoiceSelect(invoice.id, checked)}
 							/>
 						</TableCell>
-						<TableCell className="py-4" onClick={() => onSelectInvoice(invoice.id)}>{invoice.invoice_number}</TableCell>
-						<TableCell className="py-4" onClick={() => onSelectInvoice(invoice.id)}>
+						<TableCell className="py-4">{invoice.invoice_number}</TableCell>
+						<TableCell className="py-4">
 							{new Date(invoice.date).toLocaleDateString()}
 						</TableCell>
-						<TableCell className="py-4" onClick={() => onSelectInvoice(invoice.id)}>
+						<TableCell className="py-4">
 							<div className="flex items-center space-x-2">
 								<Avatar>
 									<AvatarFallback>{getInitials(invoice.customers.name || 'Unknown')}</AvatarFallback>
 								</Avatar>
-
 								<span>{invoice.customers.name || invoice.customer_id}</span>
 							</div>
 						</TableCell>
-						<TableCell className="text-right py-4" onClick={() => onSelectInvoice(invoice.id)}>
+						<TableCell className="text-right py-4">
 							{`Lps. ${invoice.subtotal.toFixed(2)}`}
 						</TableCell>
-						<TableCell className="text-right py-4" onClick={() => onSelectInvoice(invoice.id)}>
+						<TableCell className="text-right py-4">
 							{`Lps. ${invoice.tax.toFixed(2)}`}
 						</TableCell>
-						<TableCell className="text-right py-4" onClick={() => onSelectInvoice(invoice.id)}>
+						<TableCell className="text-right py-4">
 							{`Lps. ${invoice.total.toFixed(2)}`}
 						</TableCell>
-						<TableCell className="py-4" onClick={() => onSelectInvoice(invoice.id)}>
+						<TableCell className="py-4">
 							{getStatusBadge(invoice.status)}
 						</TableCell>
 					</TableRow>
