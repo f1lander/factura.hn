@@ -57,43 +57,45 @@ export default function CompanyDataForm({
         result = await companyService.updateCompany(initialCompany!.id, data);
       } else {
         result = await companyService.createCompany(data);
-        if (result) {
-          // at this point we already have available info about the company
-          // The next step is to upload the photo
-          const { data: uploadedPhoto, error: uploadPhotoError } =
-            await supabase()
-              .storage.from("company-logos")
-              .upload(
-                `public/company_${result[0].id}.${fileExtension}`,
-                buffer,
-                {
-                  cacheControl: "3600",
-                  contentType: fileType,
-                },
-              );
-          if (!uploadPhotoError) {
-            console.log(
-              "Yo, it went pretty well. The data var is: ",
-              uploadedPhoto,
-            );
-            // for uploading, you need the company id
-            const isCorrectlyUpdated = await companyService.updateCompany(
-              result[0].id,
-              {
-                logo_url: uploadedPhoto.path,
-              },
-            );
-            if (isCorrectlyUpdated) {
-              console.log("We've updated it correctly dude");
-            } else {
-              console.log(
-                "There was an error trying to update the company with the logo path",
-              );
-            }
-          }
-        } else {
-          console.log("Man, we had some sort of error, please correct it...");
-        }
+        if (result === null)
+          return console.log(
+            "Unable to create the company. Please try again later",
+          );
+
+        console.log(
+          "We were able to create the company! It looks like this: ",
+          result,
+        );
+
+        const { data: uploadedPhoto, error: uploadPhotoError } =
+          await supabase()
+            .storage.from("company-logos")
+            .upload(`public/company_${result[0].id}.${fileExtension}`, buffer, {
+              cacheControl: "3600",
+              contentType: fileType,
+            });
+        if (uploadPhotoError || !data)
+          return console.log(
+            "We were unable to upload the photo. Please try again later",
+          );
+        console.log(
+          "We were able to upload the photo! The data with respect to the photo is: ",
+          uploadedPhoto,
+        );
+        const companyWithPhoto = await companyService.updateCompany(
+          result[0].id,
+          {
+            logo_url: uploadedPhoto.path,
+          },
+        );
+
+        if (companyWithPhoto !== true)
+          return console.log(
+            "There was an error trying to update the company with the logo...",
+          );
+        console.log(
+          "The company has been created altogether. Redirecting to /home/invoices...",
+        );
       }
 
       if (result) {
@@ -298,8 +300,7 @@ export default function CompanyDataForm({
               {...register("cai", {
                 required: "Este campo es requerido",
                 pattern: {
-                  value:
-                  /^[0-9A-Fa-f]+(-[0-9A-Fa-f]+)*$/,
+                  value: /^[0-9A-Fa-f]+(-[0-9A-Fa-f]+)*$/,
                   message: "El formato del CAI no es válido",
                 },
               })}
