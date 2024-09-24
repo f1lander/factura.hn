@@ -149,7 +149,7 @@ export default function CompanyDataForm({
           {/*Here it goes!*/}
           <div className="flex flex-col gap-2">
             <Label htmlFor="something">Logo de la compañía</Label>
-            <div className="flex">
+            <div className="flex justify-between">
               <div className="relative w-[50%] h-auto z-0">
                 <Image
                   src={photo !== null ? photo : "/placeholder.jpg"}
@@ -202,8 +202,8 @@ export default function CompanyDataForm({
               <p className="text-red-500 text-sm">{errors.name.message}</p>
             )}
           </div>
-          <div className="grid grid-cols-2 space-x-2">
-            <div>
+          <div className="flex flex-col settingsPageMin:flex-row gap-3">
+            <div className="w-full">
               <Label htmlFor="ceo_name">Nombre (Gerente)</Label>
 
               <Input
@@ -218,7 +218,7 @@ export default function CompanyDataForm({
                 </p>
               )}
             </div>
-            <div>
+            <div className="w-full">
               <Label htmlFor="ceo_name">Apellido</Label>
 
               <Input
@@ -258,8 +258,8 @@ export default function CompanyDataForm({
               <p className="text-red-500 text-sm">{errors.address0.message}</p>
             )}
           </div>
-          <div className="grid grid-cols-2 space-x-2">
-            <div>
+          <div className="flex gap-3 flex-col settingsPageMin:flex-row">
+            <div className="w-full">
               <Label htmlFor="phone">Teléfono</Label>
               <Input
                 type="number"
@@ -274,7 +274,7 @@ export default function CompanyDataForm({
               )}
             </div>
 
-            <div>
+            <div className="w-full">
               <Label htmlFor="email">Correo electrónico</Label>
               <Input
                 id="email"
@@ -336,8 +336,8 @@ export default function CompanyDataForm({
               </p>
             )}
           </div>
-          <div className="grid grid-cols-2 space-x-2">
-            <div>
+          <div className="flex flex-col settingsPageMin:flex-row gap-3">
+            <div className="w-full">
               <Label htmlFor="range_invoice1">Rango de factura inicio</Label>
               <Input
                 id="range_invoice1"
@@ -352,7 +352,7 @@ export default function CompanyDataForm({
               )}
             </div>
 
-            <div>
+            <div className="w-full">
               <Label htmlFor="range_invoice2">Rango de factura fin</Label>
               <Input
                 id="range_invoice2"
