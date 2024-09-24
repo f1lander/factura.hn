@@ -13,7 +13,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import supabaseClient from "@/lib/supabase/client";
 import { User } from "@supabase/auth-js";
 import { logout } from "@/lib/supabase/auth";
@@ -152,19 +157,21 @@ export function Navigation() {
               >
                 <FacturaLogo />
               </Link>
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "hover:text-foreground",
-                    pathname === item.href
-                      ? "text-foreground"
-                      : "text-muted-foreground",
-                  )}
-                >
-                  {item.label}
-                </Link>
+              {navItems.map((item, index) => (
+                <SheetClose asChild key={index}>
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "hover:text-foreground",
+                      pathname === item.href
+                        ? "text-foreground"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                </SheetClose>
               ))}
             </nav>
           </SheetContent>

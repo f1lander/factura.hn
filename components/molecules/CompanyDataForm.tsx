@@ -70,8 +70,10 @@ export default function CompanyDataForm({
       data.user_id = user?.id!;
       let result;
       if (initialCompany) {
+        // Executed when there's already a company
         result = await companyService.updateCompany(initialCompany!.id, data);
       } else {
+        // Executed when there's a company for the first time
         result = await companyService.createCompany(data);
         if (result === null)
           return console.log(
@@ -115,7 +117,7 @@ export default function CompanyDataForm({
         toast({
           title: "Éxito",
           description:
-            "Los datos de la compañía se han guardado correctamente.",
+            "Los datos de la compañía se han guardado correctamente. En unos instantes te redirigiremos a la página de facturas.",
         });
         router.push("/home/invoices");
       }
@@ -346,6 +348,11 @@ export default function CompanyDataForm({
                 id="range_invoice1"
                 {...register("range_invoice1", {
                   required: "Este campo es requerido",
+                  pattern: {
+                    value: /^(\d{3})-(\d{3})-(\d{2})-(\d{8})$/,
+                    message:
+                      "El formato del rango de factura de inicio no es válido",
+                  },
                 })}
               />
               {errors.range_invoice1 && (
@@ -361,6 +368,11 @@ export default function CompanyDataForm({
                 id="range_invoice2"
                 {...register("range_invoice2", {
                   required: "Este campo es requerido",
+                  pattern: {
+                    value: /^(\d{3})-(\d{3})-(\d{2})-(\d{8})$/,
+                    message:
+                      "El formato del rango de factura de fin no es válido",
+                  },
                 })}
               />
               {errors.range_invoice2 && (
