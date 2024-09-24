@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import supabase from "@/lib/supabase/client";
 import { usePhoto } from "@/hooks/usePhoto";
 import CloudIcon from "./icons/CloudIcon";
+import { useRouter } from "next/navigation";
 
 interface CompanyDataFormProps {
   initialCompany: Company | null;
@@ -29,6 +30,7 @@ export default function CompanyDataForm({
   initialCompany,
 }: CompanyDataFormProps) {
   const { toast } = useToast();
+  const router = useRouter();
 
   const { photo, handleFileChange, handleDrop, handleDragOver } = usePhoto();
 
@@ -96,17 +98,12 @@ export default function CompanyDataForm({
         console.log(
           "The company has been created altogether. Redirecting to /home/invoices...",
         );
-      }
-
-      if (result) {
         toast({
           title: "Éxito",
           description:
             "Los datos de la compañía se han guardado correctamente.",
         });
-      } else {
-        console.log("The value of result was: ", result);
-        throw new Error("Failed to save company data");
+        router.push("/home/invoices");
       }
     } catch (error) {
       console.error("Error saving company data:", error);
