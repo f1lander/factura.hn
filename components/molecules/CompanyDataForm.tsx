@@ -149,8 +149,8 @@ export default function CompanyDataForm({
           {/*Here it goes!*/}
           <div className="flex flex-col gap-2">
             <Label htmlFor="something">Logo de la compañía</Label>
-            <div className="flex justify-between">
-              <div className="relative w-[50%] h-auto z-0">
+            <div className="flex flex-col justify-around settingsPageMin:flex-row gap-3">
+              <div className="relative w-full settingsPageMin:w-[50%] h-[100px] settingsPageMin:h-auto z-0">
                 <Image
                   src={photo !== null ? photo : "/placeholder.jpg"}
                   alt="concierto-coldplay"
@@ -158,7 +158,10 @@ export default function CompanyDataForm({
                   style={{ objectFit: "contain" }}
                 />
               </div>
-              <label htmlFor="coverImage" className="flex w-1/3">
+              <label
+                htmlFor="coverImage"
+                className="flex settingsPageMin:w-1/3 w-[80%] mx-auto"
+              >
                 <div
                   className="flex flex-col justify-center items-center gap-2 w-full border-dashed border-2 border-gray-300 p-4 rounded-[14px]"
                   onDrop={handleDrop}
