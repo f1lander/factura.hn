@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import {
@@ -32,8 +32,22 @@ export default function CompanyDataForm({
   const { toast } = useToast();
   const router = useRouter();
 
-  const { photo, handleFileChange, handleDrop, handleDragOver } = usePhoto();
+  const { photo, handleFileChange, handleDrop, handleDragOver, setPhoto } =
+    usePhoto();
 
+  // In case there's already a company, then get the logo_url with a presigned url
+  useEffect(() => {
+    if (initialCompany) {
+      supabase()
+        .storage.from("company-logos")
+        .createSignedUrl(initialCompany.logo_url!, 600)
+        .then((value) => {
+          if (value.error || !value.data)
+            return console.log("There was an error fetching the image");
+          setPhoto(value.data.signedUrl);
+        });
+    }
+  }, [initialCompany, setPhoto]);
   const {
     register,
     handleSubmit,
