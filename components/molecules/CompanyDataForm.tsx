@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import {
   Card,
@@ -17,6 +18,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import supabase from "@/lib/supabase/client";
+import { usePhoto } from "@/hooks/usePhoto";
+import CloudIcon from "./icons/CloudIcon";
 
 interface CompanyDataFormProps {
   initialCompany: Company | null;
@@ -27,6 +30,8 @@ export default function CompanyDataForm({
 }: CompanyDataFormProps) {
   const { toast } = useToast();
 
+  const { photo, handleFileChange, handleDrop, handleDragOver } = usePhoto();
+
   const {
     register,
     handleSubmit,
@@ -36,6 +41,12 @@ export default function CompanyDataForm({
   });
 
   const onSubmit = async (data: Omit<Company, "id">) => {
+    // Get file type, extension, and extract image itself
+    data.logo_url = "";
+    const fileType = photo!.split(";")[0].split(":")[1];
+    const fileExtension = fileType.split("/")[1];
+    const imageData = photo!.replace(/^data:image\/\w+;base64,/, "");
+    const buffer = Buffer.from(imageData, "base64");
     try {
       const {
         data: { user },
@@ -46,10 +57,43 @@ export default function CompanyDataForm({
         result = await companyService.updateCompany(initialCompany!.id, data);
       } else {
         result = await companyService.createCompany(data);
-        console.log(
-          "our result after creating the brand new company is: ",
-          result,
-        );
+        if (result) {
+          // at this point we already have available info about the company
+          // The next step is to upload the photo
+          const { data: uploadedPhoto, error: uploadPhotoError } =
+            await supabase()
+              .storage.from("company-logos")
+              .upload(
+                `public/company_${result[0].id}.${fileExtension}`,
+                buffer,
+                {
+                  cacheControl: "3600",
+                  contentType: fileType,
+                },
+              );
+          if (!uploadPhotoError) {
+            console.log(
+              "Yo, it went pretty well. The data var is: ",
+              uploadedPhoto,
+            );
+            // for uploading, you need the company id
+            const isCorrectlyUpdated = await companyService.updateCompany(
+              result[0].id,
+              {
+                logo_url: uploadedPhoto.path,
+              },
+            );
+            if (isCorrectlyUpdated) {
+              console.log("We've updated it correctly dude");
+            } else {
+              console.log(
+                "There was an error trying to update the company with the logo path",
+              );
+            }
+          }
+        } else {
+          console.log("Man, we had some sort of error, please correct it...");
+        }
       }
 
       if (result) {
@@ -89,6 +133,51 @@ export default function CompanyDataForm({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/*Here it goes!*/}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="something">Logo de la compañía</Label>
+            <div className="flex">
+              <div className="relative w-[50%] h-auto z-0">
+                <Image
+                  src={photo !== null ? photo : "/placeholder.jpg"}
+                  alt="concierto-coldplay"
+                  fill
+                  style={{ objectFit: "contain" }}
+                />
+              </div>
+              <label htmlFor="coverImage" className="flex w-1/3">
+                <div
+                  className="flex flex-col justify-center items-center gap-2 w-full border-dashed border-2 border-gray-300 p-4 rounded-[14px]"
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                >
+                  <input
+                    id="coverImage"
+                    {...register("logo_url", {
+                      required: "Necesitas un logo para tu compañía",
+                    })}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  <CloudIcon />
+                  <span className="font-medium text-sm text-[#2A302D]">
+                    Selecciona un archivo o arrástralo
+                  </span>
+                  <span className="font-normal text-[11px] text-[#6B736F]">
+                    JPG, PNG
+                  </span>
+                </div>
+              </label>
+            </div>
+            {errors.logo_url && (
+              <p className="text-red-500 text-sm bottom-0">
+                {errors.logo_url.message}
+              </p>
+            )}
+          </div>
+
           <div>
             <Label htmlFor="name">Nombre de la compañía</Label>
 
