@@ -20,14 +20,23 @@ import {
 import { customerService, Customer } from "@/lib/supabase/services/customer";
 import { CustomerForm } from "@/components/molecules/CustomerForm";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { PlusIcon, Trash2Icon, Users } from "lucide-react";
 import GenericEmptyState from "@/components/molecules/GenericEmptyState";
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
@@ -46,7 +55,9 @@ export default function CustomersPage() {
       setCustomers(fetchedCustomers);
     } catch (err) {
       console.error("Error al obtener clientes:", err);
-      setError("No se pudieron cargar los clientes. Por favor, intente de nuevo.");
+      setError(
+        "No se pudieron cargar los clientes. Por favor, intente de nuevo.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +91,8 @@ export default function CustomersPage() {
       setError("No se pudo guardar el cliente. Por favor, intente de nuevo.");
       toast({
         title: "Error",
-        description: "No se pudo guardar el cliente. Por favor, intente de nuevo.",
+        description:
+          "No se pudo guardar el cliente. Por favor, intente de nuevo.",
         variant: "destructive",
       });
     }
@@ -92,16 +104,16 @@ export default function CustomersPage() {
   };
 
   const handleCheckboxChange = (customerId: string) => {
-    setSelectedCustomers(prev =>
+    setSelectedCustomers((prev) =>
       prev.includes(customerId)
-        ? prev.filter(id => id !== customerId)
-        : [...prev, customerId]
+        ? prev.filter((id) => id !== customerId)
+        : [...prev, customerId],
     );
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedCustomers(customers.map(customer => customer.id!));
+      setSelectedCustomers(customers.map((customer) => customer.id!));
     } else {
       setSelectedCustomers([]);
     }
@@ -115,19 +127,23 @@ export default function CustomersPage() {
 
   const handleConfirmDelete = async () => {
     try {
-      await Promise.all(selectedCustomers.map(id => customerService.deleteCustomer(id)));
+      await Promise.all(
+        selectedCustomers.map((id) => customerService.deleteCustomer(id)),
+      );
       fetchCustomers();
       setSelectedCustomers([]);
       setIsDeleteDialogOpen(false);
       toast({
         title: "Clientes Eliminados",
-        description: "Los clientes seleccionados han sido eliminados exitosamente.",
+        description:
+          "Los clientes seleccionados han sido eliminados exitosamente.",
       });
     } catch (err) {
       console.error("Error al eliminar clientes:", err);
       toast({
         title: "Error",
-        description: "No se pudieron eliminar los clientes. Por favor, intente de nuevo.",
+        description:
+          "No se pudieron eliminar los clientes. Por favor, intente de nuevo.",
         variant: "destructive",
       });
     }
@@ -144,7 +160,9 @@ export default function CustomersPage() {
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <div className="flex flex-col sm:gap-4 p-12">
         <main className="flex flex-col xl:flex-row items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-          <div className={`w-full ${isFormVisible ? 'xl:w-1/2' : 'xl:w-full'} transition-all duration-300 ease-in-out`}>
+          <div
+            className={`w-full ${isFormVisible ? "xl:w-1/2" : "xl:w-full"} transition-all duration-300 ease-in-out`}
+          >
             {customers.length === 0 ? (
               <GenericEmptyState
                 icon={Users}
@@ -156,9 +174,11 @@ export default function CustomersPage() {
             ) : (
               <Card className="w-full">
                 <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
+                  <div className="flex flex-col gap-1">
                     <CardTitle>Clientes</CardTitle>
-                    <CardDescription>Gestiona tus clientes aquí</CardDescription>
+                    <CardDescription>
+                      Gestiona tus clientes aquí
+                    </CardDescription>
                   </div>
                   {customers.length > 0 && (
                     <div className="flex gap-2">
@@ -170,18 +190,22 @@ export default function CustomersPage() {
                         <Trash2Icon />
                         Eliminar
                       </Button>
-                      <Button onClick={handleCreateCustomer}><PlusIcon />Nuevo</Button>
+                      <Button onClick={handleCreateCustomer}>
+                        <PlusIcon />
+                        Nuevo
+                      </Button>
                     </div>
                   )}
                 </CardHeader>
                 <CardContent>
-
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-[50px]">
                           <Checkbox
-                            checked={selectedCustomers.length === customers.length}
+                            checked={
+                              selectedCustomers.length === customers.length
+                            }
                             onCheckedChange={handleSelectAll}
                           />
                         </TableHead>
@@ -200,19 +224,36 @@ export default function CustomersPage() {
                           <TableCell>
                             <Checkbox
                               checked={selectedCustomers.includes(customer.id!)}
-                              onCheckedChange={() => handleCheckboxChange(customer.id!)}
+                              onCheckedChange={() =>
+                                handleCheckboxChange(customer.id!)
+                              }
                               onClick={(e) => e.stopPropagation()}
                             />
                           </TableCell>
-                          <TableCell onClick={() => handleCustomerSelect(customer)}>{customer.name}</TableCell>
-                          <TableCell onClick={() => handleCustomerSelect(customer)}>{customer.rtn}</TableCell>
-                          <TableCell onClick={() => handleCustomerSelect(customer)}>{customer.email}</TableCell>
-                          <TableCell onClick={() => handleCustomerSelect(customer)}>{customer.contacts?.length || 0}</TableCell>
+                          <TableCell
+                            onClick={() => handleCustomerSelect(customer)}
+                          >
+                            {customer.name}
+                          </TableCell>
+                          <TableCell
+                            onClick={() => handleCustomerSelect(customer)}
+                          >
+                            {customer.rtn}
+                          </TableCell>
+                          <TableCell
+                            onClick={() => handleCustomerSelect(customer)}
+                          >
+                            {customer.email}
+                          </TableCell>
+                          <TableCell
+                            onClick={() => handleCustomerSelect(customer)}
+                          >
+                            {customer.contacts?.length || 0}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-
                 </CardContent>
               </Card>
             )}
@@ -233,12 +274,23 @@ export default function CustomersPage() {
           <DialogHeader>
             <DialogTitle>Confirmar Eliminación</DialogTitle>
             <DialogDescription>
-              ¿Está seguro de que desea eliminar {selectedCustomers.length === 1 ? "el cliente seleccionado" : `los ${selectedCustomers.length} clientes seleccionados`}? Esta acción no se puede deshacer.
+              ¿Está seguro de que desea eliminar{" "}
+              {selectedCustomers.length === 1
+                ? "el cliente seleccionado"
+                : `los ${selectedCustomers.length} clientes seleccionados`}
+              ? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancelar</Button>
-            <Button variant="destructive" onClick={handleConfirmDelete}>Eliminar</Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete}>
+              Eliminar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
