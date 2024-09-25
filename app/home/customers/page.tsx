@@ -42,7 +42,17 @@ export default function CustomersPage() {
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [windowWidth, setWindowWidth] = useState<number>(window.innerWidth);
   const { toast } = useToast();
+
+  // side effect for tracking screen width
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     fetchCustomers();
