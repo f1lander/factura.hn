@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import CompanyDataForm from "@/components/molecules/CompanyDataForm";
 import { getAuthAndCompanyDataClient } from "@/lib/supabase/client-utils";
@@ -17,7 +17,8 @@ export default function Settings() {
   useEffect(() => {
     async function loadData() {
       try {
-        const { isAuthenticated, user, company, error } = await getAuthAndCompanyDataClient();
+        const { isAuthenticated, user, company, error } =
+          await getAuthAndCompanyDataClient();
 
         if (!isAuthenticated || !user) {
           router.push("/auth/login");
@@ -32,13 +33,16 @@ export default function Settings() {
 
         if (!company) {
           toast({
-            title: "Company Information Required",
-            description: "Please add information about your company to continue.",
+            title: "Se requiere información de la compañía",
+            description:
+              "Por favor, añada información sobre su compañía para continuar.",
             duration: 5000,
           });
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+        setError(
+          err instanceof Error ? err.message : "An unexpected error occurred",
+        );
         toast({
           title: "Error",
           description: "Failed to load user or company data. Please try again.",
