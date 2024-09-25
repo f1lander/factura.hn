@@ -78,6 +78,7 @@ const config = {
       },
       screens: {
         settingsPageMin: "600px",
+        customersPageMin: "500px",
       },
     },
   },
