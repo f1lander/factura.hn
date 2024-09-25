@@ -12,7 +12,7 @@ export default function Banner({ message, variant }: BannerProps) {
   };
   return (
     <div
-      className={`flex sticky items-center justify-center py-2 ${variants[variant]}`}
+      className={`flex sticky items-center justify-center py-2 ${variants[variant]} z-50`}
     >
       {message}
     </div>

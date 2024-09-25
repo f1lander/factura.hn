@@ -90,7 +90,7 @@ class CompanyService extends BaseService {
 
   async createCompany(
     companyData: Omit<Company, "id">,
-  ): Promise<Company | null> {
+  ): Promise<Company[] | null> {
     const {
       data: { user },
     } = await this.supabase.auth.getUser();
@@ -109,7 +109,7 @@ class CompanyService extends BaseService {
       return null;
     }
 
-    return data as unknown as Company;
+    return data as unknown as Company[];
   }
 
   async updateCompany(
