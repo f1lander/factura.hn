@@ -27,10 +27,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { PlusIcon, Trash2Icon, Users } from "lucide-react";
 import GenericEmptyState from "@/components/molecules/GenericEmptyState";
+import { DialogClose } from "@radix-ui/react-dialog";
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -268,15 +270,33 @@ export default function CustomersPage() {
               </Card>
             )}
           </div>
-          {isFormVisible && (
-            <div className="w-full xl:w-1/2 transition-all duration-300 ease-in-out">
-              <CustomerForm
-                customer={selectedCustomer || undefined}
-                onSubmit={handleFormSubmit}
-                onCancel={handleFormCancel}
-              />
-            </div>
-          )}
+          {isFormVisible &&
+            (windowWidth >= 1280 ? (
+              <div className="w-full xl:w-1/2 transition-all duration-300 ease-in-out">
+                <CustomerForm
+                  customer={selectedCustomer || undefined}
+                  onSubmit={handleFormSubmit}
+                  onCancel={handleFormCancel}
+                />
+              </div>
+            ) : (
+              <Dialog open={isFormVisible} onOpenChange={setIsFormVisible}>
+                <DialogTrigger asChild></DialogTrigger>
+                <DialogContent
+                  className="w-[90%]"
+                  id="contenido del dialogo papa"
+                >
+                  <div className="transition-all duration-300 ease-in-out">
+                    <CustomerForm
+                      customer={selectedCustomer || undefined}
+                      onSubmit={handleFormSubmit}
+                      onCancel={handleFormCancel}
+                    />
+                  </div>
+                </DialogContent>
+                <DialogClose asChild></DialogClose>
+              </Dialog>
+            ))}
         </main>
       </div>
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
