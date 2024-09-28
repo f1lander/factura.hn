@@ -6,7 +6,7 @@ type ProductsStore = {
   setProducts: (products: Product[]) => void;
 };
 
-export const useCompanyStore = create<ProductsStore>((set) => ({
+export const useProductsStore = create<ProductsStore>((set) => ({
   products: [],
   setProducts: (products) => set({ products: products }),
 }));
