@@ -18,9 +18,14 @@ import InvoiceDashboardCharts from "@/components/organisms/InvoiceDashboardChart
 import Link from "next/link";
 import { FileText, PencilIcon, PlusCircleIcon } from "lucide-react";
 import GenericEmptyState from "@/components/molecules/GenericEmptyState";
+import { useInvoicesStore } from "@/store/invoicesStore";
+import { productService } from "@/lib/supabase/services/product";
+import { customerService } from "@/lib/supabase/services/customer";
+import { companyService } from "@/lib/supabase/services/company";
 
 export default function Dashboard() {
-  const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
+  // get ALL stores here.
+  const { allInvoices, setAllInvoices } = useInvoicesStore();
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<{
@@ -65,28 +70,11 @@ export default function Dashboard() {
     setFilteredInvoices(filtered);
   }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
 
-  // this useEffect runs EVERY TIME the component renders
-  useEffect(() => {
-    const initializeData = async () => {
-      try {
-        await fetchInvoices();
-      } catch (error) {
-        console.error("Error initializing data:", error);
-      }
-    };
-
-    initializeData();
-  }, []);
+  // As soon as you enter /home, you'll load the necessary data
 
   useEffect(() => {
     applyFilters();
   }, [allInvoices, debouncedSearchTerm, selectedStatuses, applyFilters]);
-
-  const fetchInvoices = async () => {
-    const fetchedInvoices = await invoiceService.getInvoices();
-    setAllInvoices(fetchedInvoices);
-    setFilteredInvoices(fetchedInvoices);
-  };
 
   const handleDateSearch = () => {
     if (dateRange.start && dateRange.end) {

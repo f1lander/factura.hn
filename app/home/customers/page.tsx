@@ -44,7 +44,7 @@ export default function CustomersPage() {
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [windowWidth, setWindowWidth] = useState<number>(window.innerWidth);
+  const [windowWidth, setWindowWidth] = useState<number>(0);
   const { toast } = useToast();
 
   // side effect for tracking screen width
