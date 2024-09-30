@@ -22,10 +22,13 @@ export default function LoadData() {
   useEffect(() => {
     if (!isLoaded) {
       const loadData = async function() {
-        const fetchedInvoices = await invoiceService.getInvoices();
-        const fetchedProducts = await productService.getProductsByCompany();
-        const company = await companyService.getCompanyById();
-        const fetchedCustomers = await customerService.getCustomersByCompany();
+        const [fetchedInvoices, fetchedProducts, company, fetchedCustomers] =
+          await Promise.all([
+            invoiceService.getInvoices(),
+            productService.getProductsByCompany(),
+            companyService.getCompanyById(),
+            customerService.getCustomersByCompany(),
+          ]);
 
         // 3. update the stores
         setCompany(company!);
