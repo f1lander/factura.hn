@@ -20,10 +20,8 @@ export default function LoadData() {
   const { setProducts } = useProductsStore();
   const router = useRouter();
   useEffect(() => {
-    // 1. check if it has been already loaded
     if (!isLoaded) {
       const loadData = async function() {
-        // 2. in case it hasn't been loaded, fetch the data first
         const fetchedInvoices = await invoiceService.getInvoices();
         const fetchedProducts = await productService.getProductsByCompany();
         const company = await companyService.getCompanyById();
@@ -50,6 +48,7 @@ export default function LoadData() {
     setCustomers,
     setProducts,
   ]);
-
-  return <div>Loading...</div>;
+  return (
+    <div>{isLoaded ? "Se han cargado los datos" : "Cargando tus datos..."}</div>
+  );
 }
