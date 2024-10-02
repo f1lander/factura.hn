@@ -1,7 +1,12 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-export const useIsLoadedStore = create(
+export interface isLoadedStore {
+  isLoaded: boolean;
+  setIsLoaded: () => void;
+}
+
+export const useIsLoadedStore = create<isLoadedStore>()(
   persist(
     (set) => ({
       isLoaded: false,
