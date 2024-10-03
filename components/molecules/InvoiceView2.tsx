@@ -42,7 +42,7 @@ import {
   invoiceService,
 } from "@/lib/supabase/services/invoice";
 // import { Customer, customerService } from "@/lib/supabase/services/customer";
-import { Product, productService } from "@/lib/supabase/services/product";
+import { Product } from "@/lib/supabase/services/product";
 import { Company, companyService } from "@/lib/supabase/services/company";
 import { numberToWords } from "@/lib/utils";
 import { getStatusBadge } from "./InvoicesTable";
@@ -50,6 +50,7 @@ import { renderPdf, getSignedPdfUrl } from "@/app/do-functions";
 import { toast } from "@/components/ui/use-toast";
 import { Label } from "../ui/label";
 import { useCustomersStore } from "@/store/customersStore";
+import { useProductsStore } from "@/store/productsStore";
 
 interface InvoiceViewProps {
   invoice?: Invoice;
@@ -64,7 +65,8 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
 }) => {
   const { customers } = useCustomersStore();
   // const [customers, setCustomers] = useState<Customer[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const { products } = useProductsStore();
+  // const [products, setProducts] = useState<Product[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
   const [lastInvoiceNumber, setLastInvoiceNumber] = useState<
     string | undefined
@@ -219,11 +221,11 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
   useEffect(() => {
     const fetchData = async () => {
       // const fetchedCustomers = await customerService.getCustomersByCompany();
-      const fetchedProducts = await productService.getProductsByCompany();
+      // const fetchedProducts = await productService.getProductsByCompany();
 
       const company = await companyService.getCompanyById();
       // setCustomers(fetchedCustomers);
-      setProducts(fetchedProducts);
+      // setProducts(fetchedProducts);
       setCompany(company);
 
       // Fetch the last invoice number
