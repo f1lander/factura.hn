@@ -14,7 +14,7 @@ export const useCustomersStore = create<CustomersStore>()(
       setCustomers: (customers) => set({ customers: customers }),
     }),
     {
-      name: "isLoadedStore",
+      name: "customersStore",
       storage: createJSONStorage(() => sessionStorage),
     },
   ),
