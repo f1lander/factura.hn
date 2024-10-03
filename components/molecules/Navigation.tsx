@@ -179,11 +179,11 @@ export function Navigation() {
           </SheetContent>
         </Sheet>
         <div className="profile-menu flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4 justify-end">
-          <button
-            onClick={() => console.log("The value of isLoaded is: ", isLoaded)}
-          >
-            press me for checking the value of isLoaded
-          </button>
+          {/* <button */}
+          {/*   onClick={() => console.log("The value of isLoaded is: ", isLoaded)} */}
+          {/* > */}
+          {/*   press me for checking the value of isLoaded */}
+          {/* </button> */}
           {isLoading ? (
             <p>Cargando...</p>
           ) : user ? (
