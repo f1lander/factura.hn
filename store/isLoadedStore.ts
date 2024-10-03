@@ -18,7 +18,7 @@ export const useIsLoadedStore = create<isLoadedStore>()(
     }),
     {
       name: "isLoadedStore",
-      storage: createJSONStorage(() => sessionStorage),
+      storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.setHydrated(true);

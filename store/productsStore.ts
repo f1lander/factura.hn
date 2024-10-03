@@ -15,7 +15,7 @@ export const useProductsStore = create<ProductsStore>()(
     }),
     {
       name: "productsStore",
-      storage: createJSONStorage(() => sessionStorage),
+      storage: createJSONStorage(() => localStorage),
     },
   ),
 );
