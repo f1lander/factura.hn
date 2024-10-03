@@ -13,13 +13,15 @@ import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
 
 export default function LoadData() {
-  const { isLoaded, setIsLoaded } = useIsLoadedStore();
+  const { isLoaded, setIsLoaded, hydrated } = useIsLoadedStore();
   const { setCompany } = useCompanyStore();
   const { setCustomers } = useCustomersStore();
   const { setAllInvoices } = useInvoicesStore();
   const { setProducts } = useProductsStore();
   const router = useRouter();
   useEffect(() => {
+    if (!hydrated) return console.log("Hasn't been hydrated...");
+    console.log("Hydrated. Now running...");
     if (!isLoaded) {
       const loadData = async function() {
         const [fetchedInvoices, fetchedProducts, company, fetchedCustomers] =
@@ -29,6 +31,7 @@ export default function LoadData() {
             companyService.getCompanyById(),
             customerService.getCustomersByCompany(),
           ]);
+        console.log("Yes, the data has been fetched");
 
         // 3. update the stores
         setCompany(company!);
@@ -40,8 +43,13 @@ export default function LoadData() {
         setIsLoaded();
       };
       loadData();
+    } else {
+      console.log(
+        "Don't worry, we haven't made the request because we already have data inside",
+      );
     }
-    router.push("/home");
+    // router.push("/home");
+    console.log("The effect ends here. I hope it has worked as expected");
   }, [
     isLoaded,
     setIsLoaded,
@@ -50,6 +58,7 @@ export default function LoadData() {
     setCompany,
     setCustomers,
     setProducts,
+    hydrated,
   ]);
   return (
     <div>{isLoaded ? "Se han cargado los datos" : "Cargando tus datos..."}</div>
