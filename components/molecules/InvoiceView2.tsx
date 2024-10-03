@@ -41,7 +41,7 @@ import {
   InvoiceItem,
   invoiceService,
 } from "@/lib/supabase/services/invoice";
-import { Customer, customerService } from "@/lib/supabase/services/customer";
+// import { Customer, customerService } from "@/lib/supabase/services/customer";
 import { Product, productService } from "@/lib/supabase/services/product";
 import { Company, companyService } from "@/lib/supabase/services/company";
 import { numberToWords } from "@/lib/utils";
@@ -49,6 +49,7 @@ import { getStatusBadge } from "./InvoicesTable";
 import { renderPdf, getSignedPdfUrl } from "@/app/do-functions";
 import { toast } from "@/components/ui/use-toast";
 import { Label } from "../ui/label";
+import { useCustomersStore } from "@/store/customersStore";
 
 interface InvoiceViewProps {
   invoice?: Invoice;
@@ -61,7 +62,8 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
   isEditable,
   onSave,
 }) => {
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const { customers } = useCustomersStore();
+  // const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
   const [lastInvoiceNumber, setLastInvoiceNumber] = useState<
@@ -216,11 +218,11 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({
   // this is what's consuming so much bandwidth
   useEffect(() => {
     const fetchData = async () => {
-      const fetchedCustomers = await customerService.getCustomersByCompany();
+      // const fetchedCustomers = await customerService.getCustomersByCompany();
       const fetchedProducts = await productService.getProductsByCompany();
 
       const company = await companyService.getCompanyById();
-      setCustomers(fetchedCustomers);
+      // setCustomers(fetchedCustomers);
       setProducts(fetchedProducts);
       setCompany(company);
 
