@@ -31,25 +31,16 @@ export default function LoadData() {
             companyService.getCompanyById(),
             customerService.getCustomersByCompany(),
           ]);
-        console.log("Yes, the data has been fetched");
 
-        // 3. update the stores
         setCompany(company!);
         setCustomers(fetchedCustomers);
         setAllInvoices(fetchedInvoices);
         setProducts(fetchedProducts);
 
-        // And lastly, mark the flag as already loaded
         setIsLoaded();
       };
       loadData();
-    } else {
-      console.log(
-        "Don't worry, we haven't made the request because we already have data inside",
-      );
     }
-    // router.push("/home");
-    console.log("The effect ends here. I hope it has worked as expected");
   }, [
     isLoaded,
     setIsLoaded,
