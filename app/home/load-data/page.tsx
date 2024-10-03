@@ -20,8 +20,7 @@ export default function LoadData() {
   const { setProducts } = useProductsStore();
   const router = useRouter();
   useEffect(() => {
-    if (!hydrated) return console.log("Hasn't been hydrated...");
-    console.log("Hydrated. Now running...");
+    if (!hydrated) return;
     if (!isLoaded) {
       const loadData = async function() {
         const [fetchedInvoices, fetchedProducts, company, fetchedCustomers] =
