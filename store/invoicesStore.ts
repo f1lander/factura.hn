@@ -2,12 +2,12 @@ import { Invoice } from "@/lib/supabase/services/invoice";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-// type InvoicesStore = {
-//   allInvoices: Invoice[];
-//   setAllInvoices: (invoices: Invoice[]) => void;
-// };
+type InvoicesStore = {
+  allInvoices: Invoice[];
+  setAllInvoices: (invoices: Invoice[]) => void;
+};
 
-export const useInvoicesStore = create(
+export const useInvoicesStore = create<InvoicesStore>()(
   persist(
     (set) => ({
       allInvoices: [],
