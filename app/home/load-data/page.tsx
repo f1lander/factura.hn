@@ -13,12 +13,12 @@ import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
 
 export default function LoadData() {
+  const router = useRouter();
   const { isLoaded, setIsLoaded, hydrated } = useIsLoadedStore();
   const { setCompany } = useCompanyStore();
   const { setCustomers } = useCustomersStore();
   const { setAllInvoices } = useInvoicesStore();
   const { setProducts } = useProductsStore();
-  const router = useRouter();
   useEffect(() => {
     if (!hydrated) return;
     if (!isLoaded) {
@@ -40,10 +40,11 @@ export default function LoadData() {
       };
       loadData();
     }
+    router.push("/home");
   }, [
+    router,
     isLoaded,
     setIsLoaded,
-    router,
     setAllInvoices,
     setCompany,
     setCustomers,
