@@ -15,6 +15,7 @@ export const useIsLoadedStore = create<isLoadedStore>()(
       hydrated: false,
       setIsLoaded: () => set({ isLoaded: true }),
       setHydrated: (value: boolean) => set({ hydrated: value }),
+      resetIsLoaded: () => set({ isLoaded: false, hydrated: false }),
     }),
     {
       name: "isLoadedStore",
