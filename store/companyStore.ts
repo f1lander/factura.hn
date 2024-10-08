@@ -5,6 +5,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 type CompanyStore = {
   company: Company | null;
   setCompany: (company: Company) => void;
+  resetCompany: () => void;
 };
 
 export const useCompanyStore = create<CompanyStore>()(
@@ -12,6 +13,7 @@ export const useCompanyStore = create<CompanyStore>()(
     (set) => ({
       company: null,
       setCompany: (company) => set({ company: company }),
+      resetCompany: () => set({ company: null }),
     }),
     {
       name: "companyStore",

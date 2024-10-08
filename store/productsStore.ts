@@ -5,6 +5,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 type ProductsStore = {
   products: Product[];
   setProducts: (products: Product[]) => void;
+  resetProducts: () => void;
 };
 
 export const useProductsStore = create<ProductsStore>()(
@@ -12,6 +13,7 @@ export const useProductsStore = create<ProductsStore>()(
     (set) => ({
       products: [],
       setProducts: (products) => set({ products: products }),
+      resetProducts: () => set({ products: [] }),
     }),
     {
       name: "productsStore",

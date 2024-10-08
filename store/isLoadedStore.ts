@@ -5,6 +5,7 @@ export interface isLoadedStore {
   isLoaded: boolean;
   hydrated: boolean;
   setIsLoaded: () => void;
+  resetIsLoaded: () => void;
   setHydrated: (value: boolean) => void;
 }
 
