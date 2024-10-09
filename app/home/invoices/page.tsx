@@ -33,6 +33,7 @@ import { toast } from "@/components/ui/use-toast";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import { PlusCircleIcon } from "lucide-react";
+import CreateInvoiceButton from "@/components/molecules/CreateInvoiceButton";
 
 export default function Invoices() {
   const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
@@ -268,14 +269,7 @@ export default function Invoices() {
             </CardDescription>
           </CardHeader>
           <CardFooter>
-            {/* TODO: use the local store instead of making API request when pressed here */}
-            <Button
-              className="bg-[#00A1D4] text-white text-lg font-semibold flex gap-4 p-8"
-              onClick={handleCreateInvoice}
-            >
-              <PlusCircleIcon />
-              Crear factura
-            </Button>
+            <CreateInvoiceButton handleCreateInvoice={handleCreateInvoice} />
           </CardFooter>
         </Card>
         <Card>
