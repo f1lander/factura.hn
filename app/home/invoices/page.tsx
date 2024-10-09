@@ -269,7 +269,7 @@ export default function Invoices() {
             </CardDescription>
           </CardHeader>
           <CardFooter>
-            <CreateInvoiceButton handleCreateInvoice={handleCreateInvoice} />
+            <CreateInvoiceButton />
           </CardFooter>
         </Card>
         <Card>

@@ -59,7 +59,7 @@ interface InvoiceViewProps {
   onSave: (invoice: Invoice) => void;
 }
 
-const InvoiceView: React.FC<InvoiceViewProps> = ({
+const InvoiceView2: React.FC<InvoiceViewProps> = ({
   invoice,
   isEditable,
   onSave,
@@ -723,4 +723,4 @@ const calculateItemTotal = (index: number, items: InvoiceItem[]) => {
   return (item.quantity * item.unit_cost - item.discount).toFixed(2);
 };
 
-export default InvoiceView;
+export default InvoiceView2;
