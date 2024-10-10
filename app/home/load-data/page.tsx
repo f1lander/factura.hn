@@ -28,23 +28,6 @@ export default function LoadData() {
         setIsLoaded();
       };
       syncData();
-      // const loadData = async function() {
-      //   const [fetchedInvoices, fetchedProducts, company, fetchedCustomers] =
-      //     await Promise.all([
-      //       invoiceService.getInvoices(),
-      //       productService.getProductsByCompany(),
-      //       companyService.getCompanyById(),
-      //       customerService.getCustomersByCompany(),
-      //     ]);
-      //
-      //   setCompany(company!);
-      //   setCustomers(fetchedCustomers);
-      //   setAllInvoices(fetchedInvoices);
-      //   setProducts(fetchedProducts);
-      //
-      //   setIsLoaded();
-      // };
-      // loadData();
     }
     router.push("/home");
   }, [
