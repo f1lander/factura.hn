@@ -22,7 +22,12 @@ import {
 import supabaseClient from "@/lib/supabase/client";
 import { User } from "@supabase/auth-js";
 import { logout } from "@/lib/supabase/auth";
-import Banner from "./Banner";
+// import Banner from "./Banner";
+import { useIsLoadedStore } from "@/store/isLoadedStore";
+import { useCompanyStore } from "@/store/companyStore";
+import { useCustomersStore } from "@/store/customersStore";
+import { useInvoicesStore } from "@/store/invoicesStore";
+import { useProductsStore } from "@/store/productsStore";
 
 const navItems = [
   { href: "/home/", label: "Dashboard" },
@@ -69,6 +74,11 @@ const FacturaLogo = () => (
 );
 
 export function Navigation() {
+  const { resetCompany } = useCompanyStore();
+  const { resetCustomers } = useCustomersStore();
+  const { resetInvoices } = useInvoicesStore();
+  const { resetIsLoaded } = useIsLoadedStore();
+  const { resetProducts } = useProductsStore();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,6 +110,11 @@ export function Navigation() {
   }, [supabase]);
 
   const handleSignOut = async () => {
+    resetProducts();
+    resetIsLoaded();
+    resetInvoices();
+    resetCustomers();
+    resetCompany();
     setIsLoading(true);
     await logout();
     setUser(null);
@@ -115,7 +130,7 @@ export function Navigation() {
         />
       )} */}
       <div className="flex top-0 h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
-        <nav className="hidden flex-col gap-6 text-lg items-end font-medium md:flex md:flex-row md:gap-5 md:text-sm lg:gap-6 z-50">
+        <nav className="hidden flex-col gap-6 text-lg items-end font-medium lg:flex lg:flex-row md:gap-5 lg:text-sm lg:gap-6 z-50">
           <Link
             href="#"
             className="flex items-center gap-2 text-lg font-semibold md:text-base"
@@ -143,7 +158,7 @@ export function Navigation() {
             <Button
               variant="outline"
               size="icon"
-              className="shrink-0 md:hidden"
+              className="shrink-0 lg:hidden"
             >
               <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle navigation menu</span>
@@ -177,6 +192,11 @@ export function Navigation() {
           </SheetContent>
         </Sheet>
         <div className="profile-menu flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4 justify-end">
+          {/* <button */}
+          {/*   onClick={() => console.log("The value of isLoaded is: ", isLoaded)} */}
+          {/* > */}
+          {/*   press me for checking the value of isLoaded */}
+          {/* </button> */}
           {isLoading ? (
             <p>Cargando...</p>
           ) : user ? (

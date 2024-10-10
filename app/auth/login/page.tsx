@@ -40,7 +40,7 @@ const LoginPage: React.FC = () => {
           description: "Redirigiendo a la página de facturas...",
         });
         setTimeout(() => {
-          window.location.replace("/home");
+          window.location.replace("/home/load-data");
         }, 100); // 2 seconds delay
       } else {
         toast({
