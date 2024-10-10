@@ -1,9 +1,5 @@
 "use client";
 
-import { companyService } from "@/lib/supabase/services/company";
-import { customerService } from "@/lib/supabase/services/customer";
-import { invoiceService } from "@/lib/supabase/services/invoice";
-import { productService } from "@/lib/supabase/services/product";
 import { useCompanyStore } from "@/store/companyStore";
 import { useCustomersStore } from "@/store/customersStore";
 import { useInvoicesStore } from "@/store/invoicesStore";
@@ -15,41 +11,51 @@ import React, { useEffect } from "react";
 export default function LoadData() {
   const router = useRouter();
   const { isLoaded, setIsLoaded, hydrated } = useIsLoadedStore();
-  const { setCompany } = useCompanyStore();
-  const { setCustomers } = useCustomersStore();
-  const { setAllInvoices } = useInvoicesStore();
-  const { setProducts } = useProductsStore();
+  const { syncCompany } = useCompanyStore();
+  const { syncCustomers } = useCustomersStore();
+  const { syncInvoices } = useInvoicesStore();
+  const { syncProducts } = useProductsStore();
   useEffect(() => {
     if (!hydrated) return;
     if (!isLoaded) {
-      const loadData = async function() {
-        const [fetchedInvoices, fetchedProducts, company, fetchedCustomers] =
-          await Promise.all([
-            invoiceService.getInvoices(),
-            productService.getProductsByCompany(),
-            companyService.getCompanyById(),
-            customerService.getCustomersByCompany(),
-          ]);
-
-        setCompany(company!);
-        setCustomers(fetchedCustomers);
-        setAllInvoices(fetchedInvoices);
-        setProducts(fetchedProducts);
-
+      const syncData = async () => {
+        await Promise.all([
+          syncCompany(),
+          syncCustomers(),
+          syncInvoices(),
+          syncProducts(),
+        ]);
         setIsLoaded();
       };
-      loadData();
+      syncData();
+      // const loadData = async function() {
+      //   const [fetchedInvoices, fetchedProducts, company, fetchedCustomers] =
+      //     await Promise.all([
+      //       invoiceService.getInvoices(),
+      //       productService.getProductsByCompany(),
+      //       companyService.getCompanyById(),
+      //       customerService.getCustomersByCompany(),
+      //     ]);
+      //
+      //   setCompany(company!);
+      //   setCustomers(fetchedCustomers);
+      //   setAllInvoices(fetchedInvoices);
+      //   setProducts(fetchedProducts);
+      //
+      //   setIsLoaded();
+      // };
+      // loadData();
     }
     router.push("/home");
   }, [
-    router,
-    isLoaded,
-    setIsLoaded,
-    setAllInvoices,
-    setCompany,
-    setCustomers,
-    setProducts,
+    syncProducts,
+    syncInvoices,
+    syncCustomers,
+    syncCompany,
     hydrated,
+    isLoaded,
+    router,
+    setIsLoaded,
   ]);
   return (
     <div>{isLoaded ? "Se han cargado los datos" : "Cargando tus datos..."}</div>
