@@ -130,7 +130,7 @@ export function Navigation() {
         />
       )} */}
       <div className="flex top-0 h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
-        <nav className="hidden flex-col gap-6 text-lg items-end font-medium md:flex md:flex-row md:gap-5 md:text-sm lg:gap-6 z-50">
+        <nav className="hidden flex-col gap-6 text-lg items-end font-medium lg:flex lg:flex-row md:gap-5 lg:text-sm lg:gap-6 z-50">
           <Link
             href="#"
             className="flex items-center gap-2 text-lg font-semibold md:text-base"
@@ -158,7 +158,7 @@ export function Navigation() {
             <Button
               variant="outline"
               size="icon"
-              className="shrink-0 md:hidden"
+              className="shrink-0 lg:hidden"
             >
               <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle navigation menu</span>

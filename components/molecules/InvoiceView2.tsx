@@ -298,7 +298,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
         <Controller
           name="customer_id"
           control={control}
-          rules={{ required: "Customer is required" }}
+          rules={{ required: "Debes asociar un cliente a tu factura" }}
           render={({ field }) => (
             <Select onValueChange={field.onChange} value={field.value}>
               <SelectTrigger>
@@ -624,6 +624,7 @@ const ProductSelect = ({
   <Controller
     name={`invoice_items.${index}.product_id`}
     control={control}
+    rules={{ required: "Debes agregar un producto" }}
     render={({ field }) => (
       <Select
         onValueChange={(value) => {
@@ -676,6 +677,7 @@ const QuantityInput = ({ index, control }: InputProps) => (
   <Controller
     name={`invoice_items.${index}.quantity`}
     control={control}
+    rules={{ min: 1 }}
     render={({ field }) => (
       <Input
         type="number"

@@ -16,10 +16,12 @@ export default function CreateInvoice() {
     }
   };
   return (
-    <InvoiceView2
-      invoice={undefined}
-      isEditable={true}
-      onSave={handleSaveInvoice}
-    />
+    <section className="lg:px-7 xl:px-10">
+      <InvoiceView2
+        invoice={undefined}
+        isEditable={true}
+        onSave={handleSaveInvoice}
+      />
+    </section>
   );
 }
