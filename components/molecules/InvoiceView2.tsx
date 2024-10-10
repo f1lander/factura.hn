@@ -186,7 +186,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     handleSubmit,
     watch,
     setValue,
-    formState: { isSubmitting, isDirty, isValid, errors },
+    formState: { isDirty, isValid, errors },
   } = useForm<Invoice>({
     defaultValues: invoice || {
       company_id: "",
@@ -279,6 +279,8 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   };
 
   const onSubmit = (data: Invoice) => {
+    console.log("Y si envío los datos así, se ve...", data);
+    return;
     onSave(data);
   };
 
@@ -290,14 +292,13 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     return true;
   };
 
-  console.log(errors);
-
   const renderEditableContent = () => (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="grid gap-4">
         <Controller
           name="customer_id"
           control={control}
+          rules={{ required: "Customer is required" }}
           render={({ field }) => (
             <Select onValueChange={field.onChange} value={field.value}>
               <SelectTrigger>
@@ -451,6 +452,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
           Agregar Producto o Servicio
         </Button>
       </div>
+      {/* Inhabilita el botón si el formulario no se ha tocado y todas las entradas aún son inválidas */}
       <Button type="submit" className="mt-4" disabled={!isDirty || !isValid}>
         Generar Factura
       </Button>
@@ -590,7 +592,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
       <CardFooter className="flex flex-row items-center justify-between border-t bg-muted/50 px-6 py-3">
         <div className="text-xs text-muted-foreground">
           Factura creada:{" "}
-          <time dateTime={watch("created_at")}>
+          <time dateTime={watch("created_at")} suppressHydrationWarning>
             {new Date(watch("created_at")).toLocaleString()}
           </time>
         </div>
