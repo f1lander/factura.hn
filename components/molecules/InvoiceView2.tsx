@@ -187,6 +187,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     watch,
     setValue,
     formState: { isDirty, isValid, errors },
+    setError,
   } = useForm<Invoice>({
     defaultValues: invoice || {
       company_id: "",
@@ -279,8 +280,11 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   };
 
   const onSubmit = (data: Invoice) => {
-    console.log("Y si envío los datos así, se ve...", data);
-    return;
+    if (data.invoice_items.length < 1)
+      setError("invoice_items", {
+        type: "required",
+        message: "At least one invoice",
+      });
     onSave(data);
   };
 
