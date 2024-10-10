@@ -1,7 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -18,37 +17,27 @@ import InvoiceDashboardCharts from "@/components/organisms/InvoiceDashboardChart
 import Link from "next/link";
 import { FileText, PencilIcon, PlusCircleIcon } from "lucide-react";
 import GenericEmptyState from "@/components/molecules/GenericEmptyState";
+import { useInvoicesStore } from "@/store/invoicesStore";
+import { productService } from "@/lib/supabase/services/product";
+import { customerService } from "@/lib/supabase/services/customer";
+import { companyService } from "@/lib/supabase/services/company";
 
 export default function Dashboard() {
-  const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
+  // get ALL stores here.
+  const { allInvoices, setAllInvoices } = useInvoicesStore();
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateRange, setDateRange] = useState<{ start: Date | undefined; end: Date | undefined }>({ start: undefined, end: undefined });
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(["pending", "paid", "cancelled"]);
+  const [dateRange, setDateRange] = useState<{
+    start: Date | undefined;
+    end: Date | undefined;
+  }>({ start: undefined, end: undefined });
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([
+    "pending",
+    "paid",
+    "cancelled",
+  ]);
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  useEffect(() => {
-    const initializeData = async () => {
-      try {
-        await fetchInvoices();
-
-      } catch (error) {
-        console.error("Error initializing data:", error);
-      }
-    };
-
-    initializeData();
-  }, []);
-
-  useEffect(() => {
-    applyFilters();
-  }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
-
-  const fetchInvoices = async () => {
-    const fetchedInvoices = await invoiceService.getInvoices();
-    setAllInvoices(fetchedInvoices);
-    setFilteredInvoices(fetchedInvoices);
-  };
 
   const applyFilters = useCallback(() => {
     let filtered = allInvoices;
@@ -56,28 +45,39 @@ export default function Dashboard() {
     // Apply search filter
     if (debouncedSearchTerm) {
       const lowerSearchTerm = debouncedSearchTerm.toLowerCase();
-      filtered = filtered.filter(invoice =>
-        invoice.invoice_number.toLowerCase().includes(lowerSearchTerm) ||
-        invoice.customers.name.toLowerCase().includes(lowerSearchTerm) ||
-        invoice.total.toString().includes(lowerSearchTerm) ||
-        invoice.invoice_items.some(item => item.description.toLowerCase().includes(lowerSearchTerm))
+      filtered = filtered.filter(
+        (invoice) =>
+          invoice.invoice_number.toLowerCase().includes(lowerSearchTerm) ||
+          invoice.customers.name.toLowerCase().includes(lowerSearchTerm) ||
+          invoice.total.toString().includes(lowerSearchTerm) ||
+          invoice.invoice_items.some((item) =>
+            item.description.toLowerCase().includes(lowerSearchTerm),
+          ),
       );
     }
 
     // Apply status filter
     if (selectedStatuses.length > 0) {
-      filtered = filtered.filter(invoice => {
-        const invoiceStatus = invoice.status?.toLowerCase() || 'pending'; // Default to 'pending' if status is undefined
-        return selectedStatuses.some(status => status.toLowerCase() === invoiceStatus);
+      filtered = filtered.filter((invoice) => {
+        const invoiceStatus = invoice.status?.toLowerCase() || "pending"; // Default to 'pending' if status is undefined
+        return selectedStatuses.some(
+          (status) => status.toLowerCase() === invoiceStatus,
+        );
       });
     }
 
     setFilteredInvoices(filtered);
   }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
-  const handleDateSearch = () => {
 
+  // As soon as you enter /home, you'll load the necessary data
+
+  useEffect(() => {
+    applyFilters();
+  }, [allInvoices, debouncedSearchTerm, selectedStatuses, applyFilters]);
+
+  const handleDateSearch = () => {
     if (dateRange.start && dateRange.end) {
-      const filtered = filteredInvoices.filter(invoice => {
+      const filtered = filteredInvoices.filter((invoice) => {
         const invoiceDate = new Date(invoice.date);
         return invoiceDate >= dateRange.start! && invoiceDate <= dateRange.end!;
       });
@@ -85,22 +85,28 @@ export default function Dashboard() {
     }
   };
 
-
   // Widgets Section
   const WidgetsSection = () => {
     const currentDate = new Date();
-    const oneWeekAgo = new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const oneWeekAgo = new Date(
+      currentDate.getTime() - 7 * 24 * 60 * 60 * 1000,
+    );
+    const firstDayOfMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      1,
+    );
 
     const weeklyRevenue = filteredInvoices
-      .filter(invoice => new Date(invoice.date) >= oneWeekAgo)
+      .filter((invoice) => new Date(invoice.date) >= oneWeekAgo)
       .reduce((sum, invoice) => sum + invoice.total, 0);
 
     const monthlyRevenue = filteredInvoices
-      .filter(invoice => new Date(invoice.date) >= firstDayOfMonth)
+      .filter((invoice) => new Date(invoice.date) >= firstDayOfMonth)
       .reduce((sum, invoice) => sum + invoice.total, 0);
 
-    const weeklyPercentage = monthlyRevenue !== 0 ? (weeklyRevenue / monthlyRevenue) * 100 : 0;
+    const weeklyPercentage =
+      monthlyRevenue !== 0 ? (weeklyRevenue / monthlyRevenue) * 100 : 0;
 
     return (
       <div className="w-full grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -112,7 +118,13 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardFooter>
-            <Link className="bg-[#00A1D4] text-lg w-56 p-4 rounded-md text-white font-semibold flex gap-4" href="/home/invoices"><PencilIcon />Ir a Facturas</Link>
+            <Link
+              className="bg-[#00A1D4] text-lg w-56 p-4 rounded-md text-white font-semibold flex gap-4"
+              href="/home/invoices"
+            >
+              <PencilIcon />
+              Ir a Facturas
+            </Link>
           </CardFooter>
         </Card>
         <Card>
@@ -154,7 +166,6 @@ export default function Dashboard() {
     );
   };
 
-
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <div className="flex flex-col p-6 sm:gap-4 lg:p-12">
@@ -166,13 +177,12 @@ export default function Dashboard() {
                 <GenericEmptyState
                   icon={FileText}
                   title="No tienes facturas aún"
-                  description="Comienza a crear facturas para tus clientes y visualiza tu progreso."            
-                /></div>
-            </>) : (
-
-
+                  description="Comienza a crear facturas para tus clientes y visualiza tu progreso."
+                />
+              </div>
+            </>
+          ) : (
             <InvoiceDashboardCharts invoices={filteredInvoices} />
-
           )}
         </main>
       </div>

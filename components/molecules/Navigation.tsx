@@ -22,7 +22,12 @@ import {
 import supabaseClient from "@/lib/supabase/client";
 import { User } from "@supabase/auth-js";
 import { logout } from "@/lib/supabase/auth";
-import Banner from "./Banner";
+// import Banner from "./Banner";
+import { useIsLoadedStore } from "@/store/isLoadedStore";
+import { useCompanyStore } from "@/store/companyStore";
+import { useCustomersStore } from "@/store/customersStore";
+import { useInvoicesStore } from "@/store/invoicesStore";
+import { useProductsStore } from "@/store/productsStore";
 
 const navItems = [
   { href: "/home/", label: "Dashboard" },
@@ -69,6 +74,11 @@ const FacturaLogo = () => (
 );
 
 export function Navigation() {
+  const { resetCompany } = useCompanyStore();
+  const { resetCustomers } = useCustomersStore();
+  const { resetInvoices } = useInvoicesStore();
+  const { resetIsLoaded } = useIsLoadedStore();
+  const { resetProducts } = useProductsStore();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,6 +110,11 @@ export function Navigation() {
   }, [supabase]);
 
   const handleSignOut = async () => {
+    resetProducts();
+    resetIsLoaded();
+    resetInvoices();
+    resetCustomers();
+    resetCompany();
     setIsLoading(true);
     await logout();
     setUser(null);
@@ -177,6 +192,11 @@ export function Navigation() {
           </SheetContent>
         </Sheet>
         <div className="profile-menu flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4 justify-end">
+          {/* <button */}
+          {/*   onClick={() => console.log("The value of isLoaded is: ", isLoaded)} */}
+          {/* > */}
+          {/*   press me for checking the value of isLoaded */}
+          {/* </button> */}
           {isLoading ? (
             <p>Cargando...</p>
           ) : user ? (

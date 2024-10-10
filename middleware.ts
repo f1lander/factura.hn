@@ -11,33 +11,23 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  // supabase service for interacting with the database
-  // yes, we're interacting with databases before the request
-  // arrives our app
   const supabase = createClient();
 
-  // Before the user makes a request, we try to get information about the user
-  // by making use of the getUser() method
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // This is a flag that tells us the path we're trying to access
-  // needs company data
   const requiresCompanyData = [
     "/home",
     "/home/products",
     "/home/customers",
   ].some((path) => request.nextUrl.pathname.startsWith(path));
 
-  console.log("requiresCompanyData", requiresCompanyData);
-
   if (!user) {
     if (
       !request.nextUrl.pathname.startsWith("/auth/login") &&
       !request.nextUrl.pathname.startsWith("/auth")
     ) {
-      // No user, redirect to the login page
       const loginUrl = new URL("/auth/login", request.url);
       return NextResponse.redirect(loginUrl);
     }
@@ -49,10 +39,7 @@ export async function middleware(request: NextRequest) {
       .eq("user_id", user.id)
       .single();
 
-    console.log("company", company);
-
     if (requiresCompanyData && company === null) {
-      console.log("No company data found, redirect to company setup");
       const urlWithQuery = new URL("/home/settings", request.url);
       urlWithQuery.searchParams.set("showToast", "companySetupRequired");
       return NextResponse.redirect(urlWithQuery);
