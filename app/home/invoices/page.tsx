@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -15,15 +15,15 @@ import { Progress } from "@/components/ui/progress";
 
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
+// import {
+//   Drawer,
+//   DrawerClose,
+//   DrawerContent,
+//   DrawerDescription,
+//   DrawerFooter,
+//   DrawerHeader,
+//   DrawerTitle,
+// } from "@/components/ui/drawer";
 
 import { Invoice, invoiceService } from "@/lib/supabase/services/invoice";
 import InvoiceView from "@/components/molecules/InvoiceView2";
@@ -32,11 +32,13 @@ import { useAccount, useDebounce, useMediaQuery } from "@/lib/hooks";
 import { toast } from "@/components/ui/use-toast";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
-import { PlusCircleIcon } from "lucide-react";
+// import { PlusCircleIcon } from "lucide-react";
 import CreateInvoiceButton from "@/components/molecules/CreateInvoiceButton";
+import { useInvoicesStore } from "@/store/invoicesStore";
 
 export default function Invoices() {
-  const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
+  // const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
+  const { allInvoices, syncInvoices } = useInvoicesStore();
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [weeklyRevenue, setWeeklyRevenue] = useState(0);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
@@ -66,11 +68,12 @@ export default function Invoices() {
   console.log("Company:", company);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  // const isDesktop = useMediaQuery("(min-width: 768px)");
   useEffect(() => {
     const initializeData = async () => {
       try {
-        await fetchInvoices();
+        // await fetchInvoices();
+        setFilteredInvoices(allInvoices);
         await fetchRevenue();
       } catch (error) {
         console.error("Error initializing data:", error);
@@ -79,17 +82,17 @@ export default function Invoices() {
     };
 
     initializeData();
-  }, []);
+  }, [allInvoices]);
 
   useEffect(() => {
     applyFilters();
   }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
 
-  const fetchInvoices = async () => {
-    const fetchedInvoices = await invoiceService.getInvoices();
-    setAllInvoices(fetchedInvoices);
-    setFilteredInvoices(fetchedInvoices);
-  };
+  // const fetchInvoices = async () => {
+  //   const fetchedInvoices = await invoiceService.getInvoices();
+  //   setAllInvoices(fetchedInvoices);
+  //   setFilteredInvoices(fetchedInvoices);
+  // };
 
   const fetchRevenue = async () => {
     const weeklyRev = await invoiceService.getTotalRevenue("week");
@@ -108,16 +111,17 @@ export default function Invoices() {
     }
   };
 
-  const handleCreateInvoice = () => {
-    setSelectedInvoice(undefined);
-    setIsCreatingInvoice(true);
-    setIsOpen(true);
-  };
+  // const handleCreateInvoice = () => {
+  //   setSelectedInvoice(undefined);
+  //   setIsCreatingInvoice(true);
+  //   setIsOpen(true);
+  // };
 
   const handleSaveInvoice = async (invoice: Invoice) => {
     try {
       let savedInvoice: Invoice | null;
 
+      // After creating the invoice, we need to sync it
       if (isCreatingInvoice) {
         savedInvoice = await invoiceService.createInvoiceWithItems(invoice);
       } else {
@@ -133,7 +137,10 @@ export default function Invoices() {
 
       setSelectedInvoice(savedInvoice);
       setIsCreatingInvoice(false);
-      fetchInvoices();
+      // sync invoices
+      syncInvoices();
+      setFilteredInvoices(allInvoices);
+      // fetchInvoices();
       setIsOpen(false);
     } catch (error) {
       console.error("An error occurred while saving the invoice:", error);
@@ -219,7 +226,8 @@ export default function Invoices() {
       try {
         await invoiceService.updateInvoicesStatus(invoiceIds, newStatus);
         // Refresh the invoices list after updating
-        fetchInvoices();
+        // fetchInvoices();
+        syncInvoices();
         toast({
           title: "Status Updated",
           description: `Successfully updated ${invoiceIds.length} invoice(s) to ${newStatus}`,
@@ -233,7 +241,7 @@ export default function Invoices() {
         });
       }
     },
-    [fetchInvoices],
+    [syncInvoices],
   );
 
   // Widgets Section
@@ -338,7 +346,7 @@ export default function Invoices() {
             </VisuallyHidden.Root>
           </DialogHeader>
           {isContentReady && (
-            <div className="h-full overflow-y-auto px-4 py-6 px-0">
+            <div className="h-full overflow-y-auto px-4 py-6">
               {(selectedInvoice || isCreatingInvoice) && company && (
                 <InvoiceView
                   invoice={selectedInvoice}

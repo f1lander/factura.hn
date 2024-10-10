@@ -33,13 +33,15 @@ import { useToast } from "@/components/ui/use-toast";
 import { PlusIcon, Trash2Icon, Users } from "lucide-react";
 import GenericEmptyState from "@/components/molecules/GenericEmptyState";
 import { DialogClose } from "@radix-ui/react-dialog";
+import { useCustomersStore } from "@/store/customersStore";
 
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  // const [customers, setCustomers] = useState<Customer[]>([]);
+  const { customers, syncCustomers } = useCustomersStore();
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null,
   );
-  const [isLoading, setIsLoading] = useState(true);
+  // const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
@@ -56,24 +58,24 @@ export default function CustomersPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
-
-  const fetchCustomers = async () => {
-    try {
-      setIsLoading(true);
-      const fetchedCustomers = await customerService.getCustomersByCompany();
-      setCustomers(fetchedCustomers);
-    } catch (err) {
-      console.error("Error al obtener clientes:", err);
-      setError(
-        "No se pudieron cargar los clientes. Por favor, intente de nuevo.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // useEffect(() => {
+  //   fetchCustomers();
+  // }, []);
+  //
+  // const fetchCustomers = async () => {
+  //   try {
+  //     setIsLoading(true);
+  //     const fetchedCustomers = await customerService.getCustomersByCompany();
+  //     setCustomers(fetchedCustomers);
+  //   } catch (err) {
+  //     console.error("Error al obtener clientes:", err);
+  //     setError(
+  //       "No se pudieron cargar los clientes. Por favor, intente de nuevo.",
+  //     );
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const handleCustomerSelect = (customer: Customer) => {
     setSelectedCustomer(customer);
@@ -92,7 +94,8 @@ export default function CustomersPage() {
       } else {
         await customerService.createCustomer(data as Customer);
       }
-      fetchCustomers();
+      // fetchCustomers();
+      syncCustomers();
       setIsFormVisible(false);
       toast({
         title: selectedCustomer ? "Cliente Actualizado" : "Cliente Creado",
@@ -142,7 +145,8 @@ export default function CustomersPage() {
       await Promise.all(
         selectedCustomers.map((id) => customerService.deleteCustomer(id)),
       );
-      fetchCustomers();
+      // fetchCustomers();
+      syncCustomers();
       setSelectedCustomers([]);
       setIsDeleteDialogOpen(false);
       toast({
@@ -161,9 +165,9 @@ export default function CustomersPage() {
     }
   };
 
-  if (isLoading) {
-    return <div className="p-12">Cargando...</div>;
-  }
+  // if (isLoading) {
+  //   return <div className="p-12">Cargando...</div>;
+  // }
 
   if (error) {
     return <div className="p-12">Error: {error}</div>;
