@@ -590,7 +590,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
       <CardFooter className="flex flex-row items-center justify-between border-t bg-muted/50 px-6 py-3">
         <div className="text-xs text-muted-foreground">
           Factura creada:{" "}
-          <time dateTime={watch("created_at")}>
+          <time dateTime={watch("created_at")} suppressHydrationWarning>
             {new Date(watch("created_at")).toLocaleString()}
           </time>
         </div>
