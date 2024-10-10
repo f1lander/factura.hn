@@ -1,4 +1,4 @@
-import { Product } from "@/lib/supabase/services/product";
+import { Product, productService } from "@/lib/supabase/services/product";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -6,6 +6,7 @@ type ProductsStore = {
   products: Product[];
   setProducts: (products: Product[]) => void;
   resetProducts: () => void;
+  syncProducts: () => void;
 };
 
 export const useProductsStore = create<ProductsStore>()(
@@ -14,6 +15,10 @@ export const useProductsStore = create<ProductsStore>()(
       products: [],
       setProducts: (products) => set({ products: products }),
       resetProducts: () => set({ products: [] }),
+      syncProducts: async () => {
+        const products = await productService.getProductsByCompany();
+        set({ products });
+      },
     }),
     {
       name: "productsStore",
