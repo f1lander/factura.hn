@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -13,13 +13,17 @@ import {
 
 import { Progress } from "@/components/ui/progress";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 
-import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+// import {
+//   Drawer,
+//   DrawerClose,
+//   DrawerContent,
+//   DrawerDescription,
+//   DrawerFooter,
+//   DrawerHeader,
+//   DrawerTitle,
+// } from "@/components/ui/drawer";
 
 import { Invoice, invoiceService } from "@/lib/supabase/services/invoice";
 import InvoiceView from "@/components/molecules/InvoiceView2";
@@ -27,19 +31,30 @@ import { InvoicesTable } from "@/components/molecules/InvoicesTable";
 import { useAccount, useDebounce, useMediaQuery } from "@/lib/hooks";
 import { toast } from "@/components/ui/use-toast";
 import { DialogTitle } from "@radix-ui/react-dialog";
-import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
-import { PlusCircleIcon } from "lucide-react";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
+// import { PlusCircleIcon } from "lucide-react";
+import CreateInvoiceButton from "@/components/molecules/CreateInvoiceButton";
+import { useInvoicesStore } from "@/store/invoicesStore";
 
 export default function Invoices() {
-  const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
+  // const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
+  const { allInvoices, syncInvoices } = useInvoicesStore();
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [weeklyRevenue, setWeeklyRevenue] = useState(0);
-  const [monthlyRevenue, setMonthlyRevenue] = useState(0); const [selectedInvoice, setSelectedInvoice] = useState<Invoice | undefined>();
+  const [monthlyRevenue, setMonthlyRevenue] = useState(0);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | undefined>();
   const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateRange, setDateRange] = useState<{ start: Date | undefined; end: Date | undefined }>({ start: undefined, end: undefined });
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(["pending", "paid", "cancelled"]);
+  const [dateRange, setDateRange] = useState<{
+    start: Date | undefined;
+    end: Date | undefined;
+  }>({ start: undefined, end: undefined });
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([
+    "pending",
+    "paid",
+    "cancelled",
+  ]);
   const { company } = useAccount();
   const [isContentReady, setIsContentReady] = useState(false);
 
@@ -53,11 +68,12 @@ export default function Invoices() {
   console.log("Company:", company);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  // const isDesktop = useMediaQuery("(min-width: 768px)");
   useEffect(() => {
     const initializeData = async () => {
       try {
-        await fetchInvoices();
+        // await fetchInvoices();
+        setFilteredInvoices(allInvoices);
         await fetchRevenue();
       } catch (error) {
         console.error("Error initializing data:", error);
@@ -66,17 +82,17 @@ export default function Invoices() {
     };
 
     initializeData();
-  }, []);
+  }, [allInvoices]);
 
   useEffect(() => {
     applyFilters();
   }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
 
-  const fetchInvoices = async () => {
-    const fetchedInvoices = await invoiceService.getInvoices();
-    setAllInvoices(fetchedInvoices);
-    setFilteredInvoices(fetchedInvoices);
-  };
+  // const fetchInvoices = async () => {
+  //   const fetchedInvoices = await invoiceService.getInvoices();
+  //   setAllInvoices(fetchedInvoices);
+  //   setFilteredInvoices(fetchedInvoices);
+  // };
 
   const fetchRevenue = async () => {
     const weeklyRev = await invoiceService.getTotalRevenue("week");
@@ -88,7 +104,6 @@ export default function Invoices() {
   };
 
   const handleInvoiceSelect = async (invoice: Invoice) => {
-
     if (invoice) {
       setSelectedInvoice(invoice);
       setIsCreatingInvoice(false);
@@ -96,20 +111,24 @@ export default function Invoices() {
     }
   };
 
-  const handleCreateInvoice = () => {
-    setSelectedInvoice(undefined);
-    setIsCreatingInvoice(true);
-    setIsOpen(true);
-  };
+  // const handleCreateInvoice = () => {
+  //   setSelectedInvoice(undefined);
+  //   setIsCreatingInvoice(true);
+  //   setIsOpen(true);
+  // };
 
   const handleSaveInvoice = async (invoice: Invoice) => {
     try {
       let savedInvoice: Invoice | null;
 
+      // After creating the invoice, we need to sync it
       if (isCreatingInvoice) {
         savedInvoice = await invoiceService.createInvoiceWithItems(invoice);
       } else {
-        savedInvoice = await invoiceService.updateInvoiceWithItems(invoice.id, invoice);
+        savedInvoice = await invoiceService.updateInvoiceWithItems(
+          invoice.id,
+          invoice,
+        );
       }
 
       if (!savedInvoice) {
@@ -118,7 +137,10 @@ export default function Invoices() {
 
       setSelectedInvoice(savedInvoice);
       setIsCreatingInvoice(false);
-      fetchInvoices();
+      // sync invoices
+      syncInvoices();
+      setFilteredInvoices(allInvoices);
+      // fetchInvoices();
       setIsOpen(false);
     } catch (error) {
       console.error("An error occurred while saving the invoice:", error);
@@ -129,7 +151,10 @@ export default function Invoices() {
     setSearchTerm(searchTerm);
   };
 
-  const handleDateRangeChange = (startDate: Date | undefined, endDate: Date | undefined) => {
+  const handleDateRangeChange = (
+    startDate: Date | undefined,
+    endDate: Date | undefined,
+  ) => {
     setDateRange({ start: startDate, end: endDate });
   };
 
@@ -142,28 +167,32 @@ export default function Invoices() {
     // Apply search filter
     if (debouncedSearchTerm) {
       const lowerSearchTerm = debouncedSearchTerm.toLowerCase();
-      filtered = filtered.filter(invoice =>
-        invoice.invoice_number.toLowerCase().includes(lowerSearchTerm) ||
-        invoice.customers.name.toLowerCase().includes(lowerSearchTerm) ||
-        invoice.total.toString().includes(lowerSearchTerm) ||
-        invoice.invoice_items.some(item => item.description.toLowerCase().includes(lowerSearchTerm))
+      filtered = filtered.filter(
+        (invoice) =>
+          invoice.invoice_number.toLowerCase().includes(lowerSearchTerm) ||
+          invoice.customers.name.toLowerCase().includes(lowerSearchTerm) ||
+          invoice.total.toString().includes(lowerSearchTerm) ||
+          invoice.invoice_items.some((item) =>
+            item.description.toLowerCase().includes(lowerSearchTerm),
+          ),
       );
     }
 
     // Apply status filter
     if (selectedStatuses.length > 0) {
-      filtered = filtered.filter(invoice => {
-        const invoiceStatus = invoice.status?.toLowerCase() || 'pending'; // Default to 'pending' if status is undefined
-        return selectedStatuses.some(status => status.toLowerCase() === invoiceStatus);
+      filtered = filtered.filter((invoice) => {
+        const invoiceStatus = invoice.status?.toLowerCase() || "pending"; // Default to 'pending' if status is undefined
+        return selectedStatuses.some(
+          (status) => status.toLowerCase() === invoiceStatus,
+        );
       });
     }
 
     setFilteredInvoices(filtered);
   }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
   const handleDateSearch = () => {
-
     if (dateRange.start && dateRange.end) {
-      const filtered = filteredInvoices.filter(invoice => {
+      const filtered = filteredInvoices.filter((invoice) => {
         const invoiceDate = new Date(invoice.date);
         return invoiceDate >= dateRange.start! && invoiceDate <= dateRange.end!;
       });
@@ -177,53 +206,66 @@ export default function Invoices() {
       console.log("Exporting invoices:", filteredInvoices);
 
       // Simulate file download
-      const blob = new Blob([JSON.stringify(filteredInvoices, null, 2)], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify(filteredInvoices, null, 2)], {
+        type: "application/json",
+      });
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = 'invoices-export.json';
+      a.download = "invoices-export.json";
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error exporting invoices:', error);
+      console.error("Error exporting invoices:", error);
     }
   };
 
-  const handleUpdateStatus = useCallback(async (invoiceIds: string[], newStatus: string) => {
-    try {
-      await invoiceService.updateInvoicesStatus(invoiceIds, newStatus);
-      // Refresh the invoices list after updating
-      fetchInvoices();
-      toast({
-        title: "Status Updated",
-        description: `Successfully updated ${invoiceIds.length} invoice(s) to ${newStatus}`,
-      });
-    } catch (error) {
-      console.error("Error updating invoice statuses:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update invoice statuses. Please try again.",
-        variant: "destructive",
-      });
-    }
-  }, [fetchInvoices]);
+  const handleUpdateStatus = useCallback(
+    async (invoiceIds: string[], newStatus: string) => {
+      try {
+        await invoiceService.updateInvoicesStatus(invoiceIds, newStatus);
+        // Refresh the invoices list after updating
+        // fetchInvoices();
+        syncInvoices();
+        toast({
+          title: "Status Updated",
+          description: `Successfully updated ${invoiceIds.length} invoice(s) to ${newStatus}`,
+        });
+      } catch (error) {
+        console.error("Error updating invoice statuses:", error);
+        toast({
+          title: "Error",
+          description: "Failed to update invoice statuses. Please try again.",
+          variant: "destructive",
+        });
+      }
+    },
+    [syncInvoices],
+  );
 
   // Widgets Section
   const WidgetsSection = () => {
     const currentDate = new Date();
-    const oneWeekAgo = new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const oneWeekAgo = new Date(
+      currentDate.getTime() - 7 * 24 * 60 * 60 * 1000,
+    );
+    const firstDayOfMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      1,
+    );
 
     const weeklyRevenue = filteredInvoices
-      .filter(invoice => new Date(invoice.date) >= oneWeekAgo)
+      .filter((invoice) => new Date(invoice.date) >= oneWeekAgo)
       .reduce((sum, invoice) => sum + invoice.total, 0);
 
     const monthlyRevenue = filteredInvoices
-      .filter(invoice => new Date(invoice.date) >= firstDayOfMonth)
+      .filter((invoice) => new Date(invoice.date) >= firstDayOfMonth)
       .reduce((sum, invoice) => sum + invoice.total, 0);
 
-    const weeklyPercentage = monthlyRevenue !== 0 ? (weeklyRevenue / monthlyRevenue) * 100 : 0;
+    const weeklyPercentage =
+      monthlyRevenue !== 0 ? (weeklyRevenue / monthlyRevenue) * 100 : 0;
 
     return (
       <div className="w-full grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -235,7 +277,7 @@ export default function Invoices() {
             </CardDescription>
           </CardHeader>
           <CardFooter>
-            <Button className="bg-[#00A1D4] text-white text-lg font-semibold flex gap-4 p-8" onClick={handleCreateInvoice}><PlusCircleIcon />Crear factura</Button>
+            <CreateInvoiceButton />
           </CardFooter>
         </Card>
         <Card>
@@ -295,14 +337,16 @@ export default function Invoices() {
         </main>
       </div>
       {/* {isDesktop ? ( */}
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="sm:max-w-[900px] h-[90vh]">
-            <DialogHeader>
-              <VisuallyHidden.Root>
-                <DialogTitle></DialogTitle>
-              </VisuallyHidden.Root>
-            </DialogHeader>
-            {isContentReady && <div className="h-full overflow-y-auto px-4 py-6 px-0">
+      {/* This is the dialog box that opens when pressing on crear factura button */}
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-[900px] h-[90vh]">
+          <DialogHeader>
+            <VisuallyHidden.Root>
+              <DialogTitle></DialogTitle>
+            </VisuallyHidden.Root>
+          </DialogHeader>
+          {isContentReady && (
+            <div className="h-full overflow-y-auto px-4 py-6">
               {(selectedInvoice || isCreatingInvoice) && company && (
                 <InvoiceView
                   invoice={selectedInvoice}
@@ -310,10 +354,15 @@ export default function Invoices() {
                   onSave={handleSaveInvoice}
                 />
               )}
-            </div>}
-            {!isContentReady && <div className="flex items-center justify-center h-full">Loading...</div>}
-          </DialogContent>
-        </Dialog>
+            </div>
+          )}
+          {!isContentReady && (
+            <div className="flex items-center justify-center h-full">
+              Loading...
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       {/* ) : (
         <Drawer open={isOpen} onOpenChange={setIsOpen}>
           <DrawerContent>

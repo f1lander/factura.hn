@@ -244,7 +244,14 @@ export default function CompanyDataForm({
             <Label htmlFor="rtn">RTN</Label>
             <Input
               id="rtn"
-              {...register("rtn", { required: "Este campo es requerido" })}
+              {...register("rtn", {
+                required: "Este campo es requerido",
+                pattern: {
+                  value: /^(\d{4})-(\d{6})-(\d{4})$/,
+                  message: "El formato del RTN no es válido",
+                },
+              })}
+              placeholder="0000-000000-0000"
             />
             {errors.rtn && (
               <p className="text-red-500 text-sm">{errors.rtn.message}</p>
@@ -320,6 +327,7 @@ export default function CompanyDataForm({
                   message: "El formato del CAI no es válido",
                 },
               })}
+              placeholder="000000-000000000000-000000-000000-00"
             />
             {errors.cai && (
               <p className="text-red-500 text-sm">{errors.cai.message}</p>
@@ -354,6 +362,7 @@ export default function CompanyDataForm({
                       "El formato del rango de factura de inicio no es válido",
                   },
                 })}
+                placeholder="000-000-00-00000000"
               />
               {errors.range_invoice1 && (
                 <p className="text-red-500 text-sm">
@@ -374,6 +383,7 @@ export default function CompanyDataForm({
                       "El formato del rango de factura de fin no es válido",
                   },
                 })}
+                placeholder="000-000-00-00000000"
               />
               {errors.range_invoice2 && (
                 <p className="text-red-500 text-sm">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Card,
   CardContent,
@@ -19,30 +19,34 @@ import {
 } from "@/components/ui/table";
 import { customerService, Customer } from "@/lib/supabase/services/customer";
 import { CustomerForm } from "@/components/molecules/CustomerForm";
+import { useCustomersStore } from "@/store/customersStore";
 
 const CustomersPage = () => {
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // const [customers, setCustomers] = useState<Customer[]>([]);
+  const { customers, syncCustomers } = useCustomersStore();
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null,
+  );
+  // const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
 
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
+  // useEffect(() => {
+  //   fetchCustomers();
+  // }, []);
 
-  const fetchCustomers = async () => {
-    try {
-      setIsLoading(true);
-      const fetchedCustomers = await customerService.getCustomersByCompany();
-      setCustomers(fetchedCustomers);
-    } catch (err) {
-      console.error("Error fetching customers:", err);
-      setError("Failed to fetch customers. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // const fetchCustomers = async () => {
+  //   try {
+  //     setIsLoading(true);
+  //     const fetchedCustomers = await customerService.getCustomersByCompany();
+  //     setCustomers(fetchedCustomers);
+  //   } catch (err) {
+  //     console.error("Error fetching customers:", err);
+  //     setError("Failed to fetch customers. Please try again.");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const handleCustomerSelect = (customer: Customer) => {
     setSelectedCustomer(customer);
@@ -63,7 +67,8 @@ const CustomersPage = () => {
         // Create new customer
         await customerService.createCustomer(data as Customer);
       }
-      fetchCustomers(); // Refresh the customer list
+      // fetchCustomers(); // Refresh the customer list
+      syncCustomers();
       setIsFormVisible(false);
     } catch (err) {
       console.error("Error saving customer:", err);
@@ -76,9 +81,9 @@ const CustomersPage = () => {
     setSelectedCustomer(null);
   };
 
-  if (isLoading) {
-    return <div className="p-12">Cargando...</div>;
-  }
+  // if (isLoading) {
+  //   return <div className="p-12">Cargando...</div>;
+  // }
 
   if (error) {
     return <div className="p-12">Error: {error}</div>;
@@ -86,7 +91,9 @@ const CustomersPage = () => {
 
   return (
     <main className="flex flex-col xl:flex-row items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-      <div className={`w-full ${isFormVisible ? 'xl:w-1/2' : 'xl:w-full'} transition-all duration-300 ease-in-out`}>
+      <div
+        className={`w-full ${isFormVisible ? "xl:w-1/2" : "xl:w-full"} transition-all duration-300 ease-in-out`}
+      >
         <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
