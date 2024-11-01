@@ -7,11 +7,11 @@ import { format, parse } from "date-fns";
 const convertDateFormat = (inputDate: string): string => {
   // Check if the input is in the correct format
   if (!/^\d{4}-\d{2}-\d{2}$/.test(inputDate)) {
-    throw new Error('Invalid date format. Expected YYYY-MM-DD');
+    throw new Error("Invalid date format. Expected YYYY-MM-DD");
   }
 
   // Split the input string into year, month, and day
-  const [year, month, day] = inputDate.split('-');
+  const [year, month, day] = inputDate.split("-");
 
   // Return the formatted date string
   return `${day}/${month}/${year}`;
@@ -34,7 +34,7 @@ export interface Company {
   range_invoice2: string;
   email: string;
   template_url?: string;
-  logo_url?: string;
+  logo_url: string | null;
 }
 
 class CompanyService extends BaseService {
@@ -49,9 +49,7 @@ class CompanyService extends BaseService {
     return companyId;
   }
 
-
   async getCompany(userId: string): Promise<Company | null> {
-   
     if (!userId) {
       console.error("No authenticated user found");
       return null;

@@ -65,8 +65,8 @@ export default function Settings() {
   }
 
   return (
-    <div className="container mx-auto">
+    <main className="container mx-auto">
       <CompanyDataForm initialCompany={company} />
-    </div>
+    </main>
   );
 }

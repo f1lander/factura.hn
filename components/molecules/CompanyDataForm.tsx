@@ -22,6 +22,11 @@ import { usePhoto } from "@/hooks/usePhoto";
 import CloudIcon from "./icons/CloudIcon";
 import { useRouter } from "next/navigation";
 
+/** The fact that initialCompany can be null is extremely important:
+ *
+ * If the initialCompany is null, then it means that we have a new user and it'll
+ * change the actions to be taken from now on
+ * */
 interface CompanyDataFormProps {
   initialCompany: Company | null;
 }
@@ -37,7 +42,8 @@ export default function CompanyDataForm({
 
   // In case there's already a company, then get the logo_url with a presigned url
   useEffect(() => {
-    if (initialCompany) {
+    if (initialCompany !== null && initialCompany.logo_url !== null) {
+      console.log("The value of initialCompany is: ", initialCompany.logo_url);
       supabase()
         .storage.from("company-logos")
         .createSignedUrl(initialCompany.logo_url!, 600)
@@ -46,6 +52,8 @@ export default function CompanyDataForm({
             return console.log("There was an error fetching the image");
           setPhoto(value.data.signedUrl);
         });
+    } else {
+      setPhoto("/placeholder.jpg");
     }
   }, [initialCompany, setPhoto]);
   const {
