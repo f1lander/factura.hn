@@ -76,6 +76,9 @@ export default function CustomersPage() {
   //     setIsLoading(false);
   //   }
   // };
+  //
+  //
+  // Added a comment here
 
   const handleCustomerSelect = (customer: Customer) => {
     setSelectedCustomer(customer);
