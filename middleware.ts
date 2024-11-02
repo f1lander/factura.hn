@@ -1,8 +1,7 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-// Here's where we get information about the incoming request
-// let's make comments for personal understanding
 export async function middleware(request: NextRequest) {
   // here we create an instance of the response
   let response = NextResponse.next({
