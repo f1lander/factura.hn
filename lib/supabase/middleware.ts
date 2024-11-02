@@ -6,6 +6,16 @@ import {
   routesThatRequireCompanyData,
 } from "./routeRestrictionsLists";
 
+/**
+ * Even though the name of the function is updateSession, it also performs
+ * authentication, which it shouldn't (Single responsibility principle).
+ *
+ * The thing is that I still don't know a way to chain a restrictRoutes middleware,
+ * maybe it could be by passing the response object incluing both all Supabase cookies and
+ * user object for checking current session.
+ *
+ * If you can find out a way to implement that, I'd be glad to know your solution :)
+ * */
 export async function updateSession(request: NextRequest) {
   const isRouteBlockedForGuests: boolean = blockedRoutesForGuests.some(
     (route) => {
@@ -67,7 +77,7 @@ export async function updateSession(request: NextRequest) {
 
   /** Redirect to settings page in case a user hasn't added data about their company */
   if (!isGuest) {
-    // TODO: Write a separate function that checks if the company exists
+    // TODO: Write a separate function that checks if the company exists so that it becomes more readable
     const { data: company } = await supabase
       .from("companies")
       .select("*")
