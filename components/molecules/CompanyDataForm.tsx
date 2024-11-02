@@ -127,7 +127,7 @@ export default function CompanyDataForm({
           description:
             "Los datos de la compañía se han guardado correctamente. En unos instantes te redirigiremos a la página de facturas.",
         });
-        router.push("/home/invoices");
+        router.push("/home/load-data");
       }
     } catch (error) {
       console.error("Error saving company data:", error);
