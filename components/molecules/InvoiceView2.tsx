@@ -234,7 +234,8 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     };
 
     fetchData();
-  }, [company?.range_invoice1]);
+    // como esto no ha cambiado, entonces no se ejecuta
+  }, []);
 
   useEffect(() => {
     if (lastInvoiceNumber && !invoice) {
@@ -280,6 +281,12 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   };
 
   const onSubmit = (data: Invoice) => {
+    const { subtotal, total, tax } = invoiceService.computeInvoiceData(
+      data.invoice_items,
+    );
+    data.subtotal = subtotal;
+    data.total = total;
+    data.tax = tax;
     if (data.invoice_items.length < 1)
       setError("invoice_items", {
         type: "required",

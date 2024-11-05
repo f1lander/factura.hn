@@ -1,4 +1,4 @@
-import { BaseService, Table } from './BaseService';
+import { BaseService, Table } from "./BaseService";
 import { PostgrestError } from "@supabase/supabase-js";
 
 export interface Invoice {
@@ -26,7 +26,7 @@ export interface Invoice {
     rtn: string;
   };
   invoice_items: InvoiceItem[];
-  status: 'pending' | 'paid' | 'cancelled';
+  status: "pending" | "paid" | "cancelled";
   generated_invoice_id?: string | null;
   s3_key?: string | null;
   s3_url?: string | null;
@@ -45,7 +45,7 @@ export interface InvoiceItem {
 }
 
 class InvoiceService extends BaseService {
-  private tableName: Table = 'invoices';
+  private tableName: Table = "invoices";
 
   // Helper method to ensure company ID is available
   private async ensureCompanyIdForInvoice(): Promise<string | null> {
@@ -56,28 +56,54 @@ class InvoiceService extends BaseService {
     return companyId;
   }
 
+  computeInvoiceData(invoiceItems: InvoiceItem[]): {
+    subtotal: number;
+    tax: number;
+    total: number;
+  } {
+    let subtotal = 0;
+    let tax = 0;
+    invoiceItems.forEach((invoiceItem) => {
+      subtotal = subtotal + invoiceItem.quantity * invoiceItem.unit_cost;
+      tax = tax + subtotal * 0.15;
+    });
+    const total = subtotal + tax;
+
+    return {
+      subtotal,
+      tax,
+      total,
+    };
+  }
+
   async searchInvoices(
     searchTerm: string,
     startDate?: Date,
     endDate?: Date,
-    statuses?: string[]
+    statuses?: string[],
   ): Promise<Invoice[]> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return [];
 
     let query = this.supabase
       .from(this.tableName)
-      .select(`
+      .select(
+        `
         *,
         customers (rtn, name, email),
         invoice_items (*)
-      `)
-      .eq('company_id', companyId)
-      .or(`invoice_number.ilike.%${searchTerm}%,customers.name.ilike.%${searchTerm}%,invoice_items.description.ilike.%${searchTerm}%`)
+      `,
+      )
+      .eq("company_id", companyId)
+      .or(
+        `invoice_number.ilike.%${searchTerm}%,customers.name.ilike.%${searchTerm}%,invoice_items.description.ilike.%${searchTerm}%`,
+      )
       .order("date", { ascending: false });
 
     if (startDate && endDate) {
-      query = query.gte("date", startDate.toISOString()).lte("date", endDate.toISOString());
+      query = query
+        .gte("date", startDate.toISOString())
+        .lte("date", endDate.toISOString());
     }
 
     if (statuses && statuses.length > 0) {
@@ -102,15 +128,18 @@ class InvoiceService extends BaseService {
     }));
   }
 
-  async updateInvoicesStatus(invoiceIds: string[], newStatus: string): Promise<void | PostgrestError> {
+  async updateInvoicesStatus(
+    invoiceIds: string[],
+    newStatus: string,
+  ): Promise<void | PostgrestError> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return;
 
     const { error } = await this.supabase
       .from(this.tableName)
       .update({ status: newStatus })
-      .in('id', invoiceIds)
-      .eq('company_id', companyId);
+      .in("id", invoiceIds)
+      .eq("company_id", companyId);
 
     if (error) {
       console.error("Error updating invoice statuses:", error);
@@ -124,7 +153,8 @@ class InvoiceService extends BaseService {
 
     const { data, error } = await this.supabase
       .from(this.tableName)
-      .select(`
+      .select(
+        `
         *,
         customers (rtn, name, email),
         invoice_items (
@@ -137,8 +167,9 @@ class InvoiceService extends BaseService {
           created_at,
           updated_at
         )
-      `)
-      .eq('company_id', companyId)
+      `,
+      )
+      .eq("company_id", companyId)
       .order("date", { ascending: false });
 
     if (error) {
@@ -155,13 +186,15 @@ class InvoiceService extends BaseService {
 
     const { data, error } = await this.supabase
       .from(this.tableName)
-      .select(`
+      .select(
+        `
         *,
         customers (rtn, name, email),
         invoice_items (*)
-      `)
+      `,
+      )
       .eq("id", id)
-      .eq('company_id', companyId)
+      .eq("company_id", companyId)
       .single();
 
     if (error) {
@@ -188,15 +221,23 @@ class InvoiceService extends BaseService {
     let startDate: Date;
 
     if (period === "week") {
-      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+      startDate = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 7,
+      );
     } else {
-      startDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+      startDate = new Date(
+        now.getFullYear(),
+        now.getMonth() - 1,
+        now.getDate(),
+      );
     }
 
     const { data, error } = await this.supabase
       .from(this.tableName)
       .select("total")
-      .eq('company_id', companyId)
+      .eq("company_id", companyId)
       .gte("date", startDate.toISOString())
       .lte("date", now.toISOString());
 
@@ -207,11 +248,13 @@ class InvoiceService extends BaseService {
 
     return data.reduce(
       (sum: number, invoice: { total: number }) => sum + invoice.total,
-      0
+      0,
     );
   }
 
-  async createInvoiceWithItems(invoice: Omit<Invoice, "id" | "created_at" | "updated_at">): Promise<Invoice | null> {
+  async createInvoiceWithItems(
+    invoice: Omit<Invoice, "id" | "created_at" | "updated_at">,
+  ): Promise<Invoice | null> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
 
@@ -247,7 +290,10 @@ class InvoiceService extends BaseService {
     return this.getInvoiceById(data.id);
   }
 
-  async updateInvoiceWithItems(id: string, updates: Partial<Invoice>): Promise<Invoice | null> {
+  async updateInvoiceWithItems(
+    id: string,
+    updates: Partial<Invoice>,
+  ): Promise<Invoice | null> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
 
@@ -257,7 +303,7 @@ class InvoiceService extends BaseService {
       .from(this.tableName)
       .update(invoiceUpdates)
       .eq("id", id)
-      .eq('company_id', companyId);
+      .eq("company_id", companyId);
 
     if (error) {
       console.error("Error updating invoice:", error);
@@ -275,9 +321,9 @@ class InvoiceService extends BaseService {
         return null;
       }
 
-      const itemsToInsert = invoice_items.map(item => ({
+      const itemsToInsert = invoice_items.map((item) => ({
         ...item,
-        invoice_id: id
+        invoice_id: id,
       }));
 
       const { error: insertError } = await this.supabase
@@ -294,17 +340,20 @@ class InvoiceService extends BaseService {
   }
 
   async createInvoice(
-    invoiceData: Omit<Invoice, "id" | "created_at" | "updated_at">
+    invoiceData: Omit<Invoice, "id" | "created_at" | "updated_at">,
   ): Promise<Invoice | null> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
 
-    return this.create<Invoice>(this.tableName, { ...invoiceData, company_id: companyId });
+    return this.create<Invoice>(this.tableName, {
+      ...invoiceData,
+      company_id: companyId,
+    });
   }
 
   async updateInvoice(
     id: string,
-    updates: Partial<Invoice>
+    updates: Partial<Invoice>,
   ): Promise<Invoice | null> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
@@ -313,7 +362,7 @@ class InvoiceService extends BaseService {
   }
 
   async createInvoiceItem(
-    invoiceItemData: Omit<InvoiceItem, "id" | "created_at" | "updated_at">
+    invoiceItemData: Omit<InvoiceItem, "id" | "created_at" | "updated_at">,
   ): Promise<InvoiceItem | null> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
@@ -323,7 +372,7 @@ class InvoiceService extends BaseService {
 
   async updateInvoiceItem(
     id: string,
-    updates: Partial<InvoiceItem>
+    updates: Partial<InvoiceItem>,
   ): Promise<InvoiceItem | null> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
