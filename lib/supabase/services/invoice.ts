@@ -40,8 +40,8 @@ export interface InvoiceItem {
   quantity: number;
   unit_cost: number;
   discount: number;
-  created_at: string;
   updated_at: string;
+  created_at: string;
 }
 
 class InvoiceService extends BaseService {
@@ -74,6 +74,61 @@ class InvoiceService extends BaseService {
       tax,
       total,
     };
+  }
+
+  /**
+   * Validates whether a given invoice number is valid by comparing it against the last issued invoice number.
+   *
+   * **Format Requirement**: An invoice number must strictly follow the pattern `XXX-XXX-XX-XXXXXXXX`, where:
+   * - `X` represents a digit.
+   * - It consists of four groups separated by hyphens, with lengths of 3, 3, 2, and 8 digits respectively.
+   *
+   * An invoice number is considered valid if it:
+   * - Matches the exact required format.
+   * - Follows a sequential order compared to the `lastInvoiceNumber`.
+   *
+   * @param {string} invoiceNumber - The new invoice number to validate.
+   * @param {string} lastInvoiceNumber - The last issued invoice number for comparison.
+   * @returns {boolean} - `true` if the invoice number has the correct format and is sequentially valid, otherwise `false`.
+   *
+   * @example
+   * // Returns true because "002-001-01-12345678" has the correct format and is sequentially valid.
+   * isInvoiceNumberValid("002-001-01-12345678", "003-000-01-12345678");
+   *
+   * @example
+   * // Returns false because "005" is greater than "004" in the second group.
+   * isInvoiceNumberValid("003-005-01-12345678", "003-004-01-12345678");
+   *
+   * @example
+   * // Returns false due to incorrect format (last group contains 9 digits instead of 8).
+   * isInvoiceNumberValid("003-004-01-123456789", "003-004-01-12345678");
+   *
+   * @example
+   * // Returns false due to incorrect format (missing a group).
+   * isInvoiceNumberValid("003-001-12345678", "003-001-01-12345678");
+   */
+  isInvoiceNumberValid(
+    invoiceNumber: string,
+    lastInvoiceNumber: string,
+  ): boolean {
+    const invoiceNumberStructure = /^(\d{3})-(\d{3})-(\d{2})-(\d{8})$/;
+    const invoiceNumberHasCorrectFormat: boolean =
+      invoiceNumberStructure.test(invoiceNumber) &&
+      invoiceNumberStructure.test(lastInvoiceNumber);
+    if (!invoiceNumberHasCorrectFormat) return false;
+    const invoiceNumbers = invoiceNumber
+      .match(invoiceNumberStructure)!
+      .slice(1)
+      .map(Number);
+    const lastInvoiceNumbers = lastInvoiceNumber
+      .match(invoiceNumberStructure)!
+      .slice(1)
+      .map(Number);
+    for (let i = 0; i < invoiceNumbers.length; i++) {
+      if (invoiceNumbers[i] > lastInvoiceNumbers[i]) return false;
+      if (invoiceNumbers[i] < lastInvoiceNumbers[i]) return true;
+    }
+    return true;
   }
 
   async searchInvoices(
