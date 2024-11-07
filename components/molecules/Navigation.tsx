@@ -139,7 +139,7 @@ export function Navigation() {
           </Link>
 
           {navItems.map((item) => (
-            <Link
+            <a
               key={item.href}
               href={item.href}
               className={cn(
@@ -150,7 +150,7 @@ export function Navigation() {
               )}
             >
               {item.label}
-            </Link>
+            </a>
           ))}
         </nav>
         <Sheet>
@@ -174,7 +174,7 @@ export function Navigation() {
               </Link>
               {navItems.map((item, index) => (
                 <SheetClose asChild key={index}>
-                  <Link
+                  <a
                     key={item.href}
                     href={item.href}
                     className={cn(
@@ -185,7 +185,7 @@ export function Navigation() {
                     )}
                   >
                     {item.label}
-                  </Link>
+                  </a>
                 </SheetClose>
               ))}
             </nav>

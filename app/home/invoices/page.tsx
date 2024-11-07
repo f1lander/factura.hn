@@ -88,12 +88,6 @@ export default function Invoices() {
     applyFilters();
   }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
 
-  // const fetchInvoices = async () => {
-  //   const fetchedInvoices = await invoiceService.getInvoices();
-  //   setAllInvoices(fetchedInvoices);
-  //   setFilteredInvoices(fetchedInvoices);
-  // };
-
   const fetchRevenue = async () => {
     const weeklyRev = await invoiceService.getTotalRevenue("week");
     const monthlyRev = await invoiceService.getTotalRevenue("month");
