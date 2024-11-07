@@ -186,6 +186,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     handleSubmit,
     watch,
     setValue,
+    getValues,
     formState: { isDirty, isValid, errors },
     setError,
   } = useForm<Invoice>({
@@ -217,6 +218,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     control,
     name: "invoice_items",
   });
+  const noProductsAdded: boolean = getValues("invoice_items").length === 0;
 
   const watchInvoiceItems = watch("invoice_items");
 
@@ -300,6 +302,8 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     if (!regex.test(value)) {
       return "El número de factura debe tener el formato 000-000-00-00000000";
     }
+    if (!invoiceService.isInvoiceNumberValid(value, company!.range_invoice2))
+      return "El número de factura está fuera del rango de facturación actual";
     return true;
   };
 
@@ -325,6 +329,9 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             </Select>
           )}
         />
+        {errors.customer_id && (
+          <p className="text-red-500 text-sm">{errors.customer_id.message}</p>
+        )}
         <Controller
           name="date"
           control={control}
@@ -377,41 +384,43 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             </TableHeader>
             <TableBody>
               {fields.map((item, index) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <ProductSelect
-                      index={index}
-                      products={products}
-                      control={control}
-                      setValue={setValue}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <DescriptionInput index={index} control={control} />
-                  </TableCell>
-                  <TableCell>
-                    <QuantityInput index={index} control={control} />
-                  </TableCell>
-                  <TableCell>
-                    <UnitCostInput index={index} control={control} />
-                  </TableCell>
-                  <TableCell>
-                    <DiscountInput index={index} control={control} />
-                  </TableCell>
-                  <TableCell>
-                    {`Lps. ${calculateItemTotal(index, watchInvoiceItems)}`}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => remove(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
+                <>
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <ProductSelect
+                        index={index}
+                        products={products}
+                        control={control}
+                        setValue={setValue}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <DescriptionInput index={index} control={control} />
+                    </TableCell>
+                    <TableCell>
+                      <QuantityInput index={index} control={control} />
+                    </TableCell>
+                    <TableCell>
+                      <UnitCostInput index={index} control={control} />
+                    </TableCell>
+                    <TableCell>
+                      <DiscountInput index={index} control={control} />
+                    </TableCell>
+                    <TableCell>
+                      {`Lps. ${calculateItemTotal(index, watchInvoiceItems)}`}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => remove(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                </>
               ))}
             </TableBody>
           </Table>
@@ -464,7 +473,12 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
         </Button>
       </div>
       {/* Inhabilita el botón si el formulario no se ha tocado y todas las entradas aún son inválidas */}
-      <Button type="submit" className="mt-4" disabled={!isDirty || !isValid}>
+      <Button
+        type="submit"
+        className="mt-4"
+        // disabled={noProductsAdded && (!isDirty || !isValid)}
+        disabled={noProductsAdded}
+      >
         Generar Factura
       </Button>
     </form>
