@@ -162,7 +162,6 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
   onUpdateStatus,
   selectedStatuses,
 }) => {
-  console.log("invoices", invoices);
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
