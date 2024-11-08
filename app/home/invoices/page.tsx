@@ -1,7 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
 
-// import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -15,16 +14,6 @@ import { Progress } from "@/components/ui/progress";
 
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 
-// import {
-//   Drawer,
-//   DrawerClose,
-//   DrawerContent,
-//   DrawerDescription,
-//   DrawerFooter,
-//   DrawerHeader,
-//   DrawerTitle,
-// } from "@/components/ui/drawer";
-
 import { Invoice, invoiceService } from "@/lib/supabase/services/invoice";
 import InvoiceView from "@/components/molecules/InvoiceView2";
 import { InvoicesTable } from "@/components/molecules/InvoicesTable";
@@ -35,6 +24,7 @@ import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 // import { PlusCircleIcon } from "lucide-react";
 import CreateInvoiceButton from "@/components/molecules/CreateInvoiceButton";
 import { useInvoicesStore } from "@/store/invoicesStore";
+import { useCompanyStore } from "@/store/companyStore";
 
 export default function Invoices() {
   // const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
@@ -55,24 +45,22 @@ export default function Invoices() {
     "paid",
     "cancelled",
   ]);
-  const { company } = useAccount();
-  const [isContentReady, setIsContentReady] = useState(false);
+  const { company } = useCompanyStore();
+  const [isInvoiceContentReady, setIsInvoiceContentReady] = useState(false);
 
   useEffect(() => {
     if (isOpen && company) {
-      setIsContentReady(true);
+      setIsInvoiceContentReady(true);
     } else {
-      setIsContentReady(false);
+      setIsInvoiceContentReady(false);
     }
   }, [isOpen, company]);
-  console.log("Company:", company);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   // const isDesktop = useMediaQuery("(min-width: 768px)");
   useEffect(() => {
     const initializeData = async () => {
       try {
-        // await fetchInvoices();
         setFilteredInvoices(allInvoices);
         await fetchRevenue();
       } catch (error) {
@@ -250,13 +238,15 @@ export default function Invoices() {
       1,
     );
 
-    const weeklyRevenue = filteredInvoices
-      .filter((invoice) => new Date(invoice.date) >= oneWeekAgo)
-      .reduce((sum, invoice) => sum + invoice.total, 0);
-
-    const monthlyRevenue = filteredInvoices
-      .filter((invoice) => new Date(invoice.date) >= firstDayOfMonth)
-      .reduce((sum, invoice) => sum + invoice.total, 0);
+    // console.log("The filteredInvoices are: ", filteredInvoices);
+    // const weeklyRevenue = filteredInvoices
+    //   .filter((invoice) => new Date(invoice.date) >= oneWeekAgo)
+    //   .reduce((sum, invoice) => sum + invoice.total, 0);
+    // console.log("the weekly revenue is: ", weeklyRevenue);
+    //
+    // const monthlyRevenue = filteredInvoices
+    //   .filter((invoice) => new Date(invoice.date) >= firstDayOfMonth)
+    //   .reduce((sum, invoice) => sum + invoice.total, 0);
 
     const weeklyPercentage =
       monthlyRevenue !== 0 ? (weeklyRevenue / monthlyRevenue) * 100 : 0;
@@ -339,7 +329,7 @@ export default function Invoices() {
               <DialogTitle></DialogTitle>
             </VisuallyHidden.Root>
           </DialogHeader>
-          {isContentReady && (
+          {isInvoiceContentReady && (
             <div className="h-full overflow-y-auto px-4 py-6">
               {(selectedInvoice || isCreatingInvoice) && company && (
                 <InvoiceView
@@ -350,7 +340,7 @@ export default function Invoices() {
               )}
             </div>
           )}
-          {!isContentReady && (
+          {!isInvoiceContentReady && (
             <div className="flex items-center justify-center h-full">
               Loading...
             </div>
