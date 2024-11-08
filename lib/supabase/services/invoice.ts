@@ -47,7 +47,24 @@ export interface InvoiceItem {
 class InvoiceService extends BaseService {
   private tableName: Table = "invoices";
 
-  // Helper method to ensure company ID is available
+  /**
+   * Ensures that a valid company ID is available for generating an invoice.
+   *
+   * @private
+   * @async
+   * @returns {Promise<string | null>} - Returns the company ID as a string if available; otherwise, returns null.
+   *   - Logs an error message if no company ID is found.
+   *
+   * @example
+   * async function generateInvoice() {
+   *   const companyId = await ensureCompanyIdForInvoice();
+   *   if (companyId) {
+   *     // Proceed with invoice generation
+   *   } else {
+   *     // Handle missing company ID case
+   *   }
+   * }
+   */
   private async ensureCompanyIdForInvoice(): Promise<string | null> {
     const companyId = await this.ensureCompanyId();
     if (!companyId) {
@@ -55,6 +72,42 @@ class InvoiceService extends BaseService {
     }
     return companyId;
   }
+
+  /**
+   * Computes the subtotal, tax, and total for a given list of invoice items.
+   *
+   * @param {InvoiceItem[]} invoiceItems - Array of items on the invoice. Each item should have:
+   *   - {number} quantity - Quantity of the item.
+   *   - {number} unit_cost - Unit cost of the item.
+   * @returns {{ subtotal: number, tax: number, total: number }} - Object containing:
+   *   - subtotal: Sum of all items (quantity * unit_cost for each item).
+   *   - tax: Total tax calculated at 15% of the subtotal.
+   *   - total: Final total including tax.
+   *
+   * @example
+   * const items = [
+   *   { quantity: 2, unit_cost: 50 },
+   *   { quantity: 1, unit_cost: 100 }
+   * ];
+   * computeInvoiceData(items);
+   * // Returns: { subtotal: 200, tax: 30, total: 230 }
+   *
+   * @example
+   * const items = [
+   *   { quantity: 3, unit_cost: 40 },
+   *   { quantity: 4, unit_cost: 60 }
+   * ];
+   * computeInvoiceData(items);
+   * // Returns: { subtotal: 360, tax: 54, total: 414 }
+   *
+   * @example
+   * const items = [
+   *   { quantity: 5, unit_cost: 10 },
+   *   { quantity: 2, unit_cost: 15 }
+   * ];
+   * computeInvoiceData(items);
+   * // Returns: { subtotal: 80, tax: 12, total: 92 }
+   */
 
   computeInvoiceData(invoiceItems: InvoiceItem[]): {
     subtotal: number;
