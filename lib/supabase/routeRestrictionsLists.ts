@@ -7,3 +7,6 @@ export const routesThatRequireCompanyData: RegExp[] = [
   /^\/home\/products$/,
   /^\/home\/customers$/,
 ];
+export const blockedRoutesForUsers: RegExp[] = [
+  /^\/auth.*/, // Every route that starts with /auth
+];
