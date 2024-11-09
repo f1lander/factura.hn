@@ -13,17 +13,31 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/use-toast";
+import { useIsLoadedStore } from "@/store/isLoadedStore";
+import { useCompanyStore } from "@/store/companyStore";
+import { useCustomersStore } from "@/store/customersStore";
+import { useInvoicesStore } from "@/store/invoicesStore";
+import { useProductsStore } from "@/store/productsStore";
 
 const LoginPage: React.FC = () => {
+  const { resetCompany } = useCompanyStore();
+  const { resetCustomers } = useCustomersStore();
+  const { resetInvoices } = useInvoicesStore();
+  const { resetIsLoaded } = useIsLoadedStore();
+  const { resetProducts } = useProductsStore();
   const [isLogin, setIsLogin] = useState(true);
-  const router = useRouter();
 
   const toggleForm = () => setIsLogin(!isLogin);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    // 1. Make sure to delete all kind of user data!
+    resetProducts();
+    resetIsLoaded();
+    resetInvoices();
+    resetCustomers();
+    resetCompany();
     const formData = new FormData(event.currentTarget);
 
     try {
