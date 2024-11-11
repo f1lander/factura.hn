@@ -179,9 +179,7 @@ export default function CompanyDataForm({
                 >
                   <input
                     id="coverImage"
-                    {...register("logo_url", {
-                      required: "Necesitas un logo para tu compañía",
-                    })}
+                    {...register("logo_url")}
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
@@ -253,11 +251,7 @@ export default function CompanyDataForm({
             <Input
               id="rtn"
               {...register("rtn", {
-                required: "Este campo es requerido",
-                pattern: {
-                  value: /^(\d{4})-(\d{6})-(\d{4})$/,
-                  message: "El formato del RTN no es válido",
-                },
+                required: "Este campo es requerido",                
               })}
               placeholder="0000-000000-0000"
             />
@@ -330,10 +324,6 @@ export default function CompanyDataForm({
               id="cai"
               {...register("cai", {
                 required: "Este campo es requerido",
-                pattern: {
-                  value: /^[0-9A-Fa-f]+(-[0-9A-Fa-f]+)*$/,
-                  message: "El formato del CAI no es válido",
-                },
               })}
               placeholder="000000-000000000000-000000-000000-00"
             />
