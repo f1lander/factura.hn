@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import {
   blockedRoutesForGuests,
+  blockedRoutesForUsers,
   routesThatRequireCompanyData,
 } from "./routeRestrictionsLists";
 
@@ -24,6 +25,12 @@ export async function updateSession(request: NextRequest) {
   );
 
   const routeNeedsACompany: boolean = routesThatRequireCompanyData.some(
+    (route) => {
+      return route.test(request.nextUrl.pathname);
+    },
+  );
+
+  const isRouteBlockedForUsers: boolean = blockedRoutesForUsers.some(
     (route) => {
       return route.test(request.nextUrl.pathname);
     },
@@ -88,6 +95,10 @@ export async function updateSession(request: NextRequest) {
       const urlToSettingsPage = new URL("/home/settings", request.url);
       urlToSettingsPage.searchParams.set("showToast", "companySetupRequired");
       return NextResponse.redirect(urlToSettingsPage);
+    }
+    if (isRouteBlockedForUsers) {
+      const urlToInvoicesPage = new URL("/home/invoices", request.url);
+      return NextResponse.redirect(urlToInvoicesPage);
     }
   }
 
