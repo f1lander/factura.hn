@@ -46,13 +46,20 @@ const LoginPage: React.FC = () => {
           title: "Iniciando sesión...",
           description: "Por favor espera mientras procesamos tu solicitud.",
         });
-        await login(formData);
-        // If the code reaches this section, it means the await code
-        // didn't throw
+        const { success, message } = await login(formData);
+        if (!success)
+          return toast({
+            title: "Inicio de sesión fallido",
+            description: message,
+            variant: "destructive",
+          });
+
         toast({
           title: "Inicio de sesión exitoso",
-          description: "Redirigiendo a la página de facturas...",
+          description:
+            "En unos instantes vas a ser redirigido a la pantalla principal",
         });
+
         setTimeout(() => {
           window.location.replace("/home/load-data");
         }, 100); // 2 seconds delay
@@ -132,13 +139,13 @@ const LoginPage: React.FC = () => {
                 </>
               )}
               <div className="space-y-2">
-                <Label htmlFor="email">Correo electrónico</Label>
+                <Label htmlFor="email">Correo electrónico de facturas</Label>
                 <Input
                   id="email"
                   name="email"
                   type="email"
                   required
-                  placeholder="Ingresa tu correo electrónico"
+                  placeholder="Ingresa tu correo electrónico de facturas"
                 />
               </div>
               <div className="space-y-2">
