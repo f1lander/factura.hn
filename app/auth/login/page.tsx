@@ -61,14 +61,20 @@ const LoginPage: React.FC = () => {
           title: "Creando cuenta...",
           description: "Por favor espera mientras procesamos tu solicitud.",
         });
-        await signup(formData);
+        const { success, message } = await signup(formData);
+        if (!success) {
+          return toast({
+            title: "Registro fallido",
+            variant: "destructive",
+            description: message,
+          });
+        }
+
         toast({
           title: "Cuenta creada exitosamente",
-          description: "Redirigiendo a la página de configuración...",
+          description:
+            "Revisa tu bandeja de entrada de tu correo electrónico para verificar tu cuenta y, posteriormente, iniciar sesión con ella",
         });
-        setTimeout(() => {
-          window.location.replace("/home/settings");
-        }, 1000); // 2 seconds delay
       }
     } catch (error) {
       console.error("Authentication error:", error);
@@ -101,6 +107,30 @@ const LoginPage: React.FC = () => {
         <CardContent>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4">
+              {!isLogin && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nombre</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      type="text"
+                      required
+                      placeholder="Ingresa tu nombre"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="last_name">Apellido</Label>
+                    <Input
+                      id="last_name"
+                      name="last_name"
+                      type="text"
+                      required
+                      placeholder="Ingresa tu apellido"
+                    />
+                  </div>
+                </>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email">Correo electrónico</Label>
                 <Input
