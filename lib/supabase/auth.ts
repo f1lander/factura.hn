@@ -8,7 +8,32 @@ import {
   createClientWithServiceRole,
 } from "@/lib/supabase/server";
 
-export async function login(formData: FormData) {
+/**
+ * Logs a user in using the provided form data.
+ *
+ * @async
+ * @function login
+ * @param {FormData} formData - The form data containing user login details.
+ * @returns {Promise<{ success: boolean; message: string }>} A promise that resolves to an object indicating the success status and message.
+ *
+ * @description
+ * Attempts to log a user in with an email and password extracted from the form data.
+ * If the login attempt fails, an appropriate error message is returned based on the error code:
+ * - `email_not_confirmed`: Indicates the email address has not been confirmed.
+ * - `invalid_credentials`: Indicates incorrect email or password.
+ * For any other errors, a general failure message is returned.
+ *
+ * @example
+ * const formData = new FormData();
+ * formData.append("email", "user@example.com");
+ * formData.append("password", "password123");
+ * const result = await login(formData);
+ * console.log(result); // { success: true, message: "El inicio de sesión ha sido exitoso" }
+ */
+
+export async function login(
+  formData: FormData,
+): Promise<{ success: boolean; message: string }> {
   const supabase = createClient();
 
   const data = {
@@ -19,8 +44,31 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
-    return error;
+    console.log(
+      "Something went wrong when logging user in. The error looks like this: ",
+      error,
+    );
+    if (error.code === "email_not_confirmed")
+      return {
+        success: false,
+        message:
+          "Aún no has confirmado tu dirección de correo electrónico. Revisa en tu bandeja de entrada un correo de confirmación y en él, dale click al enlace para confirmar tu correo electrónico",
+      };
+    if (error.code === "invalid_credentials")
+      return {
+        success: false,
+        message:
+          "Las credenciales son incorrectas. Revisa que tu dirección de correo electrónico y contraseña sean correctas",
+      };
+    return {
+      success: false,
+      message: "Algo salió mal con el inicio de sesión",
+    };
   }
+  return {
+    success: true,
+    message: "El inicio de sesión ha sido exitoso",
+  };
 }
 
 /**
@@ -59,6 +107,12 @@ export async function signup(
     password: formData.get("password") as string,
     name: formData.get("name") as string,
     last_name: formData.get("last_name") as string,
+    options: {
+      data: {
+        name: formData.get("name") as string,
+        last_name: formData.get("last_name") as string,
+      },
+    },
   };
 
   // 1. check if the user already exists
@@ -81,11 +135,17 @@ export async function signup(
     await supabase.auth.signUp(data);
 
   // 2.1 if something fails, return
-  if (registrationError !== null && registeredUserData === null) {
+  if (registrationError !== null || registeredUserData.user === null) {
     console.log(
       "Algo falló al crear un nuevo usuario. El error es el siguiente: ",
       registrationError,
     );
+    if (registrationError?.code === "over_email_send_rate_limit")
+      return {
+        success: false,
+        message:
+          "Has alcanzado el límite de envíos de correo de confirmación. Por favor, intenta dentro de una hora",
+      };
     return { success: false, message: "Hubo un fallo al crear el usuario" };
   }
 
