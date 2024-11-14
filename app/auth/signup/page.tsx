@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { FileInputIcon } from "lucide-react";
-import { login, signup } from "@/lib/supabase/auth";
+import { signup } from "@/lib/supabase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,14 +21,12 @@ import { useInvoicesStore } from "@/store/invoicesStore";
 import { useProductsStore } from "@/store/productsStore";
 import Link from "next/link";
 
-// TODO: put everything for signup page
 const SignupPage: React.FC = () => {
   const { resetCompany } = useCompanyStore();
   const { resetCustomers } = useCustomersStore();
   const { resetInvoices } = useInvoicesStore();
   const { resetIsLoaded } = useIsLoadedStore();
   const { resetProducts } = useProductsStore();
-  const [isLogin, setIsLogin] = useState(true);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
