@@ -2,7 +2,7 @@
 
 import React from "react";
 import { FileInputIcon } from "lucide-react";
-import { signup } from "@/lib/supabase/auth";
+import { signupv2 } from "@/lib/supabase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,15 @@ import { useCustomersStore } from "@/store/customersStore";
 import { useInvoicesStore } from "@/store/invoicesStore";
 import { useProductsStore } from "@/store/productsStore";
 import Link from "next/link";
+import { useForm, SubmitHandler } from "react-hook-form";
+
+export interface SignupForm {
+  company_name: string;
+  rtn: string;
+  full_name: string;
+  email: string;
+  password: string;
+}
 
 const SignupPage: React.FC = () => {
   const { resetCompany } = useCompanyStore();
@@ -27,21 +36,27 @@ const SignupPage: React.FC = () => {
   const { resetInvoices } = useInvoicesStore();
   const { resetIsLoaded } = useIsLoadedStore();
   const { resetProducts } = useProductsStore();
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const { register, handleSubmit } = useForm<SignupForm>({
+    defaultValues: {
+      company_name: "",
+      rtn: "",
+      full_name: "",
+      email: "",
+      password: "",
+    },
+  });
+  const onSubmit: SubmitHandler<SignupForm> = async (data) => {
+    // reset stores
     resetProducts();
     resetIsLoaded();
     resetInvoices();
     resetCustomers();
     resetCompany();
-    const formData = new FormData(event.currentTarget);
-
     toast({
       title: "Creando cuenta...",
       description: "Por favor espera mientras procesamos tu solicitud.",
     });
-    const { success, message } = await signup(formData);
+    const { success, message } = await signupv2(data);
     if (!success) {
       return toast({
         title: "Registro fallido",
@@ -75,31 +90,54 @@ const SignupPage: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nombre</Label>
+                <Label htmlFor="company_name">Nombre de la compañía</Label>
                 <Input
-                  id="name"
-                  name="name"
+                  {...register("company_name", {
+                    required: "Se requiere el nombre de la compañía",
+                  })}
+                  id="company_name"
+                  name="company_name"
                   type="text"
                   required
-                  placeholder="Ingresa tu nombre"
+                  placeholder="Ingresa el nombre de tu compañía"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="last_name">Apellido</Label>
+                <Label htmlFor="rtn">RTN</Label>
                 <Input
-                  id="last_name"
-                  name="last_name"
+                  {...register("rtn", {
+                    required: "Por favor, ingrese su RTN",
+                  })}
+                  id="rtn"
+                  name="rtn"
                   type="text"
                   required
-                  placeholder="Ingresa tu apellido"
+                  placeholder="Ingresa tu RTN"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="full_name">Nombre completo</Label>
+                <Input
+                  {...register("full_name", {
+                    required: "Por favor, ingrese su nombre completo",
+                  })}
+                  id="full_name"
+                  name="full_name"
+                  type="text"
+                  required
+                  placeholder="Ingresa tu nombre completo"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Correo electrónico de facturas</Label>
                 <Input
+                  {...register("email", {
+                    required:
+                      "Por favor, ingrese su dirección de correo electrónico",
+                  })}
                   id="email"
                   name="email"
                   type="email"
@@ -110,6 +148,9 @@ const SignupPage: React.FC = () => {
               <div className="space-y-2">
                 <Label htmlFor="password">Contraseña</Label>
                 <Input
+                  {...register("password", {
+                    required: "Por favor, ingrese su contraseña",
+                  })}
                   id="password"
                   name="password"
                   type="password"
@@ -130,7 +171,7 @@ const SignupPage: React.FC = () => {
               href="/auth/login"
               className="ml-1 text-blue-600 hover:underline focus:outline-none"
             >
-              Regístrate
+              Inicia sesión
             </Link>
           </div>
         </CardFooter>
