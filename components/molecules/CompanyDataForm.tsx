@@ -251,7 +251,7 @@ export default function CompanyDataForm({
             <Input
               id="rtn"
               {...register("rtn", {
-                required: "Este campo es requerido",                
+                required: "Este campo es requerido",
               })}
               placeholder="0000-000000-0000"
             />

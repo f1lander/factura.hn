@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "../globals.css";
 import { Navigation } from "@/components/molecules/Navigation";
-import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "factura.hn",
@@ -17,6 +16,6 @@ export default function MainLayout({
     <>
       <Navigation />
       {children}
-      <Toaster />
-    </>);
+    </>
+  );
 }
