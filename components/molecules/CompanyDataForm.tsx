@@ -21,8 +21,8 @@ import supabase from "@/lib/supabase/client";
 import { usePhoto } from "@/hooks/usePhoto";
 import CloudIcon from "./icons/CloudIcon";
 import { useRouter } from "next/navigation";
-import { useMask } from "@react-input/mask";
 import { InputMask } from "@react-input/mask";
+import { invoiceService } from "@/lib/supabase/services/invoice";
 /** The fact that initialCompany can be null is extremely important:
  *
  * If the initialCompany is null, then it means that we have a new user and it'll
@@ -120,14 +120,11 @@ export default function CompanyDataForm({
           "We were able to upload the photo! The data with respect to the photo is: ",
           uploadedPhoto,
         );
-        const companyWithPhoto = await companyService.updateCompany(
-          result[0].id,
-          {
-            logo_url: uploadedPhoto.path,
-          },
-        );
+        const { error } = await companyService.updateCompany(result[0].id, {
+          logo_url: uploadedPhoto.path,
+        });
 
-        if (companyWithPhoto !== true)
+        if (error !== null)
           return console.log(
             "There was an error trying to update the company with the logo...",
           );
@@ -363,6 +360,24 @@ export default function CompanyDataForm({
                     value: /^(\d{3})-(\d{3})-(\d{2})-(\d{8})$/,
                     message:
                       "El formato del rango de factura de fin no es válido",
+                  },
+                  validate: (value, formValues) => {
+                    // If they're undefined, they'll be validated by other rules
+                    if (
+                      value === undefined &&
+                      formValues.range_invoice2 === undefined
+                    )
+                      return true;
+
+                    const invoiceRange1 = formValues.range_invoice1 as string;
+                    const invoiceRange2 = value as string;
+                    const isRange1LessThanRange2 =
+                      invoiceService.compareInvoiceNumbers(
+                        invoiceRange1,
+                        invoiceRange2,
+                      ) === "first less than second";
+                    if (!isRange1LessThanRange2)
+                      return "El rango de factura fin debe ser mayor que el rango de factura de inicio";
                   },
                 })}
                 placeholder="000-000-00-00000000"
