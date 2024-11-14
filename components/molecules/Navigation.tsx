@@ -85,12 +85,8 @@ export function Navigation() {
   const supabase = supabaseClient();
   let nameToBeDisplayed: string = "";
   if (user !== null) {
-    if (
-      user.user_metadata.name !== undefined &&
-      user.user_metadata.last_name !== undefined
-    ) {
-      nameToBeDisplayed =
-        user.user_metadata.name + " " + user.user_metadata.last_name;
+    if (user.user_metadata.full_name !== undefined) {
+      nameToBeDisplayed = user.user_metadata.full_name;
     } else {
       nameToBeDisplayed = user.email!;
     }
