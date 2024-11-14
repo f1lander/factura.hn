@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 import { Inter as FontSans } from "next/font/google";
 import { cn } from "@/lib/utils";
@@ -9,10 +10,12 @@ const fontSans = FontSans({
 
 export const metadata: Metadata = {
   title: "factura.hn - Facturación simplificada para Honduras",
-  description: "Simplifica tu facturación electrónica en Honduras con factura.hn. Gestiona clientes, productos y servicios de forma fácil y eficiente.",
+  description:
+    "Simplifica tu facturación electrónica en Honduras con factura.hn. Gestiona clientes, productos y servicios de forma fácil y eficiente.",
   openGraph: {
     title: "factura.hn - Facturación simplificada para Honduras",
-    description: "factura.hn es tu solución integral para la facturación electrónica en Honduras. Gestiona clientes, productos y servicios, crea facturas con facilidad, realiza un seguimiento de pagos y genera informes detallados. Simplifica tu proceso de facturación y cumple con las regulaciones fiscales hondureñas de manera eficiente.",
+    description:
+      "factura.hn es tu solución integral para la facturación electrónica en Honduras. Gestiona clientes, productos y servicios, crea facturas con facilidad, realiza un seguimiento de pagos y genera informes detallados. Simplifica tu proceso de facturación y cumple con las regulaciones fiscales hondureñas de manera eficiente.",
     url: "https://factura.hn",
     siteName: "factura.hn",
     images: [
@@ -29,7 +32,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "factura.hn - Facturación simplificada para Honduras",
-    description: "Simplifica tu facturación electrónica en Honduras. Gestiona clientes, productos, servicios y cumple con las regulaciones fiscales de forma fácil y eficiente.",
+    description:
+      "Simplifica tu facturación electrónica en Honduras. Gestiona clientes, productos, servicios y cumple con las regulaciones fiscales de forma fácil y eficiente.",
     images: ["https://factura.hn/og-facturahn.png"],
   },
 };
@@ -45,10 +49,13 @@ export default function RootLayout({
         suppressHydrationWarning={true}
         className={cn(
           "min-h-screen bg-background antialiased",
-          fontSans.className
+          fontSans.className,
         )}
       >
-        {children}
+        <>
+          {children}
+          <Toaster />
+        </>
       </body>
     </html>
   );
