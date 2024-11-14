@@ -4,10 +4,25 @@ import { Button } from "@/components/ui/button";
 import { useProductsStore } from "@/store/productsStore";
 import { PlusCircleIcon } from "lucide-react";
 import { toast } from "../ui/use-toast";
+import { useCompanyStore } from "@/store/companyStore";
 
 export default function CreateInvoiceButton() {
   const { products } = useProductsStore();
+  const { company } = useCompanyStore();
+  console.log("The data about the company is:", company);
   const ensureProductsExistenceAndCreateInvoice = () => {
+    if (
+      company?.range_invoice1 === null ||
+      company?.range_invoice2 === null ||
+      company?.cai === null
+    ) {
+      return toast({
+        variant: "destructive",
+        title: "Necesitamos datos de compañía",
+        description:
+          "Antes de crear facturas, necesitamos estos datos: rango de factura de inicio, rango de factura de fin y CAI. Ve a la pestaña de configuración y asegúrate de agregarlos",
+      });
+    }
     if (products.length < 1) {
       return toast({
         variant: "destructive",
