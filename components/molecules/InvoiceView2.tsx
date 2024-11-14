@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { InputMask } from "@react-input/mask";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import {
   useForm,
@@ -397,12 +398,22 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             <div className="flex-1">
               <div className="flex flex-col gap-2">
                 <Label className="whitespace-nowrap">Nueva factura</Label>
-                <Input
-                  id="name"
+                {/* <Input */}
+                {/*   id="name" */}
+                {/*   {...register("invoice_number", { */}
+                {/*     required: "Este campo es requerido", */}
+                {/*     validate: validateInvoiceNumber, */}
+                {/*   })} */}
+                {/* /> */}
+                <InputMask
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  mask="___-___-__-________"
+                  replacement={{ _: /\d/ }}
                   {...register("invoice_number", {
                     required: "Este campo es requerido",
                     validate: validateInvoiceNumber,
                   })}
+                  placeholder="000-000-00-00000000"
                 />
                 {errors.invoice_number && (
                   <p className="text-red-500 text-sm">
