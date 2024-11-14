@@ -151,7 +151,8 @@ class CompanyService extends BaseService {
   async updateCompany(
     id: string,
     updates: Partial<Omit<Company, "id" | "user_id">>,
-  ): Promise<PostgrestError | true> {
+    // ): Promise<PostgrestError | true> {
+  ): Promise<{ error: PostgrestError | null }> {
     const { error } = await this.supabase
       .from("companies")
       .update(updates)
@@ -160,10 +161,10 @@ class CompanyService extends BaseService {
 
     if (error) {
       console.error("Error updating company:", error);
-      return error;
+      return { error };
     }
 
-    return true;
+    return { error: null };
   }
 }
 
