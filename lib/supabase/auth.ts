@@ -7,6 +7,9 @@ import {
   createClient,
   createClientWithServiceRole,
 } from "@/lib/supabase/server";
+import { companyService } from "./services/company";
+import { SignupForm } from "@/app/auth/signup/page";
+import { SignUpWithPasswordCredentials } from "@supabase/auth-js";
 
 /**
  * Logs a user in using the provided form data.
@@ -100,8 +103,9 @@ export async function signup(
 ): Promise<{ success: boolean; message: string }> {
   const supabase = createClientWithServiceRole();
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
+  const rtn = formData.get("rtn") as string;
+  const company_name = formData.get("company_name") as string;
+
   const data = {
     email: formData.get("email") as string,
     password: formData.get("password") as string,
@@ -160,6 +164,129 @@ export async function signup(
     })
     .select();
   console.log("The insertedUser is: ", insertedUser);
+  // 4. Add information about the company
+  const {
+    success,
+    message,
+    data: companyData,
+  } = await companyService.createCompanyv2(
+    { name: company_name, rtn },
+    registeredUserData.user!.id,
+  );
+  console.log("The company data is: ", companyData);
+  if (!success) {
+    console.log("Hubo un problema al intentar crear la companía");
+    return { success: false, message };
+  }
+  return { success: true, message: "El usuario se ha creado exitosamente" };
+}
+
+/**
+ * Handles the signup process for a new user, including account creation,
+ * database entry, and associated company creation.
+ *
+ * @param {SignupForm} signupForm - An object containing user and company details for signup.
+ * @param {string} signupForm.company_name - The name of the company associated with the user.
+ * @param {string} signupForm.rtn - The company RTN (Registro Tributario Nacional).
+ * @param {string} signupForm.full_name - The full name of the user.
+ * @param {string} signupForm.email - The email address of the user.
+ * @param {string} signupForm.password - The password for the user's account.
+ *
+ * @returns {Promise<{ success: boolean; message: string }>}
+ * A promise that resolves to an object indicating whether the signup process was successful
+ * and a corresponding message.
+ *
+ * @example
+ * const signupForm = {
+ *   company_name: "Acme Corp",
+ *   rtn: "123456789",
+ *   full_name: "John Doe",
+ *   email: "johndoe@example.com",
+ *   password: "securepassword123"
+ * };
+ *
+ * signupv2(signupForm).then(response => {
+ *   if (response.success) {
+ *     console.log("Signup successful:", response.message);
+ *   } else {
+ *     console.error("Signup failed:", response.message);
+ *   }
+ * });
+ */
+export async function signupv2(
+  signupForm: SignupForm,
+): Promise<{ success: boolean; message: string }> {
+  const supabase = createClientWithServiceRole();
+
+  const signupCredentials: SignUpWithPasswordCredentials = {
+    email: signupForm.email,
+    password: signupForm.password,
+    options: {
+      data: {
+        full_name: signupForm.full_name,
+      },
+    },
+  };
+
+  // 1. check if the user already exists
+  const user = await supabase
+    .from("users")
+    .select("id")
+    .eq("email", signupForm.email);
+  const userAlreadyExists: boolean = user.data!.length > 0;
+  // 1.1 If the user already exists, return the function
+  if (userAlreadyExists) {
+    return {
+      success: false,
+      message:
+        "El usuario ya existe. Si el inicio de sesión falla, intenta revisando tu bandeja de entrada y cliquear en el enlace de confirmación",
+    };
+  }
+
+  // 2. Create the user
+  const { data: registeredUserData, error: registrationError } =
+    await supabase.auth.signUp(signupCredentials);
+
+  // 2.1 if something fails, return
+  if (registrationError !== null || registeredUserData.user === null) {
+    console.log(
+      "Algo falló al crear un nuevo usuario. El error es el siguiente: ",
+      registrationError,
+    );
+    if (registrationError?.code === "over_email_send_rate_limit")
+      return {
+        success: false,
+        message:
+          "Has alcanzado el límite de envíos de correo de confirmación. Por favor, intenta dentro de una hora",
+      };
+    return { success: false, message: "Hubo un fallo al crear el usuario" };
+  }
+
+  // 3. Add the user to the user table from the public schema
+  const insertedUser = await supabase
+    .from("users")
+    .insert({
+      id: registeredUserData.user.id,
+      email: signupForm.email,
+      full_name: signupForm.full_name,
+    })
+    .select();
+  console.log("The insertedUser is: ", insertedUser);
+
+  // 4. Add information about the company
+  const {
+    success,
+    message,
+    data: companyData,
+  } = await companyService.createCompanyv2(
+    { name: signupForm.company_name, rtn: signupForm.rtn },
+    registeredUserData.user!.id,
+  );
+  console.log("The company data is: ", companyData);
+  if (!success) {
+    console.log("Hubo un problema al intentar crear la companía");
+    return { success: false, message };
+  }
   return { success: true, message: "El usuario se ha creado exitosamente" };
 }
 
