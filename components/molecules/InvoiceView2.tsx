@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import {
   useForm,
   useFieldArray,
@@ -52,6 +53,8 @@ import { Label } from "../ui/label";
 import { useCustomersStore } from "@/store/customersStore";
 import { useProductsStore } from "@/store/productsStore";
 import { useCompanyStore } from "@/store/companyStore";
+import { CustomerForm } from "./CustomerForm";
+import { Customer, customerService } from "@/lib/supabase/services/customer";
 
 interface InvoiceViewProps {
   invoice?: Invoice;
@@ -64,16 +67,36 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   isEditable,
   onSave,
 }) => {
-  const { customers } = useCustomersStore();
-  // const [customers, setCustomers] = useState<Customer[]>([]);
+  const { customers, syncCustomers } = useCustomersStore();
   const { products } = useProductsStore();
-  // const [products, setProducts] = useState<Product[]>([]);
   const { company } = useCompanyStore();
-  // const [company, setCompany] = useState<Company | null>(null);
   const [lastInvoiceNumber, setLastInvoiceNumber] = useState<
     string | undefined
   >();
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isAddClientDialogOpen, setIsAddClientDialogOpen] =
+    useState<boolean>(false);
+
+  const handleFormSubmit = async (data: Partial<Customer>) => {
+    try {
+      await customerService.createCustomer(data as Customer);
+      syncCustomers();
+      setIsAddClientDialogOpen(false);
+      toast({
+        title: "Cliente creado",
+        description: "El cliente se ha guardado exitosamente.",
+      });
+    } catch (err) {
+      console.error("Error al guardar el cliente:", err);
+      // setError("No se pudo guardar el cliente. Por favor, intente de nuevo.");
+      toast({
+        title: "Error",
+        description:
+          "No se pudo guardar el cliente. Por favor, intente de nuevo.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleDownloadPdf = async () => {
     setIsDownloading(true);
@@ -187,7 +210,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     watch,
     setValue,
     getValues,
-    formState: { isDirty, isValid, errors },
+    formState: { errors },
     setError,
   } = useForm<Invoice>({
     defaultValues: invoice || {
@@ -237,7 +260,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
 
     fetchData();
     // como esto no ha cambiado, entonces no se ejecuta
-  }, []);
+  }, [company]);
 
   useEffect(() => {
     if (lastInvoiceNumber && !invoice) {
@@ -302,186 +325,212 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     if (!regex.test(value)) {
       return "El número de factura debe tener el formato 000-000-00-00000000";
     }
-    if (!invoiceService.isInvoiceNumberValid(value, company!.range_invoice2))
+    if (!invoiceService.isInvoiceNumberValid(value, company!.range_invoice2!))
       return "El número de factura está fuera del rango de facturación actual";
     return true;
   };
 
   const renderEditableContent = () => (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <div className="grid gap-4">
-        <Controller
-          name="customer_id"
-          control={control}
-          rules={{ required: "Debes asociar un cliente a tu factura" }}
-          render={({ field }) => (
-            <Select onValueChange={field.onChange} value={field.value}>
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccione cliente" />
-              </SelectTrigger>
-              <SelectContent>
-                {customers.map((customer) => (
-                  <SelectItem key={customer.id} value={customer.id}>
-                    {customer.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="grid gap-4">
+          <Controller
+            name="customer_id"
+            control={control}
+            rules={{ required: "Debes asociar un cliente a tu factura" }}
+            render={({ field }) => (
+              <Select onValueChange={field.onChange} value={field.value}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccione cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers.map((customer) => (
+                    <SelectItem key={customer.id} value={customer.id}>
+                      {customer.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          <Button
+            type="button"
+            className="md:w-1/2"
+            onClick={() => setIsAddClientDialogOpen(true)}
+          >
+            Añadir cliente
+          </Button>
+          {errors.customer_id && (
+            <p className="text-red-500 text-sm">{errors.customer_id.message}</p>
           )}
-        />
-        {errors.customer_id && (
-          <p className="text-red-500 text-sm">{errors.customer_id.message}</p>
-        )}
-        <Controller
-          name="date"
-          control={control}
-          render={({ field }) => (
-            <DatePicker
-              onChange={(date) => field.onChange(date?.toISOString())}
-            />
-          )}
-        />
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <div className="flex flex-col gap-2">
-              <Label className="whitespace-nowrap">Última factura</Label>
-              <Input value={lastInvoiceNumber} disabled />
-            </div>
-          </div>
-          <div className="flex-1">
-            <div className="flex flex-col gap-2">
-              <Label className="whitespace-nowrap">Nueva factura</Label>
-              <Input
-                id="name"
-                {...register("invoice_number", {
-                  required: "Este campo es requerido",
-                  validate: validateInvoiceNumber,
-                })}
+          <Controller
+            name="date"
+            control={control}
+            render={({ field }) => (
+              <DatePicker
+                onChange={(date) => field.onChange(date?.toISOString())}
               />
-              {errors.invoice_number && (
-                <p className="text-red-500 text-sm">
-                  {errors.invoice_number.message}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-      <Separator className="my-4" />
-      <div className="grid gap-4">
-        <div className="hidden sm:block">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Producto</TableHead>
-                <TableHead>Descripción</TableHead>
-                <TableHead>Cantidad</TableHead>
-                <TableHead>Precio</TableHead>
-                <TableHead>Descuento</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {fields.map((item, index) => (
-                <>
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <ProductSelect
-                        index={index}
-                        products={products}
-                        control={control}
-                        setValue={setValue}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <DescriptionInput index={index} control={control} />
-                    </TableCell>
-                    <TableCell>
-                      <QuantityInput index={index} control={control} />
-                    </TableCell>
-                    <TableCell>
-                      <UnitCostInput index={index} control={control} />
-                    </TableCell>
-                    <TableCell>
-                      <DiscountInput index={index} control={control} />
-                    </TableCell>
-                    <TableCell>
-                      {`Lps. ${calculateItemTotal(index, watchInvoiceItems)}`}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => remove(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                </>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-        <div className="sm:hidden">
-          {fields.map((item, index) => (
-            <div key={item.id} className="mb-4 p-4 border rounded">
-              <ProductSelect
-                index={index}
-                products={products}
-                control={control}
-                setValue={setValue}
-              />
-              <DescriptionInput index={index} control={control} />
-              <QuantityInput index={index} control={control} />
-              <UnitCostInput index={index} control={control} />
-              <DiscountInput index={index} control={control} />
-              <div className="mt-2">
-                {`Total: Lps. ${calculateItemTotal(index, watchInvoiceItems)}`}
+            )}
+          />
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="flex flex-col gap-2">
+                <Label className="whitespace-nowrap">Última factura</Label>
+                <Input value={lastInvoiceNumber} disabled />
               </div>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={() => remove(index)}
-                className="mt-2"
-              >
-                Quitar
-              </Button>
             </div>
-          ))}
+            <div className="flex-1">
+              <div className="flex flex-col gap-2">
+                <Label className="whitespace-nowrap">Nueva factura</Label>
+                <Input
+                  id="name"
+                  {...register("invoice_number", {
+                    required: "Este campo es requerido",
+                    validate: validateInvoiceNumber,
+                  })}
+                />
+                {errors.invoice_number && (
+                  <p className="text-red-500 text-sm">
+                    {errors.invoice_number.message}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
+        <Separator className="my-4" />
+        <div className="grid gap-4">
+          <div className="hidden sm:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Producto</TableHead>
+                  <TableHead>Descripción</TableHead>
+                  <TableHead>Cantidad</TableHead>
+                  <TableHead>Precio</TableHead>
+                  <TableHead>Descuento</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {fields.map((item, index) => (
+                  <>
+                    <TableRow key={item.id}>
+                      <TableCell>
+                        <ProductSelect
+                          index={index}
+                          products={products}
+                          control={control}
+                          setValue={setValue}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <DescriptionInput index={index} control={control} />
+                      </TableCell>
+                      <TableCell>
+                        <QuantityInput index={index} control={control} />
+                      </TableCell>
+                      <TableCell>
+                        <UnitCostInput index={index} control={control} />
+                      </TableCell>
+                      <TableCell>
+                        <DiscountInput index={index} control={control} />
+                      </TableCell>
+                      <TableCell>
+                        {`Lps. ${calculateItemTotal(index, watchInvoiceItems)}`}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => remove(index)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  </>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="sm:hidden">
+            {fields.map((item, index) => (
+              <div key={item.id} className="mb-4 p-4 border rounded">
+                <ProductSelect
+                  index={index}
+                  products={products}
+                  control={control}
+                  setValue={setValue}
+                />
+                <DescriptionInput index={index} control={control} />
+                <QuantityInput index={index} control={control} />
+                <UnitCostInput index={index} control={control} />
+                <DiscountInput index={index} control={control} />
+                <div className="mt-2">
+                  {`Total: Lps. ${calculateItemTotal(index, watchInvoiceItems)}`}
+                </div>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => remove(index)}
+                  className="mt-2"
+                >
+                  Quitar
+                </Button>
+              </div>
+            ))}
+          </div>
+          <Button
+            type="button"
+            onClick={() =>
+              append({
+                id: "",
+                invoice_id: "",
+                product_id: "",
+                description: "",
+                quantity: 1,
+                unit_cost: 0,
+                discount: 0,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              })
+            }
+          >
+            Agregar Producto o Servicio
+          </Button>
+        </div>
+        {/* Inhabilita el botón si el formulario no se ha tocado y todas las entradas aún son inválidas */}
         <Button
-          type="button"
-          onClick={() =>
-            append({
-              id: "",
-              invoice_id: "",
-              product_id: "",
-              description: "",
-              quantity: 1,
-              unit_cost: 0,
-              discount: 0,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            })
-          }
+          type="submit"
+          className="mt-4"
+          // disabled={noProductsAdded && (!isDirty || !isValid)}
+          disabled={noProductsAdded}
         >
-          Agregar Producto o Servicio
+          Generar Factura
         </Button>
-      </div>
-      {/* Inhabilita el botón si el formulario no se ha tocado y todas las entradas aún son inválidas */}
-      <Button
-        type="submit"
-        className="mt-4"
-        // disabled={noProductsAdded && (!isDirty || !isValid)}
-        disabled={noProductsAdded}
+      </form>
+      <Dialog
+        open={isAddClientDialogOpen}
+        onOpenChange={setIsAddClientDialogOpen}
       >
-        Generar Factura
-      </Button>
-    </form>
+        <DialogTrigger asChild></DialogTrigger>
+        <DialogContent className="w-[90%]" id="contenido del dialogo papa">
+          <div className="transition-all duration-300 ease-in-out">
+            <CustomerForm
+              customer={undefined}
+              onSubmit={handleFormSubmit}
+              onCancel={() => {
+                setIsAddClientDialogOpen(false);
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 
   const renderReadOnlyContent = () => (
