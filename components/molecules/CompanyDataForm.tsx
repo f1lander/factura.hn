@@ -247,10 +247,18 @@ export default function CompanyDataForm({
 
           <div>
             <Label htmlFor="rtn">RTN</Label>
-            <Input
+            <InputMask
+              mask="____-______-____"
+              replacement={{ _: /\d/ }}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              {...register("rtn", {
+                required: "Por favor, ingrese su RTN",
+              })}
               id="rtn"
-              {...register("rtn")}
-              placeholder="0000-000000-0000"
+              name="rtn"
+              type="text"
+              required
+              placeholder="Ingresa tu RTN"
             />
             {errors.rtn && (
               <p className="text-red-500 text-sm">{errors.rtn.message}</p>
@@ -304,10 +312,13 @@ export default function CompanyDataForm({
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="cai">CAI</Label>
-            <Input
+            <InputMask
               id="cai"
-              {...register("cai")}
+              {...register("cai", { required: "Por favor, ingresa tu CAI" })}
               placeholder="000000-000000000000-000000-000000-00"
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              mask="______-____________-______-______-__"
+              replacement={{ _: /[A-Z0-9]/ }}
             />
             {errors.cai && (
               <p className="text-red-500 text-sm">{errors.cai.message}</p>
