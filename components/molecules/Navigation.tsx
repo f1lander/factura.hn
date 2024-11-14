@@ -98,7 +98,6 @@ export function Navigation() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      console.log("The info about the user is: ", user);
       setUser(user);
       setIsLoading(false);
     };
