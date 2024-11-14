@@ -55,6 +55,7 @@ import { useProductsStore } from "@/store/productsStore";
 import { useCompanyStore } from "@/store/companyStore";
 import { CustomerForm } from "./CustomerForm";
 import { Customer, customerService } from "@/lib/supabase/services/customer";
+import { useInvoicesStore } from "@/store/invoicesStore";
 
 interface InvoiceViewProps {
   invoice?: Invoice;
@@ -70,12 +71,21 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   const { customers, syncCustomers } = useCustomersStore();
   const { products } = useProductsStore();
   const { company } = useCompanyStore();
+  const { allInvoices } = useInvoicesStore();
   const [lastInvoiceNumber, setLastInvoiceNumber] = useState<
     string | undefined
   >();
+  const [lastInvoiceExists, setLastInvoiceExists] = useState<boolean>(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] =
     useState<boolean>(false);
+  useEffect(() => {
+    if (allInvoices.at(-1) !== undefined) {
+      setLastInvoiceExists(true);
+    } else {
+      setLastInvoiceExists(false);
+    }
+  }, [setLastInvoiceExists, allInvoices]);
 
   const handleFormSubmit = async (data: Partial<Customer>) => {
     try {
@@ -264,10 +274,14 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
 
   useEffect(() => {
     if (lastInvoiceNumber && !invoice) {
-      const nextInvoiceNumber = generateNextInvoiceNumber(lastInvoiceNumber);
-      setValue("invoice_number", nextInvoiceNumber);
+      if (lastInvoiceExists) {
+        const nextInvoiceNumber = generateNextInvoiceNumber(lastInvoiceNumber);
+        setValue("invoice_number", nextInvoiceNumber);
+      } else if (company !== null && company.range_invoice1 !== undefined) {
+        setValue("invoice_number", company.range_invoice1);
+      }
     }
-  }, [lastInvoiceNumber, invoice, setValue]);
+  }, [lastInvoiceNumber, invoice, setValue, company, lastInvoiceExists]);
 
   useEffect(() => {
     const subtotal = watchInvoiceItems.reduce(
@@ -306,6 +320,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   };
 
   const onSubmit = (data: Invoice) => {
+    // return console.log(data);
     const { subtotal, total, tax } = invoiceService.computeInvoiceData(
       data.invoice_items,
     );
