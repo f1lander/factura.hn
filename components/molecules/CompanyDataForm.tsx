@@ -23,6 +23,7 @@ import CloudIcon from "./icons/CloudIcon";
 import { useRouter } from "next/navigation";
 import { InputMask } from "@react-input/mask";
 import { invoiceService } from "@/lib/supabase/services/invoice";
+import { useCompanyStore } from "@/store/companyStore";
 /** The fact that initialCompany can be null is extremely important:
  *
  * If the initialCompany is null, then it means that we have a new user and it'll
@@ -37,6 +38,7 @@ export default function CompanyDataForm({
 }: CompanyDataFormProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const { syncCompany } = useCompanyStore();
 
   const { photo, handleFileChange, handleDrop, handleDragOver, setPhoto } =
     usePhoto();
@@ -68,10 +70,6 @@ export default function CompanyDataForm({
   const onSubmit = async (data: Omit<Company, "id">) => {
     // Get file type, extension, and extract image itself
     data.logo_url = "";
-    const fileType = photo!.split(";")[0].split(":")[1];
-    const fileExtension = fileType.split("/")[1];
-    const imageData = photo!.replace(/^data:image\/\w+;base64,/, "");
-    const buffer = Buffer.from(imageData, "base64");
     try {
       const {
         data: { user },
@@ -79,8 +77,13 @@ export default function CompanyDataForm({
       data.user_id = user?.id!;
       let result;
       if (initialCompany) {
+        toast({
+          title: "Actualizando datos de compañía...",
+        });
         // Executed when there's already a company
         result = await companyService.updateCompany(initialCompany!.id, data);
+        syncCompany();
+
         if (result.error !== null) {
           return toast({
             variant: "destructive",
@@ -93,6 +96,10 @@ export default function CompanyDataForm({
           title: "Se actualizaron los datos de compañía con éxito",
         });
       } else {
+        const fileType = photo!.split(";")[0].split(":")[1];
+        const fileExtension = fileType.split("/")[1];
+        const imageData = photo!.replace(/^data:image\/\w+;base64,/, "");
+        const buffer = Buffer.from(imageData, "base64");
         // Executed when there's a company for the first time
         result = await companyService.createCompany(data);
         if (result === null)
@@ -342,7 +349,7 @@ export default function CompanyDataForm({
                 mask="___-___-__-________"
                 replacement={{ _: /\d/ }}
                 {...register("range_invoice1", {
-                  required: "Este campo es requerido",
+                  required: "Por favor, ingresa un rango de factura de inicio",
                   pattern: {
                     value: /^(\d{3})-(\d{3})-(\d{2})-(\d{8})$/,
                     message:
@@ -366,7 +373,7 @@ export default function CompanyDataForm({
                 replacement={{ _: /\d/ }}
                 id="range_invoice2"
                 {...register("range_invoice2", {
-                  required: "Este campo es requerido",
+                  required: "Por favor, ingresa un rango de factura de fin",
                   pattern: {
                     value: /^(\d{3})-(\d{3})-(\d{2})-(\d{8})$/,
                     message:
