@@ -21,7 +21,8 @@ import supabase from "@/lib/supabase/client";
 import { usePhoto } from "@/hooks/usePhoto";
 import CloudIcon from "./icons/CloudIcon";
 import { useRouter } from "next/navigation";
-
+import { useMask } from "@react-input/mask";
+import { InputMask } from "@react-input/mask";
 /** The fact that initialCompany can be null is extremely important:
  *
  * If the initialCompany is null, then it means that we have a new user and it'll
@@ -80,6 +81,17 @@ export default function CompanyDataForm({
       if (initialCompany) {
         // Executed when there's already a company
         result = await companyService.updateCompany(initialCompany!.id, data);
+        if (result.error !== null) {
+          return toast({
+            variant: "destructive",
+            title: "Error al actualizar la compañía",
+            description:
+              "Hubo un error al intentar actualizar los datos de compañía. Por favor, intente más tarde",
+          });
+        }
+        return toast({
+          title: "Se actualizaron los datos de compañía con éxito",
+        });
       } else {
         // Executed when there's a company for the first time
         result = await companyService.createCompany(data);
@@ -217,12 +229,7 @@ export default function CompanyDataForm({
             <div className="w-full">
               <Label htmlFor="ceo_name">Nombre (Gerente)</Label>
 
-              <Input
-                id="ceo_name"
-                {...register("ceo_name", {
-                  required: "Este campo es requerido",
-                })}
-              />
+              <Input id="ceo_name" {...register("ceo_name")} />
               {errors.ceo_name && (
                 <p className="text-red-500 text-sm">
                   {errors.ceo_name.message}
@@ -232,12 +239,7 @@ export default function CompanyDataForm({
             <div className="w-full">
               <Label htmlFor="ceo_name">Apellido</Label>
 
-              <Input
-                id="ceo_lastname"
-                {...register("ceo_lastname", {
-                  required: "Este campo es requerido",
-                })}
-              />
+              <Input id="ceo_lastname" {...register("ceo_lastname")} />
               {errors.ceo_lastname && (
                 <p className="text-red-500 text-sm">
                   {errors.ceo_lastname.message}
@@ -250,9 +252,7 @@ export default function CompanyDataForm({
             <Label htmlFor="rtn">RTN</Label>
             <Input
               id="rtn"
-              {...register("rtn", {
-                required: "Este campo es requerido",
-              })}
+              {...register("rtn")}
               placeholder="0000-000000-0000"
             />
             {errors.rtn && (
@@ -262,12 +262,7 @@ export default function CompanyDataForm({
 
           <div>
             <Label htmlFor="address0">Dirección línea 1</Label>
-            <Textarea
-              id="address0"
-              {...register("address0", {
-                required: "Este campo es requerido",
-              })}
-            />
+            <Textarea id="address0" {...register("address0")} />
             {errors.address0 && (
               <p className="text-red-500 text-sm">{errors.address0.message}</p>
             )}
@@ -275,14 +270,7 @@ export default function CompanyDataForm({
           <div className="flex gap-3 flex-col settingsPageMin:flex-row">
             <div className="w-full">
               <Label htmlFor="phone">Teléfono</Label>
-              <Input
-                type="number"
-                id="phone"
-                {...register("phone", {
-                  required: "Este campo es requerido",
-                  valueAsNumber: true,
-                })}
-              />
+              <Input type="number" id="phone" {...register("phone")} />
               {errors.phone && (
                 <p className="text-red-500 text-sm">{errors.phone.message}</p>
               )}
@@ -294,7 +282,6 @@ export default function CompanyDataForm({
                 id="email"
                 type="email"
                 {...register("email", {
-                  required: "Este campo es requerido",
                   pattern: {
                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                     message: "Dirección de correo inválida",
@@ -322,9 +309,7 @@ export default function CompanyDataForm({
             <Label htmlFor="cai">CAI</Label>
             <Input
               id="cai"
-              {...register("cai", {
-                required: "Este campo es requerido",
-              })}
+              {...register("cai")}
               placeholder="000000-000000000000-000000-000000-00"
             />
             {errors.cai && (
@@ -334,13 +319,7 @@ export default function CompanyDataForm({
 
           <div>
             <Label htmlFor="limit_date">Fecha límite</Label>
-            <Input
-              id="limit_date"
-              type="date"
-              {...register("limit_date", {
-                required: "Este campo es requerido",
-              })}
-            />
+            <Input id="limit_date" type="date" {...register("limit_date")} />
             {errors.limit_date && (
               <p className="text-red-500 text-sm">
                 {errors.limit_date.message}
@@ -350,8 +329,10 @@ export default function CompanyDataForm({
           <div className="flex flex-col settingsPageMin:flex-row gap-3">
             <div className="w-full">
               <Label htmlFor="range_invoice1">Rango de factura inicio</Label>
-              <Input
-                id="range_invoice1"
+              <InputMask
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                mask="___-___-__-________"
+                replacement={{ _: /\d/ }}
                 {...register("range_invoice1", {
                   required: "Este campo es requerido",
                   pattern: {
@@ -371,7 +352,10 @@ export default function CompanyDataForm({
 
             <div className="w-full">
               <Label htmlFor="range_invoice2">Rango de factura fin</Label>
-              <Input
+              <InputMask
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                mask="___-___-__-________"
+                replacement={{ _: /\d/ }}
                 id="range_invoice2"
                 {...register("range_invoice2", {
                   required: "Este campo es requerido",
