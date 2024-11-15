@@ -21,7 +21,9 @@ import supabase from "@/lib/supabase/client";
 import { usePhoto } from "@/hooks/usePhoto";
 import CloudIcon from "./icons/CloudIcon";
 import { useRouter } from "next/navigation";
-
+import { InputMask } from "@react-input/mask";
+import { invoiceService } from "@/lib/supabase/services/invoice";
+import { useCompanyStore } from "@/store/companyStore";
 /** The fact that initialCompany can be null is extremely important:
  *
  * If the initialCompany is null, then it means that we have a new user and it'll
@@ -36,6 +38,7 @@ export default function CompanyDataForm({
 }: CompanyDataFormProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const { syncCompany } = useCompanyStore();
 
   const { photo, handleFileChange, handleDrop, handleDragOver, setPhoto } =
     usePhoto();
@@ -67,10 +70,6 @@ export default function CompanyDataForm({
   const onSubmit = async (data: Omit<Company, "id">) => {
     // Get file type, extension, and extract image itself
     data.logo_url = "";
-    const fileType = photo!.split(";")[0].split(":")[1];
-    const fileExtension = fileType.split("/")[1];
-    const imageData = photo!.replace(/^data:image\/\w+;base64,/, "");
-    const buffer = Buffer.from(imageData, "base64");
     try {
       const {
         data: { user },
@@ -78,9 +77,29 @@ export default function CompanyDataForm({
       data.user_id = user?.id!;
       let result;
       if (initialCompany) {
+        toast({
+          title: "Actualizando datos de compañía...",
+        });
         // Executed when there's already a company
         result = await companyService.updateCompany(initialCompany!.id, data);
+        syncCompany();
+
+        if (result.error !== null) {
+          return toast({
+            variant: "destructive",
+            title: "Error al actualizar la compañía",
+            description:
+              "Hubo un error al intentar actualizar los datos de compañía. Por favor, intente más tarde",
+          });
+        }
+        return toast({
+          title: "Se actualizaron los datos de compañía con éxito",
+        });
       } else {
+        const fileType = photo!.split(";")[0].split(":")[1];
+        const fileExtension = fileType.split("/")[1];
+        const imageData = photo!.replace(/^data:image\/\w+;base64,/, "");
+        const buffer = Buffer.from(imageData, "base64");
         // Executed when there's a company for the first time
         result = await companyService.createCompany(data);
         if (result === null)
@@ -108,14 +127,11 @@ export default function CompanyDataForm({
           "We were able to upload the photo! The data with respect to the photo is: ",
           uploadedPhoto,
         );
-        const companyWithPhoto = await companyService.updateCompany(
-          result[0].id,
-          {
-            logo_url: uploadedPhoto.path,
-          },
-        );
+        const { error } = await companyService.updateCompany(result[0].id, {
+          logo_url: uploadedPhoto.path,
+        });
 
-        if (companyWithPhoto !== true)
+        if (error !== null)
           return console.log(
             "There was an error trying to update the company with the logo...",
           );
@@ -217,12 +233,7 @@ export default function CompanyDataForm({
             <div className="w-full">
               <Label htmlFor="ceo_name">Nombre (Gerente)</Label>
 
-              <Input
-                id="ceo_name"
-                {...register("ceo_name", {
-                  required: "Este campo es requerido",
-                })}
-              />
+              <Input id="ceo_name" {...register("ceo_name")} />
               {errors.ceo_name && (
                 <p className="text-red-500 text-sm">
                   {errors.ceo_name.message}
@@ -232,12 +243,7 @@ export default function CompanyDataForm({
             <div className="w-full">
               <Label htmlFor="ceo_name">Apellido</Label>
 
-              <Input
-                id="ceo_lastname"
-                {...register("ceo_lastname", {
-                  required: "Este campo es requerido",
-                })}
-              />
+              <Input id="ceo_lastname" {...register("ceo_lastname")} />
               {errors.ceo_lastname && (
                 <p className="text-red-500 text-sm">
                   {errors.ceo_lastname.message}
@@ -248,12 +254,18 @@ export default function CompanyDataForm({
 
           <div>
             <Label htmlFor="rtn">RTN</Label>
-            <Input
-              id="rtn"
+            <InputMask
+              mask="____-______-____"
+              replacement={{ _: /\d/ }}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               {...register("rtn", {
-                required: "Este campo es requerido",                
+                required: "Por favor, ingrese su RTN",
               })}
-              placeholder="0000-000000-0000"
+              id="rtn"
+              name="rtn"
+              type="text"
+              required
+              placeholder="Ingresa tu RTN"
             />
             {errors.rtn && (
               <p className="text-red-500 text-sm">{errors.rtn.message}</p>
@@ -262,12 +274,7 @@ export default function CompanyDataForm({
 
           <div>
             <Label htmlFor="address0">Dirección línea 1</Label>
-            <Textarea
-              id="address0"
-              {...register("address0", {
-                required: "Este campo es requerido",
-              })}
-            />
+            <Textarea id="address0" {...register("address0")} />
             {errors.address0 && (
               <p className="text-red-500 text-sm">{errors.address0.message}</p>
             )}
@@ -275,14 +282,7 @@ export default function CompanyDataForm({
           <div className="flex gap-3 flex-col settingsPageMin:flex-row">
             <div className="w-full">
               <Label htmlFor="phone">Teléfono</Label>
-              <Input
-                type="number"
-                id="phone"
-                {...register("phone", {
-                  required: "Este campo es requerido",
-                  valueAsNumber: true,
-                })}
-              />
+              <Input type="number" id="phone" {...register("phone")} />
               {errors.phone && (
                 <p className="text-red-500 text-sm">{errors.phone.message}</p>
               )}
@@ -294,7 +294,6 @@ export default function CompanyDataForm({
                 id="email"
                 type="email"
                 {...register("email", {
-                  required: "Este campo es requerido",
                   pattern: {
                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                     message: "Dirección de correo inválida",
@@ -320,12 +319,13 @@ export default function CompanyDataForm({
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="cai">CAI</Label>
-            <Input
+            <InputMask
               id="cai"
-              {...register("cai", {
-                required: "Este campo es requerido",
-              })}
+              {...register("cai", { required: "Por favor, ingresa tu CAI" })}
               placeholder="000000-000000000000-000000-000000-00"
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              mask="______-____________-______-______-__"
+              replacement={{ _: /[A-Z0-9]/ }}
             />
             {errors.cai && (
               <p className="text-red-500 text-sm">{errors.cai.message}</p>
@@ -334,13 +334,7 @@ export default function CompanyDataForm({
 
           <div>
             <Label htmlFor="limit_date">Fecha límite</Label>
-            <Input
-              id="limit_date"
-              type="date"
-              {...register("limit_date", {
-                required: "Este campo es requerido",
-              })}
-            />
+            <Input id="limit_date" type="date" {...register("limit_date")} />
             {errors.limit_date && (
               <p className="text-red-500 text-sm">
                 {errors.limit_date.message}
@@ -350,10 +344,12 @@ export default function CompanyDataForm({
           <div className="flex flex-col settingsPageMin:flex-row gap-3">
             <div className="w-full">
               <Label htmlFor="range_invoice1">Rango de factura inicio</Label>
-              <Input
-                id="range_invoice1"
+              <InputMask
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                mask="___-___-__-________"
+                replacement={{ _: /\d/ }}
                 {...register("range_invoice1", {
-                  required: "Este campo es requerido",
+                  required: "Por favor, ingresa un rango de factura de inicio",
                   pattern: {
                     value: /^(\d{3})-(\d{3})-(\d{2})-(\d{8})$/,
                     message:
@@ -371,14 +367,35 @@ export default function CompanyDataForm({
 
             <div className="w-full">
               <Label htmlFor="range_invoice2">Rango de factura fin</Label>
-              <Input
+              <InputMask
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                mask="___-___-__-________"
+                replacement={{ _: /\d/ }}
                 id="range_invoice2"
                 {...register("range_invoice2", {
-                  required: "Este campo es requerido",
+                  required: "Por favor, ingresa un rango de factura de fin",
                   pattern: {
                     value: /^(\d{3})-(\d{3})-(\d{2})-(\d{8})$/,
                     message:
                       "El formato del rango de factura de fin no es válido",
+                  },
+                  validate: (value, formValues) => {
+                    // If they're undefined, they'll be validated by other rules
+                    if (
+                      value === undefined &&
+                      formValues.range_invoice2 === undefined
+                    )
+                      return true;
+
+                    const invoiceRange1 = formValues.range_invoice1 as string;
+                    const invoiceRange2 = value as string;
+                    const isRange1LessThanRange2 =
+                      invoiceService.compareInvoiceNumbers(
+                        invoiceRange1,
+                        invoiceRange2,
+                      ) === "first less than second";
+                    if (!isRange1LessThanRange2)
+                      return "El rango de factura fin debe ser mayor que el rango de factura de inicio";
                   },
                 })}
                 placeholder="000-000-00-00000000"

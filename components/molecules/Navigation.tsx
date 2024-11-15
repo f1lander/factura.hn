@@ -83,6 +83,14 @@ export function Navigation() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const supabase = supabaseClient();
+  let nameToBeDisplayed: string = "";
+  if (user !== null) {
+    if (user.user_metadata.full_name !== undefined) {
+      nameToBeDisplayed = user.user_metadata.full_name;
+    } else {
+      nameToBeDisplayed = user.email!;
+    }
+  }
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -192,18 +200,11 @@ export function Navigation() {
           </SheetContent>
         </Sheet>
         <div className="profile-menu flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4 justify-end">
-          {/* <button */}
-          {/*   onClick={() => console.log("The value of isLoaded is: ", isLoaded)} */}
-          {/* > */}
-          {/*   press me for checking the value of isLoaded */}
-          {/* </button> */}
           {isLoading ? (
             <p>Cargando...</p>
           ) : user ? (
             <>
-              <p className="font-medium">
-                Bienvenido, {user.user_metadata.full_name || user.email}
-              </p>
+              <p className="font-medium">Bienvenido, {nameToBeDisplayed}</p>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button

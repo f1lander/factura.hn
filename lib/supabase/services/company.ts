@@ -19,22 +19,22 @@ const convertDateFormat = (inputDate: string): string => {
 
 export interface Company {
   id: string;
-  user_id: string;
-  ceo_name: string;
-  ceo_lastname: string;
   name: string;
-  rtn: string;
-  address0: string;
-  address1: string;
-  address2: string;
-  phone: string;
-  cai: string;
-  limit_date: string;
-  range_invoice1: string;
-  range_invoice2: string;
-  email: string;
+  user_id: string;
+  rtn?: string;
+  address0?: string;
+  address1?: string;
+  address2?: string;
+  ceo_name?: string;
+  ceo_lastname?: string;
+  phone?: string;
+  cai?: string;
+  limit_date?: string;
+  range_invoice1?: string;
+  range_invoice2?: string;
+  email?: string;
   template_url?: string;
-  logo_url: string | null;
+  logo_url?: string | null;
 }
 
 class CompanyService extends BaseService {
@@ -80,11 +80,23 @@ class CompanyService extends BaseService {
       console.error("Error fetching company:", error);
       return null;
     }
-    const date = convertDateFormat(data.limit_date);
+    if (data.limit_date !== null) {
+      console.log("The value of data.limit_date is: ", data.limit_date);
+      const date = convertDateFormat(data.limit_date);
 
-    data.limit_date = date;
+      data.limit_date = date;
+    }
     return data;
   }
+
+  /**
+   * Creates a new company entry in the database associated with the authenticated user.
+   *
+   * @param {Omit<Company, "id">} companyData - The data for the new company, excluding the `id` field which is auto-generated.
+   * @returns {Promise<Company[] | null>} A promise that resolves to an array of created companies, or `null` if there was an error or no authenticated user was found.
+   *
+   * @throws {Error} Logs an error message if there is no authenticated user or if there is an error during the database insertion.
+   */
 
   async createCompany(
     companyData: Omit<Company, "id">,
@@ -110,10 +122,40 @@ class CompanyService extends BaseService {
     return data as unknown as Company[];
   }
 
+  // TODO: Create a new version of the createCompany function
+  async createCompanyv2(
+    companyData: Omit<Company, "id" | "user_id">,
+    user_id: string,
+  ): Promise<{ success: boolean; message: string; data: Company | null }> {
+    const { data: companyCreated, error } = await this.supabase
+      .from("companies")
+      .insert({ ...companyData, user_id })
+      .select("*")
+      .single();
+    console.log("companyCreated is: ", companyCreated);
+    if (error !== null) {
+      console.log(
+        "There was an error when creating the company. The error message is: ",
+        error,
+      );
+      return {
+        success: false,
+        message: "Hubo un error al crear la compañía",
+        data: null,
+      };
+    }
+    return {
+      success: true,
+      message: "Se creó la compañía con éxito",
+      data: companyCreated,
+    };
+  }
+
   async updateCompany(
     id: string,
     updates: Partial<Omit<Company, "id" | "user_id">>,
-  ): Promise<PostgrestError | true> {
+    // ): Promise<PostgrestError | true> {
+  ): Promise<{ error: PostgrestError | null }> {
     const { error } = await this.supabase
       .from("companies")
       .update(updates)
@@ -122,10 +164,10 @@ class CompanyService extends BaseService {
 
     if (error) {
       console.error("Error updating company:", error);
-      return error;
+      return { error };
     }
 
-    return true;
+    return { error: null };
   }
 }
 

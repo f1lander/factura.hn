@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { FileInputIcon } from "lucide-react";
-import { login, signup } from "@/lib/supabase/auth";
+import { login } from "@/lib/supabase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,7 @@ import { useCompanyStore } from "@/store/companyStore";
 import { useCustomersStore } from "@/store/customersStore";
 import { useInvoicesStore } from "@/store/invoicesStore";
 import { useProductsStore } from "@/store/productsStore";
+import Link from "next/link";
 
 const LoginPage: React.FC = () => {
   const { resetCompany } = useCompanyStore();
@@ -26,13 +27,9 @@ const LoginPage: React.FC = () => {
   const { resetInvoices } = useInvoicesStore();
   const { resetIsLoaded } = useIsLoadedStore();
   const { resetProducts } = useProductsStore();
-  const [isLogin, setIsLogin] = useState(true);
-
-  const toggleForm = () => setIsLogin(!isLogin);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // 1. Make sure to delete all kind of user data!
     resetProducts();
     resetIsLoaded();
     resetInvoices();
@@ -40,45 +37,27 @@ const LoginPage: React.FC = () => {
     resetCompany();
     const formData = new FormData(event.currentTarget);
 
-    try {
-      if (isLogin) {
-        toast({
-          title: "Iniciando sesión...",
-          description: "Por favor espera mientras procesamos tu solicitud.",
-        });
-        await login(formData);
-        // If the code reaches this section, it means the await code
-        // didn't throw
-        toast({
-          title: "Inicio de sesión exitoso",
-          description: "Redirigiendo a la página de facturas...",
-        });
-        setTimeout(() => {
-          window.location.replace("/home/load-data");
-        }, 100); // 2 seconds delay
-      } else {
-        toast({
-          title: "Creando cuenta...",
-          description: "Por favor espera mientras procesamos tu solicitud.",
-        });
-        await signup(formData);
-        toast({
-          title: "Cuenta creada exitosamente",
-          description: "Redirigiendo a la página de configuración...",
-        });
-        setTimeout(() => {
-          window.location.replace("/home/settings");
-        }, 1000); // 2 seconds delay
-      }
-    } catch (error) {
-      console.error("Authentication error:", error);
-      toast({
-        title: "Error de autenticación",
-        description:
-          "Ocurrió un error durante el proceso. Por favor, intenta de nuevo.",
+    toast({
+      title: "Iniciando sesión...",
+      description: "Por favor espera mientras procesamos tu solicitud.",
+    });
+    const { success, message } = await login(formData);
+    if (!success)
+      return toast({
+        title: "Inicio de sesión fallido",
+        description: message,
         variant: "destructive",
       });
-    }
+
+    toast({
+      title: "Inicio de sesión exitoso",
+      description:
+        "En unos instantes vas a ser redirigido a la pantalla principal",
+    });
+
+    setTimeout(() => {
+      window.location.replace("/home/load-data");
+    }, 100); // 2 seconds delay
   };
 
   return (
@@ -95,20 +74,20 @@ const LoginPage: React.FC = () => {
             </span>
           </div>
           <CardTitle className="text-2xl font-bold text-center">
-            {isLogin ? "Iniciar Sesión en tu Cuenta" : "Crear una Cuenta"}
+            Iniciar Sesión en tu Cuenta
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Correo electrónico</Label>
+                <Label htmlFor="email">Correo electrónico de facturas</Label>
                 <Input
                   id="email"
                   name="email"
                   type="email"
                   required
-                  placeholder="Ingresa tu correo electrónico"
+                  placeholder="Ingresa tu correo electrónico de facturas"
                 />
               </div>
               <div className="space-y-2">
@@ -122,20 +101,20 @@ const LoginPage: React.FC = () => {
                 />
               </div>
               <Button type="submit" className="w-full">
-                {isLogin ? "Iniciar Sesión" : "Registrarse"}
+                Iniciar sesión
               </Button>
             </div>
           </form>
         </CardContent>
         <CardFooter>
           <div className="text-sm text-center w-full">
-            {isLogin ? "¿No tienes una cuenta?" : "¿Ya tienes una cuenta?"}
-            <button
-              onClick={toggleForm}
+            ¿No tienes una cuenta?
+            <Link
+              href="/auth/signup"
               className="ml-1 text-blue-600 hover:underline focus:outline-none"
             >
-              {isLogin ? "Regístrate" : "Inicia Sesión"}
-            </button>
+              Regístrate
+            </Link>
           </div>
         </CardFooter>
       </Card>

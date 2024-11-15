@@ -59,6 +59,9 @@ importers:
       '@radix-ui/react-visually-hidden':
         specifier: ^1.1.0
         version: 1.1.0(@types/react-dom@18.3.0)(@types/react@18.3.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@react-input/mask':
+        specifier: ^1.2.13
+        version: 1.2.13(@types/react@18.3.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@supabase/auth-js':
         specifier: ^2.65.0
         version: 2.65.0
@@ -1450,6 +1453,26 @@ packages:
 
   '@radix-ui/rect@1.1.0':
     resolution: {integrity: sha512-A9+lCBZoaMJlVKcRBz2YByCG+Cp2t6nAnMnNba+XiWxnj6r4JUFqfsgwocMBZU9LPtdxC6wB56ySYpc7LQIoJg==}
+
+  '@react-input/core@1.0.19':
+    resolution: {integrity: sha512-mMbPwOwIsjyXiTm5WuKSIfjLHMfdtIo2BKYIcrtoFm+w1weJcj44nZcIs1UGLMZWMtmXvFiN5vNQuAGuCI0Gag==}
+    peerDependencies:
+      '@types/react': '>=16.8'
+      react: '>=16.8 || ^19.0.0-rc'
+      react-dom: '>=16.8 || ^19.0.0-rc'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+
+  '@react-input/mask@1.2.13':
+    resolution: {integrity: sha512-AZJium1AQbi+wQGKFEe3kc6STR+OLvhazKrwEvXoRD/hl/ydOUe/9gKKux9+28G41jHzjGQ6XP/B73kkfaQe4g==}
+    peerDependencies:
+      '@types/react': '>=16.8'
+      react: '>=16.8 || ^19.0.0-rc'
+      react-dom: '>=16.8 || ^19.0.0-rc'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
 
   '@rollup/rollup-linux-x64-gnu@4.21.3':
     resolution: {integrity: sha512-kZPbX/NOPh0vhS5sI+dR8L1bU2cSO9FgxwM8r7wHzGydzfSjLRCFAT87GR5U9scj2rhzN3JPYVC7NoBbl4FZ0g==}
@@ -5684,6 +5707,21 @@ snapshots:
       '@types/react-dom': 18.3.0
 
   '@radix-ui/rect@1.1.0': {}
+
+  '@react-input/core@1.0.19(@types/react@18.3.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+    optionalDependencies:
+      '@types/react': 18.3.5
+
+  '@react-input/mask@1.2.13(@types/react@18.3.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@react-input/core': 1.0.19(@types/react@18.3.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+    optionalDependencies:
+      '@types/react': 18.3.5
 
   '@rollup/rollup-linux-x64-gnu@4.21.3':
     optional: true

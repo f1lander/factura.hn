@@ -184,6 +184,65 @@ class InvoiceService extends BaseService {
     return true;
   }
 
+  /**
+   * Compares two invoice numbers based on their structure and numerical values.
+   *
+   * @param {string} invoiceNumber1 - The first invoice number to compare. Must follow the format "XXX-XXX-XX-XXXXXXXX".
+   * @param {string} invoiceNumber2 - The second invoice number to compare. Must follow the format "XXX-XXX-XX-XXXXXXXX".
+   * @returns {"first less than second" | "first greater than second" | "equal" | "invalid"}
+   * - "first less than second" if the first invoice number is less than the second.
+   * - "first greater than second" if the first invoice number is greater than the second.
+   * - "equal" if both invoice numbers are exactly the same.
+   * - "invalid" if either of the invoice numbers does not match the required format.
+   *
+   * @example
+   * compareInvoiceNumbers("123-456-78-12345678", "123-456-78-22345678");
+   * // Returns: "first less than second"
+   *
+   * @example
+   * compareInvoiceNumbers("123-456-78-22345678", "123-456-78-12345678");
+   * // Returns: "first greater than second"
+   *
+   * @example
+   * compareInvoiceNumbers("123-456-78-12345678", "123-456-78-12345678");
+   * // Returns: "equal"
+   *
+   * @example
+   * compareInvoiceNumbers("123-456-78-123", "123-456-78-22345678");
+   * // Returns: "invalid"
+   */
+
+  compareInvoiceNumbers(
+    invoiceNumber1: string,
+    invoiceNumber2: string,
+  ):
+    | "first less than second"
+    | "first greater than second"
+    | "equal"
+    | "invalid" {
+    const invoiceNumberStructure: RegExp = /^(\d{3})-(\d{3})-(\d{2})-(\d{8})$/;
+    const invoiceNumberHasCorrectFormat: boolean =
+      invoiceNumberStructure.test(invoiceNumber1) &&
+      invoiceNumberStructure.test(invoiceNumber2);
+    if (!invoiceNumberHasCorrectFormat) return "invalid";
+    if (invoiceNumber1 === invoiceNumber2) return "equal";
+    const invoice1Numbers = invoiceNumber1
+      .match(invoiceNumberStructure)!
+      .slice(1)
+      .map(Number);
+    const invoice2Numbers = invoiceNumber2
+      .match(invoiceNumberStructure)!
+      .slice(1)
+      .map(Number);
+    for (let i = 0; i < invoice1Numbers.length; i++) {
+      if (invoice1Numbers[i] > invoice2Numbers[i])
+        return "first greater than second";
+      if (invoice1Numbers[i] < invoice2Numbers[i])
+        return "first less than second";
+    }
+    return "equal";
+  }
+
   async searchInvoices(
     searchTerm: string,
     startDate?: Date,
