@@ -11,7 +11,11 @@ const QuantityInput = ({ index, control }: InputProps) => (
       <Input
         type="number"
         {...field}
-        onChange={(e) => field.onChange(Number(e.target.value))}
+        onChange={(e) => {
+          const productAmount = Number(e.target.value);
+          if (productAmount < 1) return field.onChange(1);
+          return field.onChange(productAmount);
+        }}
         placeholder="Quantity"
         className="mt-2"
       />
