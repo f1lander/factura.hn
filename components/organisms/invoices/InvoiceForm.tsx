@@ -58,16 +58,39 @@ interface InvoiceFormProps {
 }
 
 const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
+  /** Import stores from local storage */
   const { customers, syncCustomers } = useCustomersStore();
   const { products } = useProductsStore();
   const { company } = useCompanyStore();
   const { allInvoices } = useInvoicesStore();
+
+  /** Useful for setting the next invoice number */
   const [lastInvoiceNumber, setLastInvoiceNumber] = useState<
     string | undefined
   >();
   const [lastInvoiceExists, setLastInvoiceExists] = useState<boolean>(false);
+
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] =
     useState<boolean>(false);
+
+  const {
+    control,
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    getValues,
+    formState: { errors },
+    setError,
+  } = useFormContext<Invoice>();
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "invoice_items",
+  });
+
+  const customerId = watch("customer_id");
+
   useEffect(() => {
     if (allInvoices.at(-1) !== undefined) {
       setLastInvoiceExists(true);
@@ -76,7 +99,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
     }
   }, [setLastInvoiceExists, allInvoices]);
 
-  const handleFormSubmit = async (data: Partial<Customer>) => {
+  const handleAddCustomerFormSubmit = async (data: Partial<Customer>) => {
     try {
       await customerService.createCustomer(data as Customer);
       syncCustomers();
@@ -97,53 +120,28 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
     }
   };
 
-  const {
-    control,
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    getValues,
-    formState: { errors },
-    setError,
-  } = useFormContext<Invoice>();
-
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "invoice_items",
-  });
   const noProductsAdded: boolean = getValues("invoice_items").length === 0;
 
   const watchInvoiceItems = watch("invoice_items");
 
-  // this is what's consuming so much bandwidth
+  /** Logic for setting the last and next invoice number */
   useEffect(() => {
-    const fetchData = async () => {
-      // Fetch the last invoice number
-      const lastInvoice = await invoiceService.getLastInvoice();
-      if (lastInvoice) {
-        setLastInvoiceNumber(lastInvoice);
-      } else {
-        // If no last invoice, use the range_invoice1 from company
-        setLastInvoiceNumber(company?.range_invoice1);
-      }
-    };
-
-    fetchData();
-    // como esto no ha cambiado, entonces no se ejecuta
-  }, [company]);
-
-  useEffect(() => {
-    if (lastInvoiceNumber) {
-      if (lastInvoiceExists) {
-        const nextInvoiceNumber = generateNextInvoiceNumber(lastInvoiceNumber);
-        setValue("invoice_number", nextInvoiceNumber);
-      } else if (company !== null && company.range_invoice1 !== undefined) {
-        setValue("invoice_number", company.range_invoice1);
-      }
+    const lastInvoice = allInvoices.at(-1);
+    let nextInvoiceNumber = "";
+    if (lastInvoice) {
+      setLastInvoiceNumber(lastInvoice.invoice_number);
+      nextInvoiceNumber = invoiceService.generateNextInvoiceNumber(
+        lastInvoice.invoice_number,
+      );
+      setValue("invoice_number", nextInvoiceNumber);
+    } else if (company && company.range_invoice1) {
+      setLastInvoiceNumber(company.range_invoice1);
+      setValue("invoice_number", company.range_invoice1);
     }
-  }, [lastInvoiceNumber, setValue, company, lastInvoiceExists]);
+  }, [company, allInvoices, setValue]);
 
+  // FIX: this is not working as expected since the total isn't assigned as you
+  // add at least one product
   useEffect(() => {
     const subtotal = watchInvoiceItems.reduce(
       (sum, item) => sum + (item.quantity * item.unit_cost - item.discount),
@@ -158,8 +156,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
     setValue("numbers_to_letters", numberToWords(total));
   }, [watchInvoiceItems, setValue]);
 
-  const customerId = watch("customer_id");
-
+  /** Logic for setting the customer */
   useEffect(() => {
     if (customerId) {
       const selectedCustomer = customers.find((c) => c.id === customerId);
@@ -173,16 +170,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
     }
   }, [customerId, customers, setValue]);
 
-  const generateNextInvoiceNumber = (lastNumber: string) => {
-    const parts = lastNumber.split("-");
-    const lastPart = parts[parts.length - 1];
-    const nextNumber = (parseInt(lastPart, 10) + 1).toString().padStart(8, "0");
-    parts[parts.length - 1] = nextNumber;
-    return parts.join("-");
-  };
-
   const onSubmit = (data: Invoice) => {
-    // return console.log(data);
     const { subtotal, total, tax } = invoiceService.computeInvoiceData(
       data.invoice_items,
     );
@@ -195,36 +183,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
         message: "At least one invoice",
       });
     onSave(data);
-  };
-
-  const validateInvoiceNumber = (value: string) => {
-    const previousInvoiceNumber = lastInvoiceNumber as string;
-    const nextInvoiceNumber = value;
-    const regex = /^\d{3}-\d{3}-\d{2}-\d{8}$/;
-    if (!regex.test(value)) {
-      return "El número de factura debe tener el formato 000-000-00-00000000";
-    }
-    if (!invoiceService.isInvoiceNumberValid(value, company!.range_invoice2!))
-      return "El número de factura está fuera del rango de facturación actual";
-    const nextAndPreviousComparison = invoiceService.compareInvoiceNumbers(
-      nextInvoiceNumber,
-      previousInvoiceNumber,
-    );
-    if (!lastInvoiceExists) {
-      const nextGreaterOrEqualThanPrevious =
-        nextAndPreviousComparison === "first greater than second" ||
-        nextAndPreviousComparison === "equal";
-      if (!nextGreaterOrEqualThanPrevious) {
-        return "El siguiente número de factura no puede ser menor que el anterior";
-      }
-    }
-    if (lastInvoiceExists) {
-      const nextGreaterThanPrevious =
-        nextAndPreviousComparison === "first greater than second";
-      if (!nextGreaterThanPrevious)
-        return "El siguiente número de factura debe ser mayor que el anterior";
-    }
-    return true;
   };
 
   const renderEditableContent = () => (
@@ -285,7 +243,17 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
                   replacement={{ _: /\d/ }}
                   {...register("invoice_number", {
                     required: "Este campo es requerido",
-                    validate: validateInvoiceNumber,
+                    validate: (value) => {
+                      const previousInvoiceNumber = lastInvoiceNumber as string;
+                      const nextInvoiceNumber = value;
+                      const lastInvoiceRange = company!.range_invoice2!;
+                      return invoiceService.validateNextInvoiceNumber(
+                        previousInvoiceNumber,
+                        nextInvoiceNumber,
+                        lastInvoiceRange,
+                        lastInvoiceExists,
+                      );
+                    },
                   })}
                   placeholder="000-000-00-00000000"
                 />
@@ -386,7 +354,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
           </div>
           <Button
             type="button"
-            onClick={() =>
+            onClick={() => {
               append({
                 id: "",
                 invoice_id: "",
@@ -397,19 +365,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
                 discount: 0,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
-              })
-            }
+              });
+            }}
           >
             Agregar Producto o Servicio
           </Button>
         </div>
         {/* Inhabilita el botón si el formulario no se ha tocado y todas las entradas aún son inválidas */}
-        <Button
-          type="submit"
-          className="mt-4"
-          // disabled={noProductsAdded && (!isDirty || !isValid)}
-          disabled={noProductsAdded}
-        >
+        <Button type="submit" className="mt-4" disabled={noProductsAdded}>
           Generar Factura
         </Button>
       </form>
@@ -422,7 +385,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
           <div className="transition-all duration-300 ease-in-out">
             <CustomerForm
               customer={undefined}
-              onSubmit={handleFormSubmit}
+              onSubmit={handleAddCustomerFormSubmit}
               onCancel={() => {
                 setIsAddClientDialogOpen(false);
               }}
