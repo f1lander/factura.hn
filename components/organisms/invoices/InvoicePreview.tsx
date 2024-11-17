@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { useFormContext } from "react-hook-form";
+import React from "react";
+import { useFormContext, useWatch } from "react-hook-form";
 import {
   Card,
   CardContent,
@@ -19,91 +19,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Invoice, invoiceService } from "@/lib/supabase/services/invoice";
-import { numberToWords } from "@/lib/utils";
-import { useCompanyStore } from "@/store/companyStore";
-import { useInvoicesStore } from "@/store/invoicesStore";
+import { Invoice } from "@/lib/supabase/services/invoice";
 import { getStatusBadge } from "@/components/molecules/InvoicesTable";
 
-interface InvoicePreviewProps {
-  invoice?: Invoice;
-}
-
-const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
-  const { company } = useCompanyStore();
-  const { allInvoices } = useInvoicesStore();
-  const [lastInvoiceNumber, setLastInvoiceNumber] = useState<
-    string | undefined
-  >();
-  const [lastInvoiceExists, setLastInvoiceExists] = useState<boolean>(false);
-  useState<boolean>(false);
-  useEffect(() => {
-    if (allInvoices.at(-1) !== undefined) {
-      setLastInvoiceExists(true);
-    } else {
-      setLastInvoiceExists(false);
-    }
-  }, [setLastInvoiceExists, allInvoices]);
-
-  const {
-    watch,
-    setValue,
-    getValues,
-    formState: { errors },
-    setError,
-  } = useFormContext<Invoice>();
-
-  const watchInvoiceItems = watch("invoice_items");
-
-  // this is what's consuming so much bandwidth
-  useEffect(() => {
-    const fetchData = async () => {
-      // Fetch the last invoice number
-      const lastInvoice = await invoiceService.getLastInvoice();
-      if (lastInvoice) {
-        setLastInvoiceNumber(lastInvoice);
-      } else {
-        // If no last invoice, use the range_invoice1 from company
-        setLastInvoiceNumber(company?.range_invoice1);
-      }
-    };
-
-    fetchData();
-    // como esto no ha cambiado, entonces no se ejecuta
-  }, [company]);
-
-  useEffect(() => {
-    if (lastInvoiceNumber && !invoice) {
-      if (lastInvoiceExists) {
-        const nextInvoiceNumber = generateNextInvoiceNumber(lastInvoiceNumber);
-        setValue("invoice_number", nextInvoiceNumber);
-      } else if (company !== null && company.range_invoice1 !== undefined) {
-        setValue("invoice_number", company.range_invoice1);
-      }
-    }
-  }, [lastInvoiceNumber, invoice, setValue, company, lastInvoiceExists]);
-
-  useEffect(() => {
-    const subtotal = watchInvoiceItems.reduce(
-      (sum, item) => sum + (item.quantity * item.unit_cost - item.discount),
-      0,
-    );
-    const tax = subtotal * 0.15; // Assuming 15% tax rate
-    const total = subtotal + tax;
-
-    setValue("subtotal", subtotal);
-    setValue("tax", tax);
-    setValue("total", total);
-    setValue("numbers_to_letters", numberToWords(total));
-  }, [watchInvoiceItems, setValue]);
-
-  const generateNextInvoiceNumber = (lastNumber: string) => {
-    const parts = lastNumber.split("-");
-    const lastPart = parts[parts.length - 1];
-    const nextNumber = (parseInt(lastPart, 10) + 1).toString().padStart(8, "0");
-    parts[parts.length - 1] = nextNumber;
-    return parts.join("-");
-  };
+const InvoicePreview: React.FC = () => {
+  const { watch, control } = useFormContext<Invoice>();
+  const values = useWatch({ control });
 
   const renderReadOnlyContent = () => (
     <>
@@ -112,15 +33,15 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
         <dl className="grid gap-1">
           <div className="flex items-center gap-4">
             <dt className="text-muted-foreground">Cliente:</dt>
-            <dd>{watch("customers.name")}</dd>
+            <dd>{values.customers?.name}</dd>
           </div>
           <div className="flex items-center gap-4">
             <dt className="text-muted-foreground">RTN:</dt>
-            <dd>{watch("customers.rtn")}</dd>
+            <dd>{values.customers?.rtn}</dd>
           </div>
           <div className="flex items-center gap-4">
             <dt className="text-muted-foreground">Correo:</dt>
-            <dd>{watch("customers.email")}</dd>
+            <dd>{values.customers?.email}</dd>
           </div>
         </dl>
       </div>
@@ -211,19 +132,14 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
       <CardHeader className="flex flex-row items-start justify-between bg-muted/50">
         <div className="grid gap-0.5">
           <CardTitle className="group flex items-center gap-2 text-lg">
-            Número de factura {3}
+            Número de factura {watch("invoice_number")}
           </CardTitle>
-          {/* TODO: Place here the date to be added */}
           <CardDescription>
-            {/* {isEditable */}
-            {/*   ? new Date().toLocaleDateString() */}
-            {/*   : new Date(invoice?.date || "").toLocaleDateString()} */}
             Fecha: {new Date().toLocaleString()}
           </CardDescription>
         </div>
       </CardHeader>
       <CardContent className="p-6 text-sm">
-        {/* {isEditable ? renderEditableContent() : renderReadOnlyContent()} */}
         {renderReadOnlyContent()}
       </CardContent>
       <CardFooter className="flex flex-row items-center justify-between border-t bg-muted/50 px-6 py-3">
