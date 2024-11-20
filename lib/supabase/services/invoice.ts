@@ -44,6 +44,12 @@ export interface InvoiceItem {
   created_at: string;
 }
 
+interface CustomerInfo {
+  name: string;
+  email: string;
+  rtn: string;
+}
+
 class InvoiceService extends BaseService {
   private tableName: Table = "invoices";
 
@@ -71,6 +77,38 @@ class InvoiceService extends BaseService {
       console.error("No company ID available for this operation");
     }
     return companyId;
+  }
+
+  /**
+   * Determines whether the "Generate Invoice" button should be disabled.
+   *
+   * The button is disabled if any of the following conditions are met:
+   * - At least one invoice item does not have a specified product description.
+   * - There are no invoice items.
+   * - The customer information is incomplete.
+   *
+   * @param {InvoiceItem[]} invoiceItems - An array of invoice items.
+   * @param {CustomerInfo} customer - The customer's information.
+   * @returns {boolean} `true` if the button should be disabled, otherwise `false`.
+   */
+  generateInvoiceButtonShouldBeDisabled(
+    invoiceItems: InvoiceItem[],
+    customer: CustomerInfo,
+  ): boolean {
+    const anInvoiceItemHasNotSpecifiedProduct: boolean = invoiceItems.some(
+      (invoiceItem) => invoiceItem.description.length < 1,
+    );
+    const thereAreNoProductEntries: boolean = invoiceItems.length < 1;
+    const noCustomerDefined: boolean = Object.values(customer).some(
+      (value) => value.length < 1,
+    );
+    if (
+      anInvoiceItemHasNotSpecifiedProduct ||
+      thereAreNoProductEntries ||
+      noCustomerDefined
+    )
+      return true;
+    return false;
   }
 
   /**
