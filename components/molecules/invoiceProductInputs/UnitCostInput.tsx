@@ -10,7 +10,11 @@ const UnitCostInput = ({ index, control }: InputProps) => (
       <Input
         type="number"
         {...field}
-        onChange={(e) => field.onChange(Number(e.target.value))}
+        onChange={(e) => {
+          const unitCost = Number(e.target.value);
+          if (unitCost < 0) return field.onChange(0);
+          return field.onChange(unitCost);
+        }}
         placeholder="Unit Cost"
         className="mt-2"
       />

@@ -10,7 +10,11 @@ const DiscountInput = ({ index, control }: InputProps) => (
       <Input
         type="number"
         {...field}
-        onChange={(e) => field.onChange(Number(e.target.value))}
+        onChange={(e) => {
+          const discount = Number(e.target.value);
+          if (discount < 0) return field.onChange(0);
+          return field.onChange(discount);
+        }}
         placeholder="Discount"
         className="mt-2"
       />
