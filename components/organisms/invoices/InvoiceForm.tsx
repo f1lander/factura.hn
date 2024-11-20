@@ -179,12 +179,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
   }, [customerId, customers, setValue]);
 
   const onSubmit = (data: Invoice) => {
-    const { subtotal, total, tax } = invoiceService.computeInvoiceData(
-      data.invoice_items,
-    );
-    data.subtotal = subtotal;
-    data.total = total;
-    data.tax = tax;
     if (data.invoice_items.length < 1)
       setError("invoice_items", {
         type: "required",
@@ -410,7 +404,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
   );
 
   return (
-    <Card className="card-invoice overflow-hidden border-none shadow-none rounded-sm h-scren">
+    <Card className="card-invoice overflow-hidden border-none shadow-none rounded-sm h-screen">
       <CardHeader className="flex flex-row items-start justify-between bg-muted/50">
         <div className="grid gap-0.5">
           <CardTitle className="group flex items-center gap-2 text-lg">

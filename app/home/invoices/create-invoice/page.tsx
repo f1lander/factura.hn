@@ -53,10 +53,10 @@ export default function CreateInvoicePage() {
   return (
     <FormProvider {...methods}>
       <section className="lg:px-7 xl:px-10 flex gap-5 w-full">
-        <div className="w-1/2">
+        <div className="w-1/2 py-2">
           <InvoiceForm onSave={handleSaveInvoice} />
         </div>
-        <div className="w-1/2">
+        <div className="w-1/2 py-2">
           <InvoicePreview />
         </div>
       </section>
