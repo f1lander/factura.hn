@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import supabase from "../client"; // Import your existing client
+import supabase from "../client";
 
 export type Table =
   | "companies"
@@ -8,6 +8,16 @@ export type Table =
   | "customers"
   | "invoices"
   | "invoice_items";
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+}
+
+export interface PaginationOptions {
+  page: number;
+  pageSize: number;
+}
 
 export class BaseService {
   protected supabase: SupabaseClient;
@@ -47,14 +57,74 @@ export class BaseService {
     return data?.id || null;
   }
 
+  protected async getAllPaginated<T>(
+    table: Table,
+    { page, pageSize }: PaginationOptions
+  ): Promise<PaginatedResponse<T>> {
+    const companyId = await this.ensureCompanyId();
+    if (!companyId) return { data: [], total: 0 };
+
+    // Calculate range for pagination
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize - 1;
+
+    // Get total count
+    const countQuery = this.supabase
+      .from(table)
+      .select('*', { count: 'exact', head: true });
+
+    if (table === "customers") {
+      countQuery.or(`company_id.eq.${companyId},is_universal.eq.true`);
+    } else {
+      countQuery.eq("company_id", companyId);
+    }
+
+    const { count, error: countError } = await countQuery;
+
+    if (countError) {
+      console.error(`Error counting ${table}:`, countError);
+      return { data: [], total: 0 };
+    }
+
+    // Get paginated data
+    const dataQuery = this.supabase
+      .from(table)
+      .select('*');
+
+    if (table === "customers") {
+      dataQuery.or(`company_id.eq.${companyId},is_universal.eq.true`);
+    } else {
+      dataQuery.eq("company_id", companyId);
+    }
+
+    const { data, error } = await dataQuery
+      .range(start, end)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error(`Error fetching paginated ${table}:`, error);
+      return { data: [], total: 0 };
+    }
+
+    return {
+      data: data as T[],
+      total: count || 0
+    };
+  }
+
   protected async getAll<T>(table: Table): Promise<T[]> {
     const companyId = await this.ensureCompanyId();
     if (!companyId) return [];
 
-    const { data, error } = await this.supabase
-      .from(table)
-      .select("*")
-      .eq("company_id", companyId);
+    const query = this.supabase.from(table).select("*");
+
+    if (table === "customers") {
+      query.or(`company_id.eq.${companyId},is_universal.eq.true`);
+    } else {
+      query.eq("company_id", companyId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error(`Error fetching ${table}:`, error);

@@ -11,6 +11,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@ag-grid-community/locale": "^32.3.3",
     "@kinde-oss/kinde-auth-nextjs": "^2.3.5",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-checkbox": "^1.1.0",
@@ -32,6 +33,7 @@
     "@supabase/auth-js": "^2.65.0",
     "@supabase/ssr": "^0.4.0",
     "@supabase/supabase-js": "^2.44.4",
+    "ag-grid-react": "^32.3.3",
     "axios": "^1.7.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
