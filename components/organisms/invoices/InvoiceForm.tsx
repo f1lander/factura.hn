@@ -82,7 +82,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
     handleSubmit,
     watch,
     setValue,
-    getValues,
     formState: { errors },
     setError,
   } = useFormContext<Invoice>();
@@ -122,12 +121,18 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
     }
   };
 
-  const noProductsAdded: boolean = getValues("invoice_items").length === 0;
-
   const watchInvoiceItems = useWatch({
     name: "invoice_items",
     control,
   });
+
+  const watchClient = watch("customers");
+
+  const isGenerateInvoiceButtonDisabled =
+    invoiceService.generateInvoiceButtonShouldBeDisabled(
+      watchInvoiceItems,
+      watchClient,
+    );
 
   useEffect(() => {
     const subtotal = watchInvoiceItems.reduce(
@@ -270,6 +275,26 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
           </div>
         </div>
         <Separator className="my-4" />
+        <Button
+          className="w-full"
+          type="button"
+          onClick={() => {
+            append({
+              id: "",
+              invoice_id: "",
+              product_id: "",
+              description: "",
+              quantity: 1,
+              unit_cost: 0,
+              discount: 0,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+            console.log(watchInvoiceItems);
+          }}
+        >
+          Agregar Producto o Servicio
+        </Button>
         <div className="grid gap-4">
           <div className="hidden sm:block">
             <Table>
@@ -355,27 +380,12 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
               </div>
             ))}
           </div>
-          <Button
-            type="button"
-            onClick={() => {
-              append({
-                id: "",
-                invoice_id: "",
-                product_id: "",
-                description: "",
-                quantity: 1,
-                unit_cost: 0,
-                discount: 0,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              });
-            }}
-          >
-            Agregar Producto o Servicio
-          </Button>
         </div>
-        {/* FIX: mejorar la condición para que se inhabilite el botón de crear factura*/}
-        <Button type="submit" className="mt-4" disabled={noProductsAdded}>
+        <Button
+          type="submit"
+          className="mt-4"
+          disabled={isGenerateInvoiceButtonDisabled}
+        >
           Generar Factura
         </Button>
       </form>
@@ -400,7 +410,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
   );
 
   return (
-    <Card className="card-invoice overflow-hidden border-none shadow-none rounded-sm">
+    <Card className="card-invoice overflow-hidden border-none shadow-none rounded-sm h-scren">
       <CardHeader className="flex flex-row items-start justify-between bg-muted/50">
         <div className="grid gap-0.5">
           <CardTitle className="group flex items-center gap-2 text-lg">
@@ -435,11 +445,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
 };
 
 const calculateItemTotal = (index: number, items: InvoiceItem[]) => {
-  /** DON'T erase this line
-   * When you append a field, the function runs, and since the array
-   * is initially empty, the properties from item are undefined*/
-  if (items.length < 1) return 0;
   const item = items[index];
+  /** There's a point where the item is undefined, so don't delete this line*/
+  if (!item) return 0;
   return (item.quantity * item.unit_cost - item.discount).toFixed(2);
 };
 
