@@ -2,7 +2,12 @@
 import React, { useState, useEffect } from "react";
 import { InputMask } from "@react-input/mask";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { useFieldArray, Controller, useFormContext } from "react-hook-form";
+import {
+  useFieldArray,
+  Controller,
+  useFormContext,
+  useWatch,
+} from "react-hook-form";
 import {
   Card,
   CardContent,
@@ -58,13 +63,11 @@ interface InvoiceFormProps {
 }
 
 const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
-  /** Import stores from local storage */
   const { customers, syncCustomers } = useCustomersStore();
   const { products } = useProductsStore();
   const { company } = useCompanyStore();
   const { allInvoices } = useInvoicesStore();
 
-  /** Useful for setting the next invoice number */
   const [lastInvoiceNumber, setLastInvoiceNumber] = useState<
     string | undefined
   >();
@@ -110,7 +113,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
       });
     } catch (err) {
       console.error("Error al guardar el cliente:", err);
-      // setError("No se pudo guardar el cliente. Por favor, intente de nuevo.");
       toast({
         title: "Error",
         description:
@@ -122,7 +124,24 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
 
   const noProductsAdded: boolean = getValues("invoice_items").length === 0;
 
-  const watchInvoiceItems = watch("invoice_items");
+  const watchInvoiceItems = useWatch({
+    name: "invoice_items",
+    control,
+  });
+
+  useEffect(() => {
+    const subtotal = watchInvoiceItems.reduce(
+      (sum, item) => sum + (item.quantity * item.unit_cost - item.discount),
+      0,
+    );
+    const tax = subtotal * 0.15; // Assuming 15% tax rate
+    const total = subtotal + tax;
+
+    setValue("subtotal", subtotal);
+    setValue("tax", tax);
+    setValue("total", total);
+    setValue("numbers_to_letters", numberToWords(total));
+  }, [watchInvoiceItems, setValue]);
 
   /** Logic for setting the last and next invoice number */
   useEffect(() => {
@@ -139,22 +158,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
       setValue("invoice_number", company.range_invoice1);
     }
   }, [company, allInvoices, setValue]);
-
-  // FIX: this is not working as expected since the total isn't assigned as you
-  // add at least one product
-  useEffect(() => {
-    const subtotal = watchInvoiceItems.reduce(
-      (sum, item) => sum + (item.quantity * item.unit_cost - item.discount),
-      0,
-    );
-    const tax = subtotal * 0.15; // Assuming 15% tax rate
-    const total = subtotal + tax;
-
-    setValue("subtotal", subtotal);
-    setValue("tax", tax);
-    setValue("total", total);
-    setValue("numbers_to_letters", numberToWords(total));
-  }, [watchInvoiceItems, setValue]);
 
   /** Logic for setting the customer */
   useEffect(() => {
@@ -371,7 +374,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
             Agregar Producto o Servicio
           </Button>
         </div>
-        {/* Inhabilita el botón si el formulario no se ha tocado y todas las entradas aún son inválidas */}
+        {/* FIX: mejorar la condición para que se inhabilite el botón de crear factura*/}
         <Button type="submit" className="mt-4" disabled={noProductsAdded}>
           Generar Factura
         </Button>
@@ -432,6 +435,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
 };
 
 const calculateItemTotal = (index: number, items: InvoiceItem[]) => {
+  /** DON'T erase this line
+   * When you append a field, the function runs, and since the array
+   * is initially empty, the properties from item are undefined*/
+  if (items.length < 1) return 0;
   const item = items[index];
   return (item.quantity * item.unit_cost - item.discount).toFixed(2);
 };
