@@ -1,7 +1,7 @@
 "use client";
 
 import { InputMask } from "@react-input/mask";
-import React from "react";
+import React, { useState } from "react";
 import { FileInputIcon } from "lucide-react";
 import { signupv2 } from "@/lib/supabase/auth";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import { useInvoicesStore } from "@/store/invoicesStore";
 import { useProductsStore } from "@/store/productsStore";
 import Link from "next/link";
 import { useForm, SubmitHandler } from "react-hook-form";
+import { useRouter } from "next/navigation";
 
 export interface SignupForm {
   company_name: string;
@@ -37,6 +38,8 @@ const SignupPage: React.FC = () => {
   const { resetInvoices } = useInvoicesStore();
   const { resetIsLoaded } = useIsLoadedStore();
   const { resetProducts } = useProductsStore();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const router = useRouter();
   const { register, handleSubmit } = useForm<SignupForm>({
     defaultValues: {
       company_name: "",
@@ -53,12 +56,15 @@ const SignupPage: React.FC = () => {
     resetInvoices();
     resetCustomers();
     resetCompany();
+    setIsLoading(true);
     toast({
       title: "Creando cuenta...",
-      description: "Por favor espera mientras procesamos tu solicitud.",
+      description:
+        "Por favor espera mientras procesamos tu solicitud. Esto puede tardar unos segundos",
     });
     const { success, message } = await signupv2(data);
     if (!success) {
+      setIsLoading(false);
       return toast({
         title: "Registro fallido",
         variant: "destructive",
@@ -66,11 +72,9 @@ const SignupPage: React.FC = () => {
       });
     }
 
-    toast({
-      title: "Cuenta creada exitosamente",
-      description:
-        "Revisa tu bandeja de entrada de tu correo electrónico para verificar tu cuenta y, posteriormente, iniciar sesión con ella",
-    });
+    return router.push(
+      `/auth/confirm-email?name=${data.full_name}&email=${data.email}`,
+    );
   };
 
   return (
@@ -162,8 +166,8 @@ const SignupPage: React.FC = () => {
                   placeholder="Ingresa tu contraseña"
                 />
               </div>
-              <Button type="submit" className="w-full">
-                Registrarse
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Registrando..." : "Registrarse"}
               </Button>
             </div>
           </form>

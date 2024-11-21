@@ -44,6 +44,12 @@ export interface InvoiceItem {
   created_at: string;
 }
 
+interface CustomerInfo {
+  name: string;
+  email: string;
+  rtn: string;
+}
+
 class InvoiceService extends BaseService {
   private tableName: Table = "invoices";
 
@@ -71,6 +77,60 @@ class InvoiceService extends BaseService {
       console.error("No company ID available for this operation");
     }
     return companyId;
+  }
+
+  /**
+   * Determines whether the "Generate Invoice" button should be disabled.
+   *
+   * The button is disabled if any of the following conditions are met:
+   * - At least one invoice item does not have a specified product description.
+   * - There are no invoice items.
+   * - The customer information is incomplete.
+   *
+   * @param {InvoiceItem[]} invoiceItems - An array of invoice items.
+   * @param {CustomerInfo} customer - The customer's information.
+   * @returns {boolean} `true` if the button should be disabled, otherwise `false`.
+   */
+  generateInvoiceButtonShouldBeDisabled(
+    invoiceItems: InvoiceItem[],
+    customer: CustomerInfo,
+  ): boolean {
+    const anInvoiceItemHasNotSpecifiedProduct: boolean = invoiceItems.some(
+      (invoiceItem) => invoiceItem.description.length < 1,
+    );
+    const thereAreNoProductEntries: boolean = invoiceItems.length < 1;
+    const noCustomerDefined: boolean = Object.values(customer).some(
+      (value) => value.length < 1,
+    );
+    if (
+      anInvoiceItemHasNotSpecifiedProduct ||
+      thereAreNoProductEntries ||
+      noCustomerDefined
+    )
+      return true;
+    return false;
+  }
+
+  /**
+   * Generates the next invoice number by incrementing the last segment of the previous invoice number.
+   *
+   * This method takes a `previousInvoiceNumber` in the format "000-000-00-00000000", splits it into its
+   * constituent parts, increments the last 8-digit segment by one, pads it with leading zeros to maintain
+   * the required length, and then reconstructs the next invoice number.
+   *
+   * @param {string} previousInvoiceNumber - The previous invoice number, expected in the format "000-000-00-00000000".
+   * @returns {string} - The next invoice number, following the format "000-000-00-00000000".
+   *
+   * @memberof InvoiceService
+   */
+  generateNextInvoiceNumber(previousInvoiceNumber: string) {
+    const parts = previousInvoiceNumber.split("-");
+    const lastPart = parts[parts.length - 1];
+    const nextInvoiceNumber = (parseInt(lastPart, 10) + 1)
+      .toString()
+      .padStart(8, "0");
+    parts[parts.length - 1] = nextInvoiceNumber;
+    return parts.join("-");
   }
 
   /**
@@ -241,6 +301,67 @@ class InvoiceService extends BaseService {
         return "first less than second";
     }
     return "equal";
+  }
+
+  /**
+   * Validates the next invoice number against the previous invoice number and the last invoice range.
+   *
+   * This method ensures that the `nextInvoiceNumber` adheres to the required format and falls within
+   * the permissible billing range. It performs the following checks:
+   *
+   * 1. Verifies that `previousInvoiceNumber`, `nextInvoiceNumber`, and `lastInvoiceRange` match the
+   *    format `000-000-00-00000000`.
+   * 2. Ensures that `nextInvoiceNumber` is within the current billing range as defined by `lastInvoiceRange`.
+   * 3. Compares `nextInvoiceNumber` with `previousInvoiceNumber` to ensure proper sequencing.
+   *    - If `lastInvoiceExists` is `false`, `nextInvoiceNumber` must be greater than or equal to `previousInvoiceNumber`.
+   *    - If `lastInvoiceExists` is `true`, `nextInvoiceNumber` must be strictly greater than `previousInvoiceNumber`.
+   *
+   * @param {string} previousInvoiceNumber - The previous invoice number, expected in the format "000-000-00-00000000".
+   * @param {string} nextInvoiceNumber - The next invoice number to validate, expected in the format "000-000-00-00000000".
+   * @param {string} lastInvoiceRange - The last invoice range number, expected in the format "000-000-00-00000000".
+   * @param {boolean} lastInvoiceExists - Indicates whether the last invoice in the current range exists.
+   * @returns {string|true} - Returns `true` if the `nextInvoiceNumber` is valid. Otherwise, returns a descriptive error message.
+   *
+   * @memberof InvoiceService
+   */
+  validateNextInvoiceNumber(
+    previousInvoiceNumber: string,
+    nextInvoiceNumber: string,
+    lastInvoiceRange: string,
+    lastInvoiceExists: boolean,
+  ): string | true {
+    const invoiceNumberPattern = /^\d{3}-\d{3}-\d{2}-\d{8}$/;
+    if (!invoiceNumberPattern.test(previousInvoiceNumber)) {
+      return "El número de factura anterior debe tener el formato 000-000-00-00000000";
+    }
+    if (!invoiceNumberPattern.test(nextInvoiceNumber)) {
+      return "El número de factura siguiente debe tener el formato 000-000-00-00000000";
+    }
+    if (!invoiceNumberPattern.test(lastInvoiceRange)) {
+      return "El número de factura del último rango válido debe tener el formato 000-000-00-00000000";
+    }
+    if (!this.isInvoiceNumberValid(nextInvoiceNumber, lastInvoiceRange))
+      return "El siguiente número de factura está fuera del rango de facturación actual";
+    const nextAndPreviousComparison = this.compareInvoiceNumbers(
+      nextInvoiceNumber,
+      previousInvoiceNumber,
+    );
+    if (!lastInvoiceExists) {
+      const nextGreaterOrEqualThanPrevious =
+        nextAndPreviousComparison === "first greater than second" ||
+        nextAndPreviousComparison === "equal";
+      if (!nextGreaterOrEqualThanPrevious) {
+        return "El siguiente número de factura no puede ser menor que el anterior";
+      }
+    }
+    if (lastInvoiceExists) {
+      const nextGreaterThanPrevious =
+        nextAndPreviousComparison === "first greater than second";
+      if (!nextGreaterThanPrevious)
+        return "El siguiente número de factura debe ser mayor que el anterior";
+    }
+
+    return true;
   }
 
   async searchInvoices(
