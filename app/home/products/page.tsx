@@ -1,4 +1,5 @@
 "use client";
+import { FileSpreadsheet } from "lucide-react";
 import React, { useState } from "react";
 import {
   Card,
@@ -33,14 +34,14 @@ import GenericEmptyState from "@/components/molecules/GenericEmptyState";
 import { useProductsStore } from "@/store/productsStore";
 
 export default function ProductsPage() {
-  // const [products, setProducts] = useState<Product[]>([]);
   const { products, syncProducts } = useProductsStore();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  // const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isAddSpreadsheetDialogOpen, setIsAddSpreadsheetDialogOpen] =
+    useState<boolean>(false);
   const { toast } = useToast();
 
   const handleProductSelect = (product: Product) => {
@@ -130,10 +131,6 @@ export default function ProductsPage() {
     }
   };
 
-  // if (isLoading) {
-  //   return <div className="p-12">Cargando...</div>;
-  // }
-
   if (error) {
     return <div className="p-12">Error: {error}</div>;
   }
@@ -163,6 +160,13 @@ export default function ProductsPage() {
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
+                    <Button
+                      className="flex gap-2 bg-[#1D6F42] hover:bg-[#144E2E] items-center"
+                      onClick={() => setIsAddSpreadsheetDialogOpen(true)}
+                    >
+                      <FileSpreadsheet />
+                      Subir productos de Excel
+                    </Button>
                     <Button
                       onClick={handleDeleteClick}
                       variant="destructive"
@@ -278,6 +282,14 @@ export default function ProductsPage() {
               Eliminar
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={isAddSpreadsheetDialogOpen}
+        onOpenChange={setIsAddSpreadsheetDialogOpen}
+      >
+        <DialogContent className="w-[90%]" id="contenido del dialogo papa">
+          <div className="transition-all duration-300 ease-in-out">buenas</div>
         </DialogContent>
       </Dialog>
     </div>

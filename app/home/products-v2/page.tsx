@@ -1,14 +1,14 @@
-'use client';
-import React, { useEffect, useState } from 'react';
-import { ColDef } from 'ag-grid-community';
-import { Package } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
-import { Product, productService } from '@/lib/supabase/services/product';
-import { useProductsStore } from '@/store/productsStore';
-import GenericEmptyState from '@/components/molecules/GenericEmptyState';
-import { ProductForm } from '@/components/molecules/ProductForm';
-import { Dialog } from '@radix-ui/react-dialog';
-import { DataGrid } from '@/components/molecules/DataGrid';
+"use client";
+import React, { useEffect, useState } from "react";
+import { ColDef } from "ag-grid-community";
+import { Package } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { Product, productService } from "@/lib/supabase/services/product";
+import { useProductsStore } from "@/store/productsStore";
+import GenericEmptyState from "@/components/molecules/GenericEmptyState";
+import { ProductForm } from "@/components/molecules/ProductForm";
+import { Dialog } from "@radix-ui/react-dialog";
+import { DataGrid } from "@/components/molecules/DataGrid";
 
 export default function ProductsPage() {
   const { products, setProducts } = useProductsStore();
@@ -31,7 +31,8 @@ export default function ProductsPage() {
       console.error("Error loading products:", err);
       toast({
         title: "Error",
-        description: "No se pudieron cargar los productos. Por favor, intente de nuevo.",
+        description:
+          "No se pudieron cargar los productos. Por favor, intente de nuevo.",
         variant: "destructive",
       });
     }
@@ -39,27 +40,28 @@ export default function ProductsPage() {
 
   const columnDefs: ColDef<Product>[] = [
     {
-      field: 'sku',
-      headerName: 'SKU',
+      field: "sku",
+      headerName: "SKU",
       checkboxSelection: true,
       headerCheckboxSelection: true,
     },
-    { field: 'description', headerName: 'Descripción' },
+    { field: "description", headerName: "Descripción" },
     {
-      field: 'unit_cost',
-      headerName: 'Precio Unitario',
-      valueFormatter: params => `Lps. ${params.value.toFixed(2)}`
+      field: "unit_cost",
+      headerName: "Precio Unitario",
+      valueFormatter: (params) => `Lps. ${params.value.toFixed(2)}`,
     },
     {
-      field: 'is_service',
-      headerName: 'Tipo',
-      valueFormatter: params => params.value ? 'Servicio' : 'Producto'
+      field: "is_service",
+      headerName: "Tipo",
+      valueFormatter: (params) => (params.value ? "Servicio" : "Producto"),
     },
     {
-      field: 'quantity_in_stock',
-      headerName: 'Inventario',
-      valueFormatter: params => params.data?.is_service ? 'N/A' : params.value
-    }
+      field: "quantity_in_stock",
+      headerName: "Inventario",
+      valueFormatter: (params) =>
+        params.data?.is_service ? "N/A" : params.value,
+    },
   ];
 
   const handleCreateProduct = () => {
@@ -85,7 +87,8 @@ export default function ProductsPage() {
       console.error("Error al guardar el producto:", err);
       toast({
         title: "Error",
-        description: "No se pudo guardar el producto. Por favor, intente de nuevo.",
+        description:
+          "No se pudo guardar el producto. Por favor, intente de nuevo.",
         variant: "destructive",
       });
     }
@@ -104,7 +107,9 @@ export default function ProductsPage() {
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <div className="flex flex-col sm:gap-4 p-12">
         <main className="flex flex-col xl:flex-row items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-          <div className={`w-full ${isFormVisible ? "xl:w-1/2" : "xl:w-full"} transition-all duration-300 ease-in-out`}>
+          <div
+            className={`w-full ${isFormVisible ? "xl:w-1/2" : "xl:w-full"} transition-all duration-300 ease-in-out`}
+          >
             {products.length === 0 ? (
               <GenericEmptyState
                 icon={Package}
@@ -128,7 +133,7 @@ export default function ProductsPage() {
                 onDelete={() => setIsDeleteDialogOpen(true)}
                 pageSize={pageSize}
                 pageSizeOptions={[5, 10, 20, 50]}
-                // onPageChange={handlePageChange}
+              // onPageChange={handlePageChange}
               />
             )}
           </div>

@@ -32,7 +32,7 @@ import { useProductsStore } from "@/store/productsStore";
 const navItems = [
   { href: "/home/", label: "Dashboard" },
   { href: "/home/invoices", label: "Facturas" },
-  { href: "/home/products", label: "Productos" },
+  { href: "/home/products-v2", label: "Productos" },
   { href: "/home/customers", label: "Clientes" },
   { href: "/home/settings", label: "Configuracion" },
 ];
