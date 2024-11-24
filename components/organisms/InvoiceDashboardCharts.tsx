@@ -24,9 +24,9 @@ const InvoiceDashboardCharts = ({ invoices }: { invoices: Invoice[] }) => {
     invoices.forEach(invoice => {
       statusCounts[invoice.status]++;
     });
-    return Object.entries(statusCounts).map(([status, count]) => ({ 
-      status: translateStatus(status), 
-      count 
+    return Object.entries(statusCounts).map(([status, count]) => ({
+      status: translateStatus(status),
+      count
     }));
   };
 
@@ -96,8 +96,85 @@ const InvoiceDashboardCharts = ({ invoices }: { invoices: Invoice[] }) => {
     return translations[status] || status;
   };
 
+  const getTotalsByStatus = () => {
+    const data = {
+      total: { amount: 0, qty: 0 },
+      pending: { amount: 0, qty: 0 },
+      paid: { amount: 0, qty: 0 },
+      cancelled: { amount: 0, qty: 0 }
+    };
+
+    invoices.forEach(invoice => {
+      data.total.amount += invoice.total;
+      data.total.qty += 1;
+      data[invoice.status].amount += invoice.total;
+      data[invoice.status].qty += 1;
+    });
+
+    return data;
+  };
+
+
   return (
     <div className="flex flex-wrap gap-4">
+
+      <Card className="flex-grow basis-full sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(25%-0.75rem)]">
+        <CardHeader>
+          <CardTitle>Resumen de Facturas</CardTitle>
+          <CardDescription>Totales y cantidades por estado</CardDescription>
+        </CardHeader>
+        <CardContent className="h-fulll flex items-center justify-center p-4">
+          {invoices.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4 w-full">
+              {/* Total Card */}
+              <div className="bg-gray-100 rounded-lg p-3 flex flex-col justify-between">
+                <div className="text-sm font-medium text-gray-600">Total</div>
+                <div>
+                  <div className="text-xl font-bold">
+                    L. {getTotalsByStatus().total.amount.toLocaleString('es-HN', { minimumFractionDigits: 2 })}
+                  </div>
+                  <div className="text-sm text-gray-600">{getTotalsByStatus().total.qty} facturas</div>
+                </div>
+              </div>
+
+              {/* Paid Card */}
+              <div className="bg-green-50 rounded-lg p-3 flex flex-col justify-between">
+                <div className="text-sm font-medium text-green-600">Pagadas</div>
+                <div>
+                  <div className="text-xl font-bold text-green-700">
+                    L. {getTotalsByStatus().paid.amount.toLocaleString('es-HN', { minimumFractionDigits: 2 })}
+                  </div>
+                  <div className="text-sm text-green-600">{getTotalsByStatus().paid.qty} facturas</div>
+                </div>
+              </div>
+
+              {/* Pending Card */}
+              <div className="bg-yellow-50 rounded-lg p-3 flex flex-col justify-between">
+                <div className="text-sm font-medium text-yellow-600">Pendientes</div>
+                <div>
+                  <div className="text-xl font-bold text-yellow-700">
+                    L. {getTotalsByStatus().pending.amount.toLocaleString('es-HN', { minimumFractionDigits: 2 })}
+                  </div>
+                  <div className="text-sm text-yellow-600">{getTotalsByStatus().pending.qty} facturas</div>
+                </div>
+              </div>
+
+              {/* Cancelled Card */}
+              <div className="bg-red-50 rounded-lg p-3 flex flex-col justify-between">
+                <div className="text-sm font-medium text-red-600">Canceladas</div>
+                <div>
+                  <div className="text-xl font-bold text-red-700">
+                    L. {getTotalsByStatus().cancelled.amount.toLocaleString('es-HN', { minimumFractionDigits: 2 })}
+                  </div>
+                  <div className="text-sm text-red-600">{getTotalsByStatus().cancelled.qty} facturas</div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <SkeletonLoader />
+          )}
+        </CardContent>
+      </Card>
       <Card className="flex-grow basis-full sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(25%-0.75rem)]">
         <CardHeader>
           <CardTitle>Estado de Facturas</CardTitle>
@@ -116,29 +193,9 @@ const InvoiceDashboardCharts = ({ invoices }: { invoices: Invoice[] }) => {
           )}
         </CardContent>
       </Card>
-  
-      <Card className="flex-grow basis-full sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(25%-0.75rem)]">
-        <CardHeader>
-          <CardTitle>Ingresos Mensuales</CardTitle>
-          <CardDescription>Tendencia de ingresos en los últimos meses</CardDescription>
-        </CardHeader>
-        <CardContent className="h-[200px]">
-          {getMonthlyRevenue().length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={getMonthlyRevenue()}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Area type="monotone" dataKey="revenue" name="Ingresos" stroke="#8884d8" fill="#8884d8" />
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : (
-            <ChartSkeleton />
-          )}
-        </CardContent>
-      </Card>
-  
+
+
+
       <Card className="flex-grow basis-full sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(25%-0.75rem)]">
         <CardHeader>
           <CardTitle>Clientes Principales</CardTitle>
@@ -160,24 +217,33 @@ const InvoiceDashboardCharts = ({ invoices }: { invoices: Invoice[] }) => {
           )}
         </CardContent>
       </Card>
-  
-      <Card className="flex-grow basis-full sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(25%-0.75rem)]">
-        <CardHeader>
-          <CardTitle>Ingresos Totales</CardTitle>
-          <CardDescription>Suma de todas las facturas</CardDescription>
-        </CardHeader>
-        <CardContent className="h-[200px] flex items-center justify-center">
-          {getTotalRevenue() > 0 ? (
-            <div className="text-4xl font-bold">
-              L. {getTotalRevenue().toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-          ) : (
-            <SkeletonLoader />
-          )}
-        </CardContent>
-      </Card>
-  
+
+      <div className="grid grid-cols-1 w-full">
+
+        <Card className="flex-grow basis-full sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(25%-0.75rem)]">
+          <CardHeader>
+            <CardTitle>Ingresos Mensuales</CardTitle>
+            <CardDescription>Tendencia de ingresos en los últimos meses</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[200px]">
+            {getMonthlyRevenue().length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={getMonthlyRevenue()}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Area type="monotone" dataKey="revenue" name="Ingresos" stroke="#8884d8" fill="#8884d8" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <ChartSkeleton />
+            )}
+          </CardContent>
+        </Card>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+
         <Card className="col-span-1 sm:col-span-2 md:col-span-1">
           <CardHeader>
             <CardTitle>Facturas Semanales</CardTitle>
@@ -200,7 +266,7 @@ const InvoiceDashboardCharts = ({ invoices }: { invoices: Invoice[] }) => {
             )}
           </CardContent>
         </Card>
-  
+
         <Card className="col-span-1 sm:col-span-2 md:col-span-1">
           <CardHeader>
             <CardTitle>Ingresos Diarios</CardTitle>

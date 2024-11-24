@@ -67,81 +67,94 @@ export default function CompanyDataForm({
     defaultValues: initialCompany || undefined,
   });
 
-  const onSubmit = async (data: Omit<Company, "id">) => {
-    // Get file type, extension, and extract image itself
-    data.logo_url = "";
+  const handleLogoUpload = async (
+    companyId: string,
+    photoBase64: string
+  ): Promise<string | null> => {
     try {
-      const {
-        data: { user },
-      } = await supabase().auth.getUser();
+      const fileType = photoBase64.split(";")[0].split(":")[1];
+      const fileExtension = fileType.split("/")[1];
+      const imageData = photoBase64.replace(/^data:image\/\w+;base64,/, "");
+      const buffer = Buffer.from(imageData, "base64");
+  
+      const { data: uploadedPhoto, error: uploadPhotoError } = await supabase()
+        .storage.from("company-logos")
+        .upload(`public/company_${companyId}.${fileExtension}`, buffer, {
+          cacheControl: "3600",
+          contentType: fileType,
+          upsert: true // Add this to update existing files
+        });
+  
+      if (uploadPhotoError || !uploadedPhoto) {
+        console.error("Photo upload failed:", uploadPhotoError);
+        return null;
+      }
+  
+      return uploadedPhoto.path;
+    } catch (error) {
+      console.error("Error uploading logo:", error);
+      return null;
+    }
+  };
+  
+  const onSubmit = async (data: Omit<Company, "id">) => {
+    data.logo_url = "";
+    
+    try {
+      const { data: { user } } = await supabase().auth.getUser();
       data.user_id = user?.id!;
-      let result;
+  
       if (initialCompany) {
         toast({
           title: "Actualizando datos de compañía...",
         });
-        // Executed when there's already a company
-        result = await companyService.updateCompany(initialCompany!.id, data);
+  
+        const updates: Partial<Company> = { ...data };
+        
+        // Handle logo update if photo changed
+        if (photo) {
+          const logoPath = await handleLogoUpload(initialCompany.id, photo);
+          if (logoPath) {
+            updates.logo_url = logoPath;
+          }
+        }
+        debugger;
+        const result = await companyService.updateCompany(initialCompany.id, updates);
         syncCompany();
-
+  
         if (result.error !== null) {
           return toast({
             variant: "destructive",
             title: "Error al actualizar la compañía",
-            description:
-              "Hubo un error al intentar actualizar los datos de compañía. Por favor, intente más tarde",
+            description: "Hubo un error al intentar actualizar los datos de compañía. Por favor, intente más tarde",
           });
         }
+  
         return toast({
           title: "Se actualizaron los datos de compañía con éxito",
         });
       } else {
-        const fileType = photo!.split(";")[0].split(":")[1];
-        const fileExtension = fileType.split("/")[1];
-        const imageData = photo!.replace(/^data:image\/\w+;base64,/, "");
-        const buffer = Buffer.from(imageData, "base64");
-        // Executed when there's a company for the first time
-        result = await companyService.createCompany(data);
-        if (result === null)
-          return console.log(
-            "Unable to create the company. Please try again later",
-          );
-
-        console.log(
-          "We were able to create the company! It looks like this: ",
-          result,
-        );
-
-        const { data: uploadedPhoto, error: uploadPhotoError } =
-          await supabase()
-            .storage.from("company-logos")
-            .upload(`public/company_${result[0].id}.${fileExtension}`, buffer, {
-              cacheControl: "3600",
-              contentType: fileType,
+        // Create new company
+        const result = await companyService.createCompany(data);
+        if (!result) {
+          return toast({
+            variant: "destructive",
+            title: "Error al crear la compañía",
+          });
+        }
+  
+        if (photo) {
+          const logoPath = await handleLogoUpload(result[0].id, photo);
+          if (logoPath) {
+            await companyService.updateCompany(result[0].id, {
+              logo_url: logoPath,
             });
-        if (uploadPhotoError || !data)
-          return console.log(
-            "We were unable to upload the photo. Please try again later",
-          );
-        console.log(
-          "We were able to upload the photo! The data with respect to the photo is: ",
-          uploadedPhoto,
-        );
-        const { error } = await companyService.updateCompany(result[0].id, {
-          logo_url: uploadedPhoto.path,
-        });
-
-        if (error !== null)
-          return console.log(
-            "There was an error trying to update the company with the logo...",
-          );
-        console.log(
-          "The company has been created altogether. Redirecting to /home/invoices...",
-        );
+          }
+        }
+  
         toast({
           title: "Éxito",
-          description:
-            "Los datos de la compañía se han guardado correctamente. En unos instantes te redirigiremos a la página de facturas.",
+          description: "Los datos de la compañía se han guardado correctamente. En unos instantes te redirigiremos a la página de facturas.",
         });
         router.push("/home/load-data");
       }
@@ -149,8 +162,7 @@ export default function CompanyDataForm({
       console.error("Error saving company data:", error);
       toast({
         title: "Error",
-        description:
-          "Ocurrió un error al guardar los datos. Por favor, intente de nuevo.",
+        description: "Ocurrió un error al guardar los datos. Por favor, intente de nuevo.",
         variant: "destructive",
       });
     }

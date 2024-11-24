@@ -60,21 +60,19 @@ import UnitCostInput from "@/components/molecules/invoiceProductInputs/UnitCostI
 
 interface InvoiceFormProps {
   onSave: (invoice: Invoice) => void;
+  isEditing?: boolean;
+  invoice?: Invoice | null;
 }
 
-const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
+const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave, isEditing, invoice }) => {
   const { customers, syncCustomers } = useCustomersStore();
   const { products } = useProductsStore();
   const { company } = useCompanyStore();
   const { allInvoices } = useInvoicesStore();
 
-  const [lastInvoiceNumber, setLastInvoiceNumber] = useState<
-    string | undefined
-  >();
+  const [lastInvoiceNumber, setLastInvoiceNumber] = useState<string | undefined>();
   const [lastInvoiceExists, setLastInvoiceExists] = useState<boolean>(false);
-
-  const [isAddClientDialogOpen, setIsAddClientDialogOpen] =
-    useState<boolean>(false);
+  const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState<boolean>(false);
 
   const {
     control,
@@ -84,6 +82,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
     setValue,
     formState: { errors },
     setError,
+    reset
   } = useFormContext<Invoice>();
 
   const { fields, append, remove } = useFieldArray({
@@ -93,8 +92,16 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
 
   const customerId = watch("customer_id");
 
+  // Initialize form with invoice data when editing
   useEffect(() => {
-    if (allInvoices.at(-1) !== undefined) {
+    if (isEditing && invoice) {
+      reset(invoice);
+      setLastInvoiceNumber(invoice.invoice_number);
+    }
+  }, [isEditing, invoice, reset]);
+
+  useEffect(() => {
+    if (allInvoices.filter(item => item.status !== 'cancelled').at(-1) !== undefined) {
       setLastInvoiceExists(true);
     } else {
       setLastInvoiceExists(false);
@@ -114,8 +121,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
       console.error("Error al guardar el cliente:", err);
       toast({
         title: "Error",
-        description:
-          "No se pudo guardar el cliente. Por favor, intente de nuevo.",
+        description: "No se pudo guardar el cliente. Por favor, intente de nuevo.",
         variant: "destructive",
       });
     }
@@ -139,7 +145,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
       (sum, item) => sum + (item.quantity * item.unit_cost - item.discount),
       0,
     );
-    const tax = subtotal * 0.15; // Assuming 15% tax rate
+    const tax = subtotal * 0.15;
     const total = subtotal + tax;
 
     setValue("subtotal", subtotal);
@@ -150,19 +156,21 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
 
   /** Logic for setting the last and next invoice number */
   useEffect(() => {
-    const lastInvoice = allInvoices.at(-1);
-    let nextInvoiceNumber = "";
-    if (lastInvoice) {
-      setLastInvoiceNumber(lastInvoice.invoice_number);
-      nextInvoiceNumber = invoiceService.generateNextInvoiceNumber(
-        lastInvoice.invoice_number,
-      );
-      setValue("invoice_number", nextInvoiceNumber);
-    } else if (company && company.range_invoice1) {
-      setLastInvoiceNumber(company.range_invoice1);
-      setValue("invoice_number", company.range_invoice1);
+    if (!isEditing) {
+      const lastInvoice = allInvoices.filter(item=> item.status !== 'cancelled').at(-1);
+      let nextInvoiceNumber = "";
+      if (lastInvoice) {
+        setLastInvoiceNumber(lastInvoice.invoice_number);
+        nextInvoiceNumber = invoiceService.generateNextInvoiceNumber(
+          lastInvoice.invoice_number,
+        );
+        setValue("invoice_number", nextInvoiceNumber);
+      } else if (company && company.range_invoice1) {
+        setLastInvoiceNumber(company.range_invoice1);
+        setValue("invoice_number", company.range_invoice1);
+      }
     }
-  }, [company, allInvoices, setValue]);
+  }, [company, allInvoices, setValue, isEditing]);
 
   /** Logic for setting the customer */
   useEffect(() => {
@@ -226,19 +234,24 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
             render={({ field }) => (
               <DatePicker
                 onChange={(date) => field.onChange(date?.toISOString())}
+                value={field.value ? new Date(field.value) : undefined}
               />
             )}
           />
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="flex flex-col gap-2">
-                <Label className="whitespace-nowrap">Última factura</Label>
+                <Label className="whitespace-nowrap">
+                  {isEditing ? 'Número actual' : 'Última factura'}
+                </Label>
                 <Input value={lastInvoiceNumber} disabled />
               </div>
             </div>
             <div className="flex-1">
               <div className="flex flex-col gap-2">
-                <Label className="whitespace-nowrap">Nueva factura</Label>
+                <Label className="whitespace-nowrap">
+                  {isEditing ? 'Mantener número' : 'Nueva factura'}
+                </Label>
                 <InputMask
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   mask="___-___-__-________"
@@ -246,6 +259,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
                   {...register("invoice_number", {
                     required: "Este campo es requerido",
                     validate: (value) => {
+                      if (isEditing) return true; // Skip validation when editing
                       const previousInvoiceNumber = lastInvoiceNumber as string;
                       const nextInvoiceNumber = value;
                       const lastInvoiceRange = company!.range_invoice2!;
@@ -258,6 +272,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
                     },
                   })}
                   placeholder="000-000-00-00000000"
+                  disabled={isEditing}
                 />
                 {errors.invoice_number && (
                   <p className="text-red-500 text-sm">
@@ -284,7 +299,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             });
-            console.log(watchInvoiceItems);
           }}
         >
           Agregar Producto o Servicio
@@ -295,53 +309,43 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Producto</TableHead>
-                  <TableHead>Descripción</TableHead>
                   <TableHead>Cantidad</TableHead>
                   <TableHead>Precio</TableHead>
                   <TableHead>Descuento</TableHead>
-                  <TableHead>Total</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {fields.map((item, index) => (
-                  <>
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <ProductSelect
-                          index={index}
-                          products={products}
-                          control={control}
-                          setValue={setValue}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <DescriptionInput index={index} control={control} />
-                      </TableCell>
-                      <TableCell>
-                        <QuantityInput index={index} control={control} />
-                      </TableCell>
-                      <TableCell>
-                        <UnitCostInput index={index} control={control} />
-                      </TableCell>
-                      <TableCell>
-                        <DiscountInput index={index} control={control} />
-                      </TableCell>
-                      <TableCell>
-                        {`Lps. ${calculateItemTotal(index, watchInvoiceItems)}`}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          onClick={() => remove(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  </>
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <ProductSelect
+                        index={index}
+                        products={products}
+                        control={control}
+                        setValue={setValue}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <QuantityInput index={index} control={control} />
+                    </TableCell>
+                    <TableCell>
+                      <UnitCostInput index={index} control={control} />
+                    </TableCell>
+                    <TableCell>
+                      <DiscountInput index={index} control={control} />
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => remove(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
               </TableBody>
             </Table>
@@ -380,7 +384,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
           className="mt-4"
           disabled={isGenerateInvoiceButtonDisabled}
         >
-          Generar Factura
+          {isEditing ? 'Actualizar Factura' : 'Generar Factura'}
         </Button>
       </form>
       <Dialog
@@ -408,10 +412,13 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
       <CardHeader className="flex flex-row items-start justify-between bg-muted/50">
         <div className="grid gap-0.5">
           <CardTitle className="group flex items-center gap-2 text-lg">
-            Crear Factura
+            {isEditing ? 'Editar Factura' : 'Crear Factura'}
           </CardTitle>
           <CardDescription>
-            Fecha:{new Date().toLocaleDateString()}
+            {isEditing 
+              ? `Editando factura: ${invoice?.invoice_number}`
+              : `Fecha: ${new Date().toLocaleDateString()}`
+            }
           </CardDescription>
         </div>
       </CardHeader>
@@ -420,10 +427,21 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave }) => {
       </CardContent>
       <CardFooter className="flex flex-row items-center justify-between border-t bg-muted/50 px-6 py-3">
         <div className="text-xs text-muted-foreground">
-          Factura creada:{" "}
-          <time dateTime={watch("created_at")} suppressHydrationWarning>
-            {new Date(watch("created_at")).toLocaleString()}
-          </time>
+          {isEditing ? (
+            <>
+              Última modificación:{" "}
+              <time dateTime={watch("updated_at")} suppressHydrationWarning>
+                {new Date(watch("updated_at")).toLocaleString()}
+              </time>
+            </>
+          ) : (
+            <>
+              Factura creada:{" "}
+              <time dateTime={watch("created_at")} suppressHydrationWarning>
+                {new Date(watch("created_at")).toLocaleString()}
+              </time>
+            </>
+          )}
         </div>
         <div>
           <Badge variant={watch("is_proforma") ? "outline" : "secondary"}>
