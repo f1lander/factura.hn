@@ -331,7 +331,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
               <TableBody>
                 {fields.map((item, index) => (
                   <TableRow key={item.id}>
-                    <TableCell className="sm:max-w-[40vw]" id="troublesome">
+                    <TableCell className="sm:max-w-[40vw]">
                       <ProductSelect
                         index={index}
                         products={products}

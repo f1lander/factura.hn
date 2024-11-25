@@ -165,7 +165,10 @@ export default function CreateInvoicePage() {
               <SheetTrigger asChild id="sheettrigger">
                 <Button className="w-4/5 mx-auto">Previsualizar factura</Button>
               </SheetTrigger>
-              <SheetContent style={{ maxWidth: "60vw" }}>
+              <SheetContent
+                style={{ maxWidth: "60vw" }}
+                className="overflow-auto"
+              >
                 <InvoicePreview />
               </SheetContent>
             </Sheet>
