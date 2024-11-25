@@ -64,15 +64,22 @@ interface InvoiceFormProps {
   invoice?: Invoice | null;
 }
 
-const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave, isEditing, invoice }) => {
+const InvoiceForm: React.FC<InvoiceFormProps> = ({
+  onSave,
+  isEditing,
+  invoice,
+}) => {
   const { customers, syncCustomers } = useCustomersStore();
   const { products } = useProductsStore();
   const { company } = useCompanyStore();
   const { allInvoices } = useInvoicesStore();
 
-  const [lastInvoiceNumber, setLastInvoiceNumber] = useState<string | undefined>();
+  const [lastInvoiceNumber, setLastInvoiceNumber] = useState<
+    string | undefined
+  >();
   const [lastInvoiceExists, setLastInvoiceExists] = useState<boolean>(false);
-  const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState<boolean>(false);
+  const [isAddClientDialogOpen, setIsAddClientDialogOpen] =
+    useState<boolean>(false);
 
   const {
     control,
@@ -82,7 +89,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave, isEditing, invoice })
     setValue,
     formState: { errors },
     setError,
-    reset
+    reset,
   } = useFormContext<Invoice>();
 
   const { fields, append, remove } = useFieldArray({
@@ -101,7 +108,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave, isEditing, invoice })
   }, [isEditing, invoice, reset]);
 
   useEffect(() => {
-    if (allInvoices.filter(item => item.status !== 'cancelled').at(-1) !== undefined) {
+    if (
+      allInvoices.filter((item) => item.status !== "cancelled").at(-1) !==
+      undefined
+    ) {
       setLastInvoiceExists(true);
     } else {
       setLastInvoiceExists(false);
@@ -121,7 +131,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave, isEditing, invoice })
       console.error("Error al guardar el cliente:", err);
       toast({
         title: "Error",
-        description: "No se pudo guardar el cliente. Por favor, intente de nuevo.",
+        description:
+          "No se pudo guardar el cliente. Por favor, intente de nuevo.",
         variant: "destructive",
       });
     }
@@ -157,7 +168,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave, isEditing, invoice })
   /** Logic for setting the last and next invoice number */
   useEffect(() => {
     if (!isEditing) {
-      const lastInvoice = allInvoices.filter(item=> item.status !== 'cancelled').at(-1);
+      const lastInvoice = allInvoices
+        .filter((item) => item.status !== "cancelled")
+        .at(-1);
       let nextInvoiceNumber = "";
       if (lastInvoice) {
         setLastInvoiceNumber(lastInvoice.invoice_number);
@@ -234,7 +247,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave, isEditing, invoice })
             render={({ field }) => (
               <DatePicker
                 onChange={(date) => field.onChange(date?.toISOString())}
-                value={field.value ? new Date(field.value) : undefined}
+              // value={field.value ? new Date(field.value) : undefined}
               />
             )}
           />
@@ -242,7 +255,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave, isEditing, invoice })
             <div className="flex-1">
               <div className="flex flex-col gap-2">
                 <Label className="whitespace-nowrap">
-                  {isEditing ? 'Número actual' : 'Última factura'}
+                  {isEditing ? "Número actual" : "Última factura"}
                 </Label>
                 <Input value={lastInvoiceNumber} disabled />
               </div>
@@ -250,7 +263,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave, isEditing, invoice })
             <div className="flex-1">
               <div className="flex flex-col gap-2">
                 <Label className="whitespace-nowrap">
-                  {isEditing ? 'Mantener número' : 'Nueva factura'}
+                  {isEditing ? "Mantener número" : "Nueva factura"}
                 </Label>
                 <InputMask
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
@@ -384,7 +397,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave, isEditing, invoice })
           className="mt-4"
           disabled={isGenerateInvoiceButtonDisabled}
         >
-          {isEditing ? 'Actualizar Factura' : 'Generar Factura'}
+          {isEditing ? "Actualizar Factura" : "Generar Factura"}
         </Button>
       </form>
       <Dialog
@@ -412,13 +425,12 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSave, isEditing, invoice })
       <CardHeader className="flex flex-row items-start justify-between bg-muted/50">
         <div className="grid gap-0.5">
           <CardTitle className="group flex items-center gap-2 text-lg">
-            {isEditing ? 'Editar Factura' : 'Crear Factura'}
+            {isEditing ? "Editar Factura" : "Crear Factura"}
           </CardTitle>
           <CardDescription>
-            {isEditing 
+            {isEditing
               ? `Editando factura: ${invoice?.invoice_number}`
-              : `Fecha: ${new Date().toLocaleDateString()}`
-            }
+              : `Fecha: ${new Date().toLocaleDateString()}`}
           </CardDescription>
         </div>
       </CardHeader>
