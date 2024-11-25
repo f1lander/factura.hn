@@ -331,7 +331,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
               <TableBody>
                 {fields.map((item, index) => (
                   <TableRow key={item.id}>
-                    <TableCell>
+                    <TableCell className="sm:max-w-[40vw]" id="troublesome">
                       <ProductSelect
                         index={index}
                         products={products}
@@ -366,12 +366,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
           <div className="sm:hidden">
             {fields.map((item, index) => (
               <div key={item.id} className="mb-4 p-4 border rounded">
-                <ProductSelect
-                  index={index}
-                  products={products}
-                  control={control}
-                  setValue={setValue}
-                />
+                <div className="max-w-[80vw]">
+                  <ProductSelect
+                    index={index}
+                    products={products}
+                    control={control}
+                    setValue={setValue}
+                  />
+                </div>
                 <DescriptionInput index={index} control={control} />
                 <QuantityInput index={index} control={control} />
                 <UnitCostInput index={index} control={control} />
@@ -421,7 +423,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   );
 
   return (
-    <Card className="card-invoice overflow-hidden border-none shadow-none rounded-sm h-screen">
+    <Card className="card-invoice overflow-hidden border-none shadow-none rounded-sm h-fit">
       <CardHeader className="flex flex-row items-start justify-between bg-muted/50">
         <div className="grid gap-0.5">
           <CardTitle className="group flex items-center gap-2 text-lg">
