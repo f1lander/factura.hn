@@ -160,24 +160,14 @@ export default function CreateInvoicePage() {
           </Tabs>
         )}
         {windowWidth >= 1280 && (
-          <div className="flex flex-col w-full gap-4">
-            <Sheet>
-              <SheetTrigger asChild id="sheettrigger">
-                <Button className="w-4/5 mx-auto">Previsualizar factura</Button>
-              </SheetTrigger>
-              <SheetContent
-                style={{ maxWidth: "60vw" }}
-                className="overflow-auto"
-              >
-                <InvoicePreview />
-              </SheetContent>
-            </Sheet>
+          <>
             <InvoiceForm
               onSave={handleSaveInvoice}
               isEditing={!!invoiceId}
               invoice={currentInvoice}
             />
-          </div>
+            <InvoicePreview />
+          </>
         )}
       </section>
     </FormProvider>
