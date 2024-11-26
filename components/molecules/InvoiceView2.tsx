@@ -46,7 +46,7 @@ import {
 // import { Customer, customerService } from "@/lib/supabase/services/customer";
 import { Product } from "@/lib/supabase/services/product";
 // import { Company, companyService } from "@/lib/supabase/services/company";
-import { numberToWords } from "@/lib/utils";
+import { getSignedLogoUrl, numberToWords } from "@/lib/utils";
 import { getStatusBadge } from "./InvoicesTable";
 import { renderPdf, getSignedPdfUrl } from "@/app/do-functions";
 import { toast } from "@/components/ui/use-toast";
@@ -57,6 +57,7 @@ import { useCompanyStore } from "@/store/companyStore";
 import { CustomerForm } from "./CustomerForm";
 import { Customer, customerService } from "@/lib/supabase/services/customer";
 import { useInvoicesStore } from "@/store/invoicesStore";
+import { useRouter } from "next/navigation";
 
 interface InvoiceViewProps {
   invoice?: Invoice;
@@ -114,12 +115,17 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     try {
       let s3Url = invoice?.s3_url;
       let s3Key = invoice?.s3_key;
-
+      debugger;
       if (!s3Key && !s3Url) {
         if (!company) {
           throw new Error("No se pudo obtener la información de la empresa");
         }
 
+        const logoUrl = await getSignedLogoUrl(company?.logo_url);
+
+        console.log("Generating PDF for invoice:", invoice);
+        console.log("logoUrl:", logoUrl);
+        debugger;
         const renderResult = await renderPdf({
           data: {
             invoice_number: invoice?.invoice_number,
@@ -148,6 +154,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             rangeInvoice1: company?.range_invoice1,
             rangeInvoice2: company?.range_invoice2,
             email: company?.email,
+            logo_url: logoUrl,
           },
           template_url: `https://factura-hn.nyc3.digitaloceanspaces.com/templates/${company?.template_url ?? "default_template2.html"}`,
         });
@@ -193,7 +200,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
 
         toast({
           title: "Success",
-          description: "Tu facse descargó correctamente.",
+          description: "Tu factura se descargó correctamente.",
           duration: 3000,
         });
       } else {
@@ -247,7 +254,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
       status: "pending",
     },
   });
-
+  const router = useRouter();
   const { fields, append, remove } = useFieldArray({
     control,
     name: "invoice_items",
@@ -579,6 +586,10 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     </>
   );
 
+  const handleEditInvoice = () => {
+    router.push(`/home/invoices/create-invoice?invoice_id=${invoice?.id}`);
+  };
+
   const renderReadOnlyContent = () => (
     <>
       <div className="grid gap-3">
@@ -677,6 +688,16 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
           {watch("numbers_to_letters")}
         </p>
       </div>
+      {invoice?.status !== 'paid' && (
+        <div className="mt-4">
+          <Button
+            onClick={handleEditInvoice}
+            className="w-full sm:w-auto"
+          >
+            Editar Factura
+          </Button>
+        </div>
+      )}
     </>
   );
 
@@ -696,15 +717,28 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
               : new Date(invoice?.date || "").toLocaleDateString()}
           </CardDescription>
         </div>
-        {!isEditable && (
-          <Button
-            onClick={handleDownloadPdf}
-            disabled={isDownloading}
-            size="sm"
-          >
-            {isDownloading ? "Descargando..." : "Descargar PDF"}
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {!isEditable && (
+            <>
+              {invoice?.status !== 'paid' && (
+                <Button
+                  onClick={handleEditInvoice}
+                  variant="outline"
+                  size="sm"
+                >
+                  Editar
+                </Button>
+              )}
+              <Button
+                onClick={handleDownloadPdf}
+                disabled={isDownloading}
+                size="sm"
+              >
+                {isDownloading ? "Descargando..." : "Descargar PDF"}
+              </Button>
+            </>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="p-6 text-sm">
         {isEditable ? renderEditableContent() : renderReadOnlyContent()}

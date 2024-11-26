@@ -128,7 +128,7 @@ const InvoicePreview: React.FC = () => {
   );
 
   return (
-    <Card className="card-invoice overflow-hidden border-none shadow-none rounded-sm">
+    <Card className="card-invoice overflow-hidden border-none shadow-none rounded-sm w-full">
       <CardHeader className="flex flex-row items-start justify-between bg-muted/50">
         <div className="grid gap-0.5">
           <CardTitle className="group flex items-center gap-2 text-lg">
