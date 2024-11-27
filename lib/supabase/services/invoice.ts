@@ -20,12 +20,18 @@ export interface Invoice {
   is_proforma: boolean;
   created_at: string;
   updated_at: string;
+  customer?: {
+    name: string;
+    email: string;
+    rtn: string;
+  };
   customers: {
     name: string;
     email: string;
     rtn: string;
   };
   invoice_items: InvoiceItem[];
+  items?: InvoiceItem[];
   status: "pending" | "paid" | "cancelled";
   generated_invoice_id?: string | null;
   s3_key?: string | null;
@@ -584,6 +590,8 @@ class InvoiceService extends BaseService {
   ): Promise<Invoice | null> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
+    if (updates.customer) delete updates.customer;
+    if (updates.items) delete updates.items;
 
     const { invoice_items, ...invoiceUpdates } = updates;
 
@@ -609,14 +617,19 @@ class InvoiceService extends BaseService {
         return null;
       }
 
+      // It shoudn't contain the ids provided by react hook form.
       const itemsToInsert = invoice_items.map((item) => ({
         ...item,
         invoice_id: id,
       }));
 
+      const itemsToInsertWithoutId = itemsToInsert.map(
+        ({ id, ...rest }) => rest,
+      );
+
       const { error: insertError } = await this.supabase
         .from("invoice_items")
-        .insert(itemsToInsert);
+        .insert(itemsToInsertWithoutId);
 
       if (insertError) {
         console.error("Error inserting new invoice items:", insertError);
