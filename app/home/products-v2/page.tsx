@@ -45,7 +45,7 @@ export default function ProductsPage() {
     setIsTablePreviewDialogOpen,
     tableFieldnames,
   } = useUploadXls();
-  const { control, register, handleSubmit } = useForm<ProductKeyMappings>({
+  const { control, handleSubmit } = useForm<ProductKeyMappings>({
     defaultValues: {
       sku: "",
       description: "",
@@ -228,13 +228,6 @@ export default function ProductsPage() {
         )}
         {xlsFile && (
           <div className="flex gap-3 mt-2 w-[60%] mx-auto border-2 border-gray-300 rounded p-5 justify-around items-center">
-            <Button
-              onClick={() => {
-                console.log(xlsFile);
-              }}
-            >
-              Ver tabla
-            </Button>
             <div className="flex flex-col gap-3">
               <h2 className="text-lg font-medium">Nombre de archivo subido:</h2>
               <span>{fileName}</span>
