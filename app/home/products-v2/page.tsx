@@ -44,6 +44,9 @@ export default function ProductsPage() {
     isTablePreviewDialogOpen,
     setIsTablePreviewDialogOpen,
     tableFieldnames,
+    areProductsLoading,
+    setAreProductsLoading,
+    setXlsFile,
   } = useUploadXls();
   const { control, handleSubmit } = useForm<ProductKeyMappings>({
     defaultValues: {
@@ -64,8 +67,32 @@ export default function ProductsPage() {
   const [totalProducts, setTotalProducts] = useState(0);
   const { toast } = useToast();
 
-  const onSubmit: SubmitHandler<ProductKeyMappings> = (data) => {
-    console.log(data);
+  const onSubmit: SubmitHandler<ProductKeyMappings> = async (data) => {
+    setAreProductsLoading(true);
+    if (!xlsFile) {
+      setAreProductsLoading(false);
+      return alert("No se ha subido ningún archivo de Excel");
+    }
+    const transformedRows = xlsFile.map((row) => {
+      const newRow: Record<string, any> = {};
+      for (const [newKey, oldKey] of Object.entries(data)) {
+        newRow[newKey] = row[oldKey];
+      }
+      return newRow;
+    });
+    const { success, message } =
+      await productService.createMultipleProducts(transformedRows);
+    if (!success) {
+      toast({
+        title: "No se pudieron subir los productos",
+        description: message,
+      });
+      return setAreProductsLoading(false);
+    }
+    toast({ title: "Carga de productos exitosa", description: message });
+    setIsAddProductsWithSpreadsheetDialogOpen(false);
+    setXlsFile(null);
+    setAreProductsLoading(false);
   };
 
   const loadProducts = useCallback(
@@ -458,7 +485,10 @@ export default function ProductsPage() {
                 }}
               />
             </div>
-            <Button type="submit">Subir productos</Button>
+            {/* <Button type="submit" disabled={areProductsLoading}>Subir productos</Button> */}
+            <Button type="submit" disabled={areProductsLoading}>
+              {areProductsLoading ? "Subiendo productos..." : "Subir productos"}
+            </Button>
           </form>
         </DialogContent>
       </Dialog>
