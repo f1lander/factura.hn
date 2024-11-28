@@ -1,11 +1,10 @@
 import { ChangeEvent, useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 
-interface DataRow {
-  [key: string]: any;
-}
+type DataRow = Record<string, any>;
 
 export default function useUploadXls() {
+  const [areProductsLoading, setAreProductsLoading] = useState<boolean>(false);
   const [xlsFile, setXlsFile] = useState<DataRow[] | null>(null);
   const [fileName, setFileName] = useState<string>("");
   const [tableFieldnames, setTableFieldnames] = useState<string[]>([]);
@@ -46,6 +45,7 @@ export default function useUploadXls() {
 
   return {
     handleXlsFileUpload,
+    setXlsFile,
     xlsFile,
     fileName,
     tableFieldnames,
@@ -53,5 +53,7 @@ export default function useUploadXls() {
     setIsAddProductsWithSpreadsheetDialogOpen,
     isTablePreviewDialogOpen,
     setIsTablePreviewDialogOpen,
+    areProductsLoading,
+    setAreProductsLoading,
   };
 }
