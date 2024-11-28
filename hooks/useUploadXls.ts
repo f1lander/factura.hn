@@ -7,16 +7,21 @@ interface DataRow {
 
 export default function useUploadXls() {
   const [xlsFile, setXlsFile] = useState<DataRow[] | null>(null);
+  const [fileName, setFileName] = useState<string>("");
+  const [tableFieldnames, setTableFieldnames] = useState<string[]>([]);
   const [
     isAddProductsWithSpreadsheetDialogOpen,
     setIsAddProductsWithSpreadsheetDialogOpen,
   ] = useState<boolean>(false);
+  const [isTablePreviewDialogOpen, setIsTablePreviewDialogOpen] =
+    useState<boolean>(false);
 
   const handleXlsFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
       return;
     }
+    setFileName(file.name);
     const reader = new FileReader();
     reader.readAsBinaryString(file);
 
@@ -26,13 +31,12 @@ export default function useUploadXls() {
         return;
       }
       const workbook = XLSX.read(binaryStr, { type: "binary" });
-      console.log("the workbook is: ", workbook);
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
-      console.log("The sheet is: ", sheet);
       const sheetData: DataRow[] = XLSX.utils.sheet_to_json(sheet);
 
       setXlsFile(sheetData);
+      setTableFieldnames(Object.keys(sheetData[0]));
     };
   };
 
@@ -43,7 +47,11 @@ export default function useUploadXls() {
   return {
     handleXlsFileUpload,
     xlsFile,
+    fileName,
+    tableFieldnames,
     isAddProductsWithSpreadsheetDialogOpen,
     setIsAddProductsWithSpreadsheetDialogOpen,
+    isTablePreviewDialogOpen,
+    setIsTablePreviewDialogOpen,
   };
 }
