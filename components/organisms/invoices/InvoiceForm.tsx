@@ -57,6 +57,8 @@ import DescriptionInput from "@/components/molecules/invoiceProductInputs/Descri
 import QuantityInput from "@/components/molecules/invoiceProductInputs/QuantityInput";
 import DiscountInput from "@/components/molecules/invoiceProductInputs/DiscountInput";
 import UnitCostInput from "@/components/molecules/invoiceProductInputs/UnitCostInput";
+import { useQuery } from "@tanstack/react-query";
+import { productService } from "@/lib/supabase/services/product";
 
 interface InvoiceFormProps {
   onSave: (invoice: Invoice) => void;
@@ -69,8 +71,26 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   isEditing,
   invoice,
 }) => {
-  const { customers, syncCustomers } = useCustomersStore();
-  const { products } = useProductsStore();
+  // const { customers, syncCustomers } = useCustomersStore();
+  const { data: customers, isLoading: areCustomersLoading } = useQuery(
+    ["customers"], // unique query key
+    () => customerService.getCustomersByCompany(), // the function for fetching
+    {
+      staleTime: 300000,
+      cacheTime: 600000,
+      refetchOnWindowFocus: true,
+    },
+  );
+  const { data: products, isLoading: areProductsLoading } = useQuery(
+    ["products"],
+    () => productService.getProductsByCompany(),
+    {
+      staleTime: 300000,
+      cacheTime: 600000,
+      refetchOnWindowFocus: true,
+    },
+  );
+  // const { products } = useProductsStore();
   const { company } = useCompanyStore();
   const { allInvoices } = useInvoicesStore();
 
@@ -421,6 +441,12 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
       </Dialog>
     </>
   );
+  if (areCustomersLoading) {
+    return <div>Cargando clientes...</div>;
+  }
+  if (areProductsLoading) {
+    return <div>Cargando productos...</div>;
+  }
 
   return (
     <Card className="card-invoice overflow-hidden border-none shadow-none rounded-sm h-fit w-full">
