@@ -44,8 +44,6 @@ import {
 } from "@/lib/supabase/services/invoice";
 import { numberToWords } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
-import { useCustomersStore } from "@/store/customersStore";
-import { useProductsStore } from "@/store/productsStore";
 import { useCompanyStore } from "@/store/companyStore";
 import { Customer, customerService } from "@/lib/supabase/services/customer";
 import { useInvoicesStore } from "@/store/invoicesStore";
@@ -57,6 +55,8 @@ import DescriptionInput from "@/components/molecules/invoiceProductInputs/Descri
 import QuantityInput from "@/components/molecules/invoiceProductInputs/QuantityInput";
 import DiscountInput from "@/components/molecules/invoiceProductInputs/DiscountInput";
 import UnitCostInput from "@/components/molecules/invoiceProductInputs/UnitCostInput";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { productService } from "@/lib/supabase/services/product";
 
 interface InvoiceFormProps {
   onSave: (invoice: Invoice) => void;
@@ -69,8 +69,27 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   isEditing,
   invoice,
 }) => {
-  const { customers, syncCustomers } = useCustomersStore();
-  const { products } = useProductsStore();
+  const queryClient = useQueryClient();
+
+  const { data: customers, isLoading: areCustomersLoading } = useQuery(
+    ["customers"], // unique query key
+    () => customerService.getCustomersByCompany(), // the function for fetching
+    {
+      staleTime: 300000,
+      cacheTime: 600000,
+      refetchOnWindowFocus: true,
+    },
+  );
+  const { data: products, isLoading: areProductsLoading } = useQuery(
+    ["products"],
+    () => productService.getProductsByCompany(),
+    {
+      staleTime: 300000,
+      cacheTime: 600000,
+      refetchOnWindowFocus: true,
+    },
+  );
+  // const { products } = useProductsStore();
   const { company } = useCompanyStore();
   const { allInvoices } = useInvoicesStore();
 
@@ -121,12 +140,12 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const handleAddCustomerFormSubmit = async (data: Partial<Customer>) => {
     try {
       await customerService.createCustomer(data as Customer);
-      syncCustomers();
       setIsAddClientDialogOpen(false);
       toast({
         title: "Cliente creado",
         description: "El cliente se ha guardado exitosamente.",
       });
+      queryClient.invalidateQueries(["customers"]);
     } catch (err) {
       console.error("Error al guardar el cliente:", err);
       toast({
@@ -188,7 +207,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   /** Logic for setting the customer */
   useEffect(() => {
     if (customerId) {
-      const selectedCustomer = customers.find((c) => c.id === customerId);
+      const selectedCustomer = customers!.find((c) => c.id === customerId);
       if (selectedCustomer) {
         setValue("customers", {
           name: selectedCustomer.name,
@@ -222,7 +241,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   <SelectValue placeholder="Seleccione cliente" />
                 </SelectTrigger>
                 <SelectContent>
-                  {customers.map((customer) => (
+                  {customers!.map((customer) => (
                     <SelectItem key={customer.id} value={customer.id}>
                       {customer.name}
                     </SelectItem>
@@ -334,7 +353,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     <TableCell className="sm:max-w-[40vw] xl:max-w-[17vw]">
                       <ProductSelect
                         index={index}
-                        products={products}
+                        products={products!}
                         control={control}
                         setValue={setValue}
                       />
@@ -369,7 +388,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 <div className="max-w-[80vw]">
                   <ProductSelect
                     index={index}
-                    products={products}
+                    products={products!}
                     control={control}
                     setValue={setValue}
                   />
@@ -421,6 +440,12 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
       </Dialog>
     </>
   );
+  if (areCustomersLoading) {
+    return <div>Cargando clientes...</div>;
+  }
+  if (areProductsLoading) {
+    return <div>Cargando productos...</div>;
+  }
 
   return (
     <Card className="card-invoice overflow-hidden border-none shadow-none rounded-sm h-fit w-full">

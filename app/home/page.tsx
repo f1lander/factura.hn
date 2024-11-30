@@ -15,16 +15,20 @@ import { Invoice, invoiceService } from "@/lib/supabase/services/invoice";
 import { useDebounce } from "@/lib/hooks";
 import InvoiceDashboardCharts from "@/components/organisms/InvoiceDashboardCharts";
 import Link from "next/link";
-import { FileText, PencilIcon, PlusCircleIcon } from "lucide-react";
+import { FileText, PencilIcon } from "lucide-react";
 import GenericEmptyState from "@/components/molecules/GenericEmptyState";
-import { useInvoicesStore } from "@/store/invoicesStore";
-import { productService } from "@/lib/supabase/services/product";
-import { customerService } from "@/lib/supabase/services/customer";
-import { companyService } from "@/lib/supabase/services/company";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Dashboard() {
-  // get ALL stores here.
-  const { allInvoices, setAllInvoices } = useInvoicesStore();
+  const { data: allInvoices, isLoading: areInvoicesLoading } = useQuery(
+    ["allInvoices"], // unique query key
+    () => invoiceService.getInvoices(), // the function for fetching
+    {
+      staleTime: 300000,
+      cacheTime: 600000,
+      refetchOnWindowFocus: true,
+    },
+  );
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<{
@@ -41,11 +45,13 @@ export default function Dashboard() {
 
   const applyFilters = useCallback(() => {
     let filtered = allInvoices;
+    if (areInvoicesLoading) filtered = [];
+    console.log("The value of filtered is: ", filtered);
 
     // Apply search filter
     if (debouncedSearchTerm) {
       const lowerSearchTerm = debouncedSearchTerm.toLowerCase();
-      filtered = filtered.filter(
+      filtered = filtered!.filter(
         (invoice) =>
           invoice.invoice_number.toLowerCase().includes(lowerSearchTerm) ||
           invoice.customers.name.toLowerCase().includes(lowerSearchTerm) ||
@@ -58,7 +64,7 @@ export default function Dashboard() {
 
     // Apply status filter
     if (selectedStatuses.length > 0) {
-      filtered = filtered.filter((invoice) => {
+      filtered = filtered!.filter((invoice) => {
         const invoiceStatus = invoice.status?.toLowerCase() || "pending"; // Default to 'pending' if status is undefined
         return selectedStatuses.some(
           (status) => status.toLowerCase() === invoiceStatus,
@@ -66,14 +72,15 @@ export default function Dashboard() {
       });
     }
 
-    setFilteredInvoices(filtered);
-  }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
+    setFilteredInvoices(filtered!);
+  }, [allInvoices, debouncedSearchTerm, selectedStatuses, areInvoicesLoading]);
 
   // As soon as you enter /home, you'll load the necessary data
 
   useEffect(() => {
     applyFilters();
   }, [allInvoices, debouncedSearchTerm, selectedStatuses, applyFilters]);
+  if (areInvoicesLoading) return <div>Loading invoices</div>;
 
   const handleDateSearch = () => {
     if (dateRange.start && dateRange.end) {

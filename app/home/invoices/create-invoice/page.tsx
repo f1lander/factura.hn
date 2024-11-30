@@ -2,7 +2,6 @@
 
 import InvoiceForm from "@/components/organisms/invoices/InvoiceForm";
 import InvoicePreview from "@/components/organisms/invoices/InvoicePreview";
-// import { Card } from "@/components/ui/card";
 import { Invoice, invoiceService } from "@/lib/supabase/services/invoice";
 import { useInvoicesStore } from "@/store/invoicesStore";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -13,7 +12,6 @@ import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import useWindowSize from "@/hooks/useWindowSize";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export default function CreateInvoicePage() {
   const [loading, setLoading] = useState(true);

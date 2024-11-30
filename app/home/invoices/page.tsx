@@ -25,10 +25,19 @@ import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import CreateInvoiceButton from "@/components/molecules/CreateInvoiceButton";
 import { useInvoicesStore } from "@/store/invoicesStore";
 import { useCompanyStore } from "@/store/companyStore";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Invoices() {
-  // const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
-  const { allInvoices, syncInvoices } = useInvoicesStore();
+  // const { allInvoices, syncInvoices } = useInvoicesStore();
+  const { data: allInvoices, isLoading: areInvoicesLoading } = useQuery(
+    ["allInvoices"], // unique query key
+    () => invoiceService.getInvoices(), // the function for fetching
+    {
+      staleTime: 300000,
+      cacheTime: 600000,
+      refetchOnWindowFocus: true,
+    },
+  );
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [weeklyRevenue, setWeeklyRevenue] = useState(0);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
@@ -61,7 +70,7 @@ export default function Invoices() {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        setFilteredInvoices(allInvoices);
+        if (allInvoices) setFilteredInvoices(allInvoices);
         await fetchRevenue();
       } catch (error) {
         console.error("Error initializing data:", error);
@@ -71,10 +80,42 @@ export default function Invoices() {
 
     initializeData();
   }, [allInvoices]);
+  const applyFilters = useCallback(() => {
+    let filtered: Invoice[] = [];
+    if (!areInvoicesLoading && allInvoices) filtered = allInvoices;
+
+    // Apply search filter
+    if (debouncedSearchTerm) {
+      const lowerSearchTerm = debouncedSearchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (invoice) =>
+          invoice.invoice_number.toLowerCase().includes(lowerSearchTerm) ||
+          invoice.customers.name.toLowerCase().includes(lowerSearchTerm) ||
+          invoice.total.toString().includes(lowerSearchTerm) ||
+          invoice.invoice_items.some((item) =>
+            item.description.toLowerCase().includes(lowerSearchTerm),
+          ),
+      );
+    }
+
+    // Apply status filter
+    if (selectedStatuses.length > 0) {
+      filtered = filtered.filter((invoice) => {
+        const invoiceStatus = invoice.status?.toLowerCase() || "pending"; // Default to 'pending' if status is undefined
+        return selectedStatuses.some(
+          (status) => status.toLowerCase() === invoiceStatus,
+        );
+      });
+    }
+
+    setFilteredInvoices(filtered);
+  }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
 
   useEffect(() => {
     applyFilters();
-  }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
+  }, [allInvoices, debouncedSearchTerm, selectedStatuses, applyFilters]);
+
+  // STARTS HERE
 
   const fetchRevenue = async () => {
     const weeklyRev = await invoiceService.getTotalRevenue("week");
@@ -119,10 +160,7 @@ export default function Invoices() {
 
       setSelectedInvoice(savedInvoice);
       setIsCreatingInvoice(false);
-      // sync invoices
-      syncInvoices();
-      setFilteredInvoices(allInvoices);
-      // fetchInvoices();
+      if (allInvoices) setFilteredInvoices(allInvoices);
       setIsOpen(false);
     } catch (error) {
       console.error("An error occurred while saving the invoice:", error);
@@ -143,35 +181,6 @@ export default function Invoices() {
   const handleStatusFilterChange = (statuses: string[]) => {
     setSelectedStatuses(statuses);
   };
-  const applyFilters = useCallback(() => {
-    let filtered = allInvoices;
-
-    // Apply search filter
-    if (debouncedSearchTerm) {
-      const lowerSearchTerm = debouncedSearchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (invoice) =>
-          invoice.invoice_number.toLowerCase().includes(lowerSearchTerm) ||
-          invoice.customers.name.toLowerCase().includes(lowerSearchTerm) ||
-          invoice.total.toString().includes(lowerSearchTerm) ||
-          invoice.invoice_items.some((item) =>
-            item.description.toLowerCase().includes(lowerSearchTerm),
-          ),
-      );
-    }
-
-    // Apply status filter
-    if (selectedStatuses.length > 0) {
-      filtered = filtered.filter((invoice) => {
-        const invoiceStatus = invoice.status?.toLowerCase() || "pending"; // Default to 'pending' if status is undefined
-        return selectedStatuses.some(
-          (status) => status.toLowerCase() === invoiceStatus,
-        );
-      });
-    }
-
-    setFilteredInvoices(filtered);
-  }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
   const handleDateSearch = () => {
     if (dateRange.start && dateRange.end) {
       const filtered = filteredInvoices.filter((invoice) => {
@@ -209,7 +218,6 @@ export default function Invoices() {
         await invoiceService.updateInvoicesStatus(invoiceIds, newStatus);
         // Refresh the invoices list after updating
         // fetchInvoices();
-        syncInvoices();
         toast({
           title: "Status Updated",
           description: `Successfully updated ${invoiceIds.length} invoice(s) to ${newStatus}`,
@@ -223,7 +231,7 @@ export default function Invoices() {
         });
       }
     },
-    [syncInvoices],
+    [],
   );
 
   // Widgets Section
@@ -250,6 +258,7 @@ export default function Invoices() {
 
     const weeklyPercentage =
       monthlyRevenue !== 0 ? (weeklyRevenue / monthlyRevenue) * 100 : 0;
+    if (areInvoicesLoading) return <div>Loading invoices</div>;
 
     return (
       <div className="w-full grid gap-4 md:grid-cols-2 lg:grid-cols-4">
