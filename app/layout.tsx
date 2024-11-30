@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 import { Inter as FontSans } from "next/font/google";
 import { cn } from "@/lib/utils";
+import ReactQueryProvider from "@/utils/providers/ReactQueryProvider";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -44,19 +45,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
-      <body
-        suppressHydrationWarning={true}
-        className={cn(
-          "min-h-screen bg-background antialiased",
-          fontSans.className,
-        )}
-      >
-        <>
-          {children}
-          <Toaster />
-        </>
-      </body>
-    </html>
+    <ReactQueryProvider>
+      <html lang="es">
+        <body
+          suppressHydrationWarning={true}
+          className={cn(
+            "min-h-screen bg-background antialiased",
+            fontSans.className,
+          )}
+        >
+          <>
+            {children}
+            <Toaster />
+          </>
+        </body>
+      </html>
+    </ReactQueryProvider>
   );
 }
