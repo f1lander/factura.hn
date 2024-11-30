@@ -25,10 +25,19 @@ import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import CreateInvoiceButton from "@/components/molecules/CreateInvoiceButton";
 import { useInvoicesStore } from "@/store/invoicesStore";
 import { useCompanyStore } from "@/store/companyStore";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Invoices() {
-  // const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
-  const { allInvoices, syncInvoices } = useInvoicesStore();
+  // const { allInvoices, syncInvoices } = useInvoicesStore();
+  const { data: allInvoices, isLoading: areInvoicesLoading } = useQuery(
+    ["allInvoices"], // unique query key
+    () => invoiceService.getInvoices(), // the function for fetching
+    {
+      staleTime: 300000,
+      cacheTime: 600000,
+      refetchOnWindowFocus: true,
+    },
+  );
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [weeklyRevenue, setWeeklyRevenue] = useState(0);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
@@ -76,6 +85,8 @@ export default function Invoices() {
     applyFilters();
   }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
 
+  // STARTS HERE
+
   const fetchRevenue = async () => {
     const weeklyRev = await invoiceService.getTotalRevenue("week");
     const monthlyRev = await invoiceService.getTotalRevenue("month");
@@ -120,7 +131,6 @@ export default function Invoices() {
       setSelectedInvoice(savedInvoice);
       setIsCreatingInvoice(false);
       // sync invoices
-      syncInvoices();
       setFilteredInvoices(allInvoices);
       // fetchInvoices();
       setIsOpen(false);
@@ -144,7 +154,8 @@ export default function Invoices() {
     setSelectedStatuses(statuses);
   };
   const applyFilters = useCallback(() => {
-    let filtered = allInvoices;
+    let filtered: Invoice[] = [];
+    if (!areInvoicesLoading && allInvoices) filtered = allInvoices;
 
     // Apply search filter
     if (debouncedSearchTerm) {
@@ -209,7 +220,6 @@ export default function Invoices() {
         await invoiceService.updateInvoicesStatus(invoiceIds, newStatus);
         // Refresh the invoices list after updating
         // fetchInvoices();
-        syncInvoices();
         toast({
           title: "Status Updated",
           description: `Successfully updated ${invoiceIds.length} invoice(s) to ${newStatus}`,
@@ -223,7 +233,7 @@ export default function Invoices() {
         });
       }
     },
-    [syncInvoices],
+    [],
   );
 
   // Widgets Section
@@ -250,6 +260,7 @@ export default function Invoices() {
 
     const weeklyPercentage =
       monthlyRevenue !== 0 ? (weeklyRevenue / monthlyRevenue) * 100 : 0;
+    if (areInvoicesLoading) return <div>Loading invoices</div>;
 
     return (
       <div className="w-full grid gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -55,7 +55,7 @@ import DescriptionInput from "@/components/molecules/invoiceProductInputs/Descri
 import QuantityInput from "@/components/molecules/invoiceProductInputs/QuantityInput";
 import DiscountInput from "@/components/molecules/invoiceProductInputs/DiscountInput";
 import UnitCostInput from "@/components/molecules/invoiceProductInputs/UnitCostInput";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { productService } from "@/lib/supabase/services/product";
 
 interface InvoiceFormProps {
@@ -69,7 +69,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   isEditing,
   invoice,
 }) => {
-  // const { customers, syncCustomers } = useCustomersStore();
+  const queryClient = useQueryClient();
+
   const { data: customers, isLoading: areCustomersLoading } = useQuery(
     ["customers"], // unique query key
     () => customerService.getCustomersByCompany(), // the function for fetching
@@ -144,6 +145,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
         title: "Cliente creado",
         description: "El cliente se ha guardado exitosamente.",
       });
+      queryClient.invalidateQueries(["customers"]);
     } catch (err) {
       console.error("Error al guardar el cliente:", err);
       toast({

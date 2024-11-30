@@ -30,11 +30,19 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { Package, PlusIcon, Trash2Icon } from "lucide-react";
 import GenericEmptyState from "@/components/molecules/GenericEmptyState";
-import { useProductsStore } from "@/store/productsStore";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function ProductsPage() {
-  // const [products, setProducts] = useState<Product[]>([]);
-  const { products, syncProducts } = useProductsStore();
+  const queryClient = useQueryClient();
+  const { data: products, isLoading: areProductsLoading } = useQuery(
+    ["products"],
+    () => productService.getProductsByCompany(),
+    {
+      staleTime: 300000,
+      cacheTime: 600000,
+      refetchOnWindowFocus: true,
+    },
+  );
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   // const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +50,8 @@ export default function ProductsPage() {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  if (areProductsLoading) return <div>Cargando productos</div>;
 
   const handleProductSelect = (product: Product) => {
     setSelectedProduct(product);
@@ -60,8 +70,8 @@ export default function ProductsPage() {
       } else {
         await productService.createProduct(data as Product);
       }
+      queryClient.invalidateQueries(["products"]);
       // fetchProducts();
-      syncProducts();
       setIsFormVisible(false);
       toast({
         title: selectedProduct ? "Producto Actualizado" : "Producto Creado",
@@ -93,7 +103,7 @@ export default function ProductsPage() {
   };
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedProducts(products.map((product) => product.id!));
+      setSelectedProducts(products!.map((product) => product.id!));
     } else {
       setSelectedProducts([]);
     }
@@ -110,8 +120,7 @@ export default function ProductsPage() {
       await Promise.all(
         selectedProducts.map((id) => productService.deleteProduct(id)),
       );
-      // fetchProducts();
-      syncProducts();
+      queryClient.invalidateQueries(["products"]);
       setSelectedProducts([]);
       setIsDeleteDialogOpen(false);
       toast({
@@ -145,7 +154,7 @@ export default function ProductsPage() {
           <div
             className={`w-full ${isFormVisible ? "xl:w-1/2" : "xl:w-full"} transition-all duration-300 ease-in-out`}
           >
-            {products.length === 0 ? (
+            {products!.length === 0 ? (
               <GenericEmptyState
                 icon={Package}
                 title="No tienes productos aún"
@@ -184,7 +193,7 @@ export default function ProductsPage() {
                         <TableHead className="w-[50px]">
                           <Checkbox
                             checked={
-                              selectedProducts.length === products.length
+                              selectedProducts.length === products!.length
                             }
                             onCheckedChange={handleSelectAll}
                           />
@@ -197,7 +206,7 @@ export default function ProductsPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {products.map((product) => (
+                      {products!.map((product) => (
                         <TableRow
                           key={product.id}
                           className="cursor-pointer hover:bg-muted/50"
