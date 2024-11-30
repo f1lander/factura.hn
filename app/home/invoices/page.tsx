@@ -70,7 +70,7 @@ export default function Invoices() {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        setFilteredInvoices(allInvoices);
+        if (allInvoices) setFilteredInvoices(allInvoices);
         await fetchRevenue();
       } catch (error) {
         console.error("Error initializing data:", error);
@@ -80,10 +80,40 @@ export default function Invoices() {
 
     initializeData();
   }, [allInvoices]);
+  const applyFilters = useCallback(() => {
+    let filtered: Invoice[] = [];
+    if (!areInvoicesLoading && allInvoices) filtered = allInvoices;
+
+    // Apply search filter
+    if (debouncedSearchTerm) {
+      const lowerSearchTerm = debouncedSearchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (invoice) =>
+          invoice.invoice_number.toLowerCase().includes(lowerSearchTerm) ||
+          invoice.customers.name.toLowerCase().includes(lowerSearchTerm) ||
+          invoice.total.toString().includes(lowerSearchTerm) ||
+          invoice.invoice_items.some((item) =>
+            item.description.toLowerCase().includes(lowerSearchTerm),
+          ),
+      );
+    }
+
+    // Apply status filter
+    if (selectedStatuses.length > 0) {
+      filtered = filtered.filter((invoice) => {
+        const invoiceStatus = invoice.status?.toLowerCase() || "pending"; // Default to 'pending' if status is undefined
+        return selectedStatuses.some(
+          (status) => status.toLowerCase() === invoiceStatus,
+        );
+      });
+    }
+
+    setFilteredInvoices(filtered);
+  }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
 
   useEffect(() => {
     applyFilters();
-  }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
+  }, [allInvoices, debouncedSearchTerm, selectedStatuses, applyFilters]);
 
   // STARTS HERE
 
@@ -130,9 +160,7 @@ export default function Invoices() {
 
       setSelectedInvoice(savedInvoice);
       setIsCreatingInvoice(false);
-      // sync invoices
-      setFilteredInvoices(allInvoices);
-      // fetchInvoices();
+      if (allInvoices) setFilteredInvoices(allInvoices);
       setIsOpen(false);
     } catch (error) {
       console.error("An error occurred while saving the invoice:", error);
@@ -153,36 +181,6 @@ export default function Invoices() {
   const handleStatusFilterChange = (statuses: string[]) => {
     setSelectedStatuses(statuses);
   };
-  const applyFilters = useCallback(() => {
-    let filtered: Invoice[] = [];
-    if (!areInvoicesLoading && allInvoices) filtered = allInvoices;
-
-    // Apply search filter
-    if (debouncedSearchTerm) {
-      const lowerSearchTerm = debouncedSearchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (invoice) =>
-          invoice.invoice_number.toLowerCase().includes(lowerSearchTerm) ||
-          invoice.customers.name.toLowerCase().includes(lowerSearchTerm) ||
-          invoice.total.toString().includes(lowerSearchTerm) ||
-          invoice.invoice_items.some((item) =>
-            item.description.toLowerCase().includes(lowerSearchTerm),
-          ),
-      );
-    }
-
-    // Apply status filter
-    if (selectedStatuses.length > 0) {
-      filtered = filtered.filter((invoice) => {
-        const invoiceStatus = invoice.status?.toLowerCase() || "pending"; // Default to 'pending' if status is undefined
-        return selectedStatuses.some(
-          (status) => status.toLowerCase() === invoiceStatus,
-        );
-      });
-    }
-
-    setFilteredInvoices(filtered);
-  }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
   const handleDateSearch = () => {
     if (dateRange.start && dateRange.end) {
       const filtered = filteredInvoices.filter((invoice) => {
