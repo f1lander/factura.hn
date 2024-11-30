@@ -44,8 +44,6 @@ import {
 } from "@/lib/supabase/services/invoice";
 import { numberToWords } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
-import { useCustomersStore } from "@/store/customersStore";
-import { useProductsStore } from "@/store/productsStore";
 import { useCompanyStore } from "@/store/companyStore";
 import { Customer, customerService } from "@/lib/supabase/services/customer";
 import { useInvoicesStore } from "@/store/invoicesStore";
@@ -141,7 +139,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const handleAddCustomerFormSubmit = async (data: Partial<Customer>) => {
     try {
       await customerService.createCustomer(data as Customer);
-      syncCustomers();
       setIsAddClientDialogOpen(false);
       toast({
         title: "Cliente creado",
@@ -208,7 +205,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   /** Logic for setting the customer */
   useEffect(() => {
     if (customerId) {
-      const selectedCustomer = customers.find((c) => c.id === customerId);
+      const selectedCustomer = customers!.find((c) => c.id === customerId);
       if (selectedCustomer) {
         setValue("customers", {
           name: selectedCustomer.name,
@@ -242,7 +239,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   <SelectValue placeholder="Seleccione cliente" />
                 </SelectTrigger>
                 <SelectContent>
-                  {customers.map((customer) => (
+                  {customers!.map((customer) => (
                     <SelectItem key={customer.id} value={customer.id}>
                       {customer.name}
                     </SelectItem>
@@ -354,7 +351,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     <TableCell className="sm:max-w-[40vw] xl:max-w-[17vw]">
                       <ProductSelect
                         index={index}
-                        products={products}
+                        products={products!}
                         control={control}
                         setValue={setValue}
                       />
@@ -389,7 +386,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 <div className="max-w-[80vw]">
                   <ProductSelect
                     index={index}
-                    products={products}
+                    products={products!}
                     control={control}
                     setValue={setValue}
                   />
