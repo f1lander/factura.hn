@@ -206,7 +206,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
   /** Logic for setting the customer */
   useEffect(() => {
-    if (customerId) {
+    if (customerId && customers !== undefined) {
       const selectedCustomer = customers!.find((c) => c.id === customerId);
       if (selectedCustomer) {
         setValue("customers", {
