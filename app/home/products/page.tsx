@@ -149,7 +149,7 @@ export default function ProductsPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
-      <div className="flex flex-col sm:gap-4 p-12">
+      <div className="flex flex-col sm:gap-4 sm:p-6 md:p-12">
         <main className="flex flex-col xl:flex-row items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
           <div
             className={`w-full ${isFormVisible ? "xl:w-1/2" : "xl:w-full"} transition-all duration-300 ease-in-out`}
@@ -164,7 +164,7 @@ export default function ProductsPage() {
               />
             ) : (
               <Card className="w-full">
-                <CardHeader className="flex flex-row items-center justify-between">
+                <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <CardTitle>Productos y Servicios</CardTitle>
                     <CardDescription>
