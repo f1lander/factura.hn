@@ -226,7 +226,7 @@ export default function ProductsPage() {
                                   <span className="font-medium"></span>
                                 </div>
                               </div>
-                              <span className="text-xl font-medium">
+                              <span className="text-2xl font-medium">
                                 {product.description}
                               </span>
                               <span className="font-semibold text-green-600 text-lg">{`Lps. ${product.unit_cost}`}</span>
@@ -306,13 +306,26 @@ export default function ProductsPage() {
             )}
           </div>
           {isFormVisible && (
-            <div className="w-full xl:w-1/2 transition-all duration-300 ease-in-out">
-              <ProductForm
-                product={selectedProduct || undefined}
-                onSubmit={handleFormSubmit}
-                onCancel={handleFormCancel}
-              />
-            </div>
+            <>
+              <div className="hidden sm:block w-full xl:w-1/2 transition-all duration-300 ease-in-out">
+                <ProductForm
+                  product={selectedProduct || undefined}
+                  onSubmit={handleFormSubmit}
+                  onCancel={handleFormCancel}
+                />
+              </div>
+              <div className="sm:hidden">
+                <Dialog open={isFormVisible} onOpenChange={setIsFormVisible}>
+                  <DialogContent className="h-[80vh] w-[80vw] overflow-auto sm:hidden">
+                    <ProductForm
+                      product={selectedProduct || undefined}
+                      onSubmit={handleFormSubmit}
+                      onCancel={handleFormCancel}
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </>
           )}
         </main>
       </div>
