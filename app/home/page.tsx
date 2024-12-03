@@ -138,12 +138,12 @@ export default function Dashboard() {
           <CardHeader className="pb-2">
             <CardDescription>Esta Semana</CardDescription>
             <CardTitle className="text-4xl">
-              {`Lps. ${weeklyRevenue.toFixed(2)}`}
+              {`Lps. ${weeklyRevenue.toLocaleString('en')}`}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-xs text-muted-foreground">
-              {weeklyPercentage.toFixed(2)}% del mes actual
+              {weeklyPercentage.toLocaleString('en')}% del mes actual
             </div>
           </CardContent>
           <CardFooter>
@@ -157,7 +157,7 @@ export default function Dashboard() {
           <CardHeader className="pb-2">
             <CardDescription>Este Mes</CardDescription>
             <CardTitle className="text-4xl">
-              {`Lps. ${monthlyRevenue.toFixed(2)}`}
+              {`Lps. ${monthlyRevenue.toLocaleString('en')}`}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -175,7 +175,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
-      <div className="flex flex-col p-6 sm:gap-4 lg:p-12">
+      <div className="flex flex-col p-6 xs:p-0 sm:gap-4 lg:p-12">
         <main className="flex w-full flex-col items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
           {filteredInvoices.length === 0 ? (
             <>

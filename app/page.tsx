@@ -132,12 +132,12 @@ export default function Invoices() {
           <CardHeader className="pb-2">
             <CardDescription>Esta Semana</CardDescription>
             <CardTitle className="text-4xl">
-              {`Lps. ${weeklyRevenue.toFixed(2)}`}
+              {`Lps. ${weeklyRevenue.toLocaleString('en')}`}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-xs text-muted-foreground">
-              {weeklyPercentage.toFixed(2)}% del mes actual
+              {weeklyPercentage.toLocaleString('en')}% del mes actual
             </div>
           </CardContent>
           <CardFooter>
@@ -151,7 +151,7 @@ export default function Invoices() {
           <CardHeader className="pb-2">
             <CardDescription>Este Mes</CardDescription>
             <CardTitle className="text-4xl">
-              {`Lps. ${monthlyRevenue.toFixed(2)}`}
+              {`Lps. ${monthlyRevenue.toLocaleString('en')}`}
             </CardTitle>
           </CardHeader>
           <CardContent>

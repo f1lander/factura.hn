@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import { InputMask } from "@react-input/mask";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -36,7 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Trash2 } from "lucide-react";
+import { CheckIcon, PlusCircleIcon, Trash2 } from "lucide-react";
 import {
   Invoice,
   InvoiceItem,
@@ -57,6 +58,7 @@ import DiscountInput from "@/components/molecules/invoiceProductInputs/DiscountI
 import UnitCostInput from "@/components/molecules/invoiceProductInputs/UnitCostInput";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { productService } from "@/lib/supabase/services/product";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface InvoiceFormProps {
   onSave: (invoice: Invoice) => void;
@@ -117,6 +119,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   });
 
   const customerId = watch("customer_id");
+  const isProforma = watch("is_proforma");
+  const isExento = watch("exento");
 
   // Initialize form with invoice data when editing
   useEffect(() => {
@@ -175,14 +179,15 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
       (sum, item) => sum + (item.quantity * item.unit_cost - item.discount),
       0,
     );
-    const tax = subtotal * 0.15;
+    const tax = isExento ? 0 : subtotal * 0.15; // Modified this line
     const total = subtotal + tax;
 
     setValue("subtotal", subtotal);
     setValue("tax", tax);
     setValue("total", total);
     setValue("numbers_to_letters", numberToWords(total));
-  }, [watchInvoiceItems, setValue]);
+    setValue("tax_exento", isExento ? subtotal : 0);
+  }, [watchInvoiceItems, setValue, isExento]);
 
   /** Logic for setting the last and next invoice number */
   useEffect(() => {
@@ -207,7 +212,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   /** Logic for setting the customer */
   useEffect(() => {
     if (customerId) {
-      const selectedCustomer = customers!.find((c) => c.id === customerId);
+      const selectedCustomer = customers!?.find((c) => c.id === customerId);
       if (selectedCustomer) {
         setValue("customers", {
           name: selectedCustomer.name,
@@ -231,35 +236,38 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid gap-4">
-          <Controller
-            name="customer_id"
-            control={control}
-            rules={{ required: "Debes asociar un cliente a tu factura" }}
-            render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers!.map((customer) => (
-                    <SelectItem key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="flex gap-4">
+            <Controller
+              name="customer_id"
+              control={control}
+              rules={{ required: "Debes asociar un cliente a tu factura" }}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customers?.map((customer) => (
+                      <SelectItem key={customer.id} value={customer.id}>
+                        {customer.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            <Button
+              className="md:w-1/4"
+              variant="secondary"
+              type="button"
+              onClick={() => setIsAddClientDialogOpen(true)}
+            >
+              Crear Cliente <PlusCircleIcon className="h-4 w-4 ml-2 text-[#00A1D4]" />
+            </Button>
+            {errors.customer_id && (
+              <p className="text-red-500 text-sm">{errors.customer_id.message}</p>
             )}
-          />
-          <Button
-            type="button"
-            className="md:w-1/2"
-            onClick={() => setIsAddClientDialogOpen(true)}
-          >
-            Añadir cliente
-          </Button>
-          {errors.customer_id && (
-            <p className="text-red-500 text-sm">{errors.customer_id.message}</p>
-          )}
+          </div>
           <Controller
             name="date"
             control={control}
@@ -279,6 +287,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 <Input value={lastInvoiceNumber} disabled />
               </div>
             </div>
+
             <div className="flex-1">
               <div className="flex flex-col gap-2">
                 <Label className="whitespace-nowrap">
@@ -291,7 +300,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   {...register("invoice_number", {
                     required: "Este campo es requerido",
                     validate: (value) => {
-                      if (isEditing) return true; // Skip validation when editing
+                      if (isEditing || isProforma) return true; // Skip validation when editing
                       const previousInvoiceNumber = lastInvoiceNumber as string;
                       const nextInvoiceNumber = value;
                       const lastInvoiceRange = company!.range_invoice2!;
@@ -304,7 +313,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     },
                   })}
                   placeholder="000-000-00-00000000"
-                  disabled={isEditing}
+                  disabled={isEditing || isProforma}
                 />
                 {errors.invoice_number && (
                   <p className="text-red-500 text-sm">
@@ -313,43 +322,36 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 )}
               </div>
             </div>
+
           </div>
         </div>
         <Separator className="my-4" />
-        <Button
-          className="w-full"
-          type="button"
-          onClick={() => {
-            append({
-              id: "",
-              invoice_id: "",
-              product_id: "",
-              description: "",
-              quantity: 1,
-              unit_cost: 0,
-              discount: 0,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            });
-          }}
-        >
-          Agregar Producto o Servicio
-        </Button>
-        <div className="grid gap-4">
+        <div className="items-table grid gap-4 overflow-y-auto">
           <div className="hidden sm:block">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead></TableHead>
                   <TableHead>Producto</TableHead>
                   <TableHead>Cantidad</TableHead>
                   <TableHead>Precio</TableHead>
                   <TableHead>Descuento</TableHead>
-                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {fields.map((item, index) => (
                   <TableRow key={item.id}>
+                    <TableCell>
+                      <Button
+                        className="bg-transparent"
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => remove(index)}
+                      >
+                        <Trash2 className="h-4 w-4 text-rose-700" />
+                      </Button>
+                    </TableCell>
                     <TableCell className="sm:max-w-[40vw] xl:max-w-[17vw]">
                       <ProductSelect
                         index={index}
@@ -367,16 +369,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     <TableCell>
                       <DiscountInput index={index} control={control} />
                     </TableCell>
-                    <TableCell>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => remove(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
+
                   </TableRow>
                 ))}
               </TableBody>
@@ -413,13 +406,47 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
             ))}
           </div>
         </div>
+        <Separator className="my-4" />
         <Button
-          type="submit"
-          className="mt-4"
-          disabled={isGenerateInvoiceButtonDisabled}
+          className="w-full"
+          variant="secondary"
+
+          type="button"
+          onClick={() => {
+            append({
+              id: "",
+              invoice_id: "",
+              product_id: "",
+              description: "",
+              quantity: 1,
+              unit_cost: 0,
+              discount: 0,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+          }}
         >
-          {isEditing ? "Actualizar Factura" : "Generar Factura"}
+          Agregar item <PlusCircleIcon className="h-4 w-4 ml-2 text-[#00A1D4]" />
         </Button>
+        <div className="flex items-center justify-between gap-4 py-4">
+          <Button
+            className="bg-[#00A1D4] text-white"
+            type="submit"
+            disabled={isGenerateInvoiceButtonDisabled}
+          >
+            {isEditing ? "Actualizar Factura" : "Generar Factura"} <CheckIcon className="ml-2" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-slate-600 text-white"
+            onClick={() => {
+              reset();
+            }}
+          >
+            Limpiar
+          </Button>
+        </div>
       </form>
       <Dialog
         open={isAddClientDialogOpen}
@@ -448,11 +475,13 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   }
 
   return (
-    <Card className="card-invoice overflow-hidden border-none shadow-none rounded-sm h-fit w-full">
-      <CardHeader className="flex flex-row items-start justify-between bg-muted/50">
+    <Card className="card-invoice border-none shadow-none rounded-sm flex flex-col h-[90vh]">
+      <CardHeader className="flex flex-row items-start justify-between bg-muted/50 shrink-0">
         <div className="grid gap-0.5">
           <CardTitle className="group flex items-center gap-2 text-lg">
             {isEditing ? "Editar Factura" : "Crear Factura"}
+            {isProforma && <Badge variant="default">Proforma</Badge>}
+            {isExento && <Badge className="bg-rose-700">Exenta</Badge>}
           </CardTitle>
           <CardDescription>
             {isEditing
@@ -460,11 +489,53 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
               : `Fecha: ${new Date().toLocaleDateString()}`}
           </CardDescription>
         </div>
+        <div className="grid gap-4">
+          <div className="flex items-center space-x-2">
+            <Controller
+              name="is_proforma"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  id="is_proforma"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  disabled={isEditing}
+                />
+              )}
+            />
+            <label
+              htmlFor="is_proforma"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Factura Proforma
+            </label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Controller
+              name="exento"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  id="is_exento"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
+            />
+            <label
+              htmlFor="is_exento"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Exenta
+            </label>
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="p-6 text-sm">
+      <CardContent className="p-6 text-sm flex-1">
         {renderEditableContent()}
       </CardContent>
-      <CardFooter className="flex flex-row items-center justify-between border-t bg-muted/50 px-6 py-3">
+      <CardFooter className="flex flex-row items-center justify-between border-t bg-muted/50 px-6 py-3 shrink-0">
+
         <div className="text-xs text-muted-foreground">
           {isEditing ? (
             <>
@@ -482,13 +553,13 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
             </>
           )}
         </div>
-        <div>
+        <div className="flex gap-4">
           <Badge variant={watch("is_proforma") ? "outline" : "secondary"}>
             {watch("is_proforma") ? "Proforma" : "Factura"}
           </Badge>
-          <Badge variant={watch("is_proforma") ? "outline" : "secondary"}>
-            {getStatusBadge(watch("status"))}
-          </Badge>
+
+          {getStatusBadge(watch("status"))}
+
         </div>
       </CardFooter>
     </Card>
@@ -497,9 +568,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
 const calculateItemTotal = (index: number, items: InvoiceItem[]) => {
   const item = items[index];
-  /** There's a point where the item is undefined, so don't delete this line*/
   if (!item) return 0;
-  return (item.quantity * item.unit_cost - item.discount).toFixed(2);
+  return (item.quantity * item.unit_cost - item.discount).toLocaleString('en');
 };
 
 export default InvoiceForm;

@@ -70,7 +70,7 @@ export function numberToWords(number: number): string {
 }
 
 export function numberToCurrency(number: number): string {
-  return number.toFixed(2);
+  return number.toLocaleString('en');
 }
 
 export async function getSignedLogoUrl(logoUrl: string | null | undefined): Promise<string | null> {
@@ -116,4 +116,17 @@ const convertSignedUrlToBase64 = async (signedUrl: string): Promise<string> => {
     console.error('Error converting image to base64:', error);
     throw error;
   }
+};
+
+// If date is in DD/MM/YYYY format, convert it properly
+export const formatDate = (dateStr: string | undefined | null): string => {
+  // If no date provided, return today's date
+  if (!dateStr) return new Date().toLocaleDateString('en-GB');
+
+  // If already in correct format, return as is
+  if (dateStr.includes('/')) return dateStr;
+
+  // If in YYYY-MM-DD format, convert to DD/MM/YYYY
+  const [year, month, day] = dateStr.split('-');
+  return `${day}/${month}/${year}`;
 };
