@@ -139,10 +139,6 @@ export default function ProductsPage() {
     }
   };
 
-  // if (isLoading) {
-  //   return <div className="p-12">Cargando...</div>;
-  // }
-
   if (error) {
     return <div className="p-12">Error: {error}</div>;
   }
@@ -187,7 +183,63 @@ export default function ProductsPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Table>
+                  {/* I think this table is only visible for large screens */}
+                  <div className="sm:hidden flex flex-col gap-2">
+                    <div className="flex gap-2 items-center">
+                      <Checkbox
+                        checked={selectedProducts.length === products!.length}
+                        onCheckedChange={handleSelectAll}
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        Seleccionar todos los productos
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {products!.map((product) => (
+                        <div
+                          key={product.id}
+                          className="bg-white rounded-lg border shadow-sm overflow-hidden"
+                        >
+                          <div
+                            className="p-4"
+                            onClick={() => handleProductSelect(product)}
+                          >
+                            {/* Header Row */}
+                            <div className="flex flex-col md:flex-row items-start justify-between mb-3 gap-2">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className="flex gap-2 items-center"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Checkbox
+                                    checked={selectedProducts.includes(
+                                      product.id!,
+                                    )}
+                                    onCheckedChange={() =>
+                                      handleCheckboxChange(product.id!)
+                                    }
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                  <span>{product.sku}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium"></span>
+                                </div>
+                              </div>
+                              <span className="text-2xl font-medium">
+                                {product.description}
+                              </span>
+                              <span className="font-semibold text-green-600 text-lg">{`Lps. ${product.unit_cost}`}</span>
+                              {product.quantity_in_stock !== undefined && (
+                                <span>{`Stock: ${product.quantity_in_stock}`}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <Table className="hidden sm:block">
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-[50px]">
@@ -232,7 +284,7 @@ export default function ProductsPage() {
                           </TableCell>
                           <TableCell
                             onClick={() => handleProductSelect(product)}
-                          >{`Lps. ${product.unit_cost.toLocaleString('en')}`}</TableCell>
+                          >{`Lps. ${product.unit_cost.toLocaleString("en")}`}</TableCell>
                           <TableCell
                             onClick={() => handleProductSelect(product)}
                           >
@@ -254,13 +306,26 @@ export default function ProductsPage() {
             )}
           </div>
           {isFormVisible && (
-            <div className="w-full xl:w-1/2 transition-all duration-300 ease-in-out">
-              <ProductForm
-                product={selectedProduct || undefined}
-                onSubmit={handleFormSubmit}
-                onCancel={handleFormCancel}
-              />
-            </div>
+            <>
+              <div className="hidden sm:block w-full xl:w-1/2 transition-all duration-300 ease-in-out">
+                <ProductForm
+                  product={selectedProduct || undefined}
+                  onSubmit={handleFormSubmit}
+                  onCancel={handleFormCancel}
+                />
+              </div>
+              <div className="sm:hidden">
+                <Dialog open={isFormVisible} onOpenChange={setIsFormVisible}>
+                  <DialogContent className="h-[80vh] w-[80vw] overflow-auto sm:hidden">
+                    <ProductForm
+                      product={selectedProduct || undefined}
+                      onSubmit={handleFormSubmit}
+                      onCancel={handleFormCancel}
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </>
           )}
         </main>
       </div>
