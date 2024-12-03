@@ -10,8 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import { Progress } from "@/components/ui/progress";
-
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 
 import { Invoice, invoiceService } from "@/lib/supabase/services/invoice";
@@ -21,17 +19,14 @@ import { useAccount, useDebounce, useMediaQuery } from "@/lib/hooks";
 import { toast } from "@/components/ui/use-toast";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
-// import { PlusCircleIcon } from "lucide-react";
 import CreateInvoiceButton from "@/components/molecules/CreateInvoiceButton";
-import { useInvoicesStore } from "@/store/invoicesStore";
 import { useCompanyStore } from "@/store/companyStore";
 import { useQuery } from "@tanstack/react-query";
 
 export default function Invoices() {
-  // const { allInvoices, syncInvoices } = useInvoicesStore();
   const { data: allInvoices, isLoading: areInvoicesLoading } = useQuery(
-    ["allInvoices"], // unique query key
-    () => invoiceService.getInvoices(), // the function for fetching
+    ["allInvoices"],
+    () => invoiceService.getInvoices(),
     {
       staleTime: 300000,
       cacheTime: 600000,
@@ -66,7 +61,6 @@ export default function Invoices() {
   }, [isOpen, company]);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // const isDesktop = useMediaQuery("(min-width: 768px)");
   useEffect(() => {
     const initializeData = async () => {
       try {
@@ -74,7 +68,6 @@ export default function Invoices() {
         await fetchRevenue();
       } catch (error) {
         console.error("Error initializing data:", error);
-        // Handle the error appropriately (e.g., show an error message to the user)
       }
     };
 
@@ -84,7 +77,6 @@ export default function Invoices() {
     let filtered: Invoice[] = [];
     if (!areInvoicesLoading && allInvoices) filtered = allInvoices;
 
-    // Apply search filter
     if (debouncedSearchTerm) {
       const lowerSearchTerm = debouncedSearchTerm.toLowerCase();
       filtered = filtered.filter(
@@ -98,7 +90,6 @@ export default function Invoices() {
       );
     }
 
-    // Apply status filter
     if (selectedStatuses.length > 0) {
       filtered = filtered.filter((invoice) => {
         const invoiceStatus = invoice.status?.toLowerCase() || "pending"; // Default to 'pending' if status is undefined
@@ -109,7 +100,7 @@ export default function Invoices() {
     }
 
     setFilteredInvoices(filtered);
-  }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
+  }, [allInvoices, debouncedSearchTerm, selectedStatuses, areInvoicesLoading]);
 
   useEffect(() => {
     applyFilters();
@@ -134,17 +125,10 @@ export default function Invoices() {
     }
   };
 
-  // const handleCreateInvoice = () => {
-  //   setSelectedInvoice(undefined);
-  //   setIsCreatingInvoice(true);
-  //   setIsOpen(true);
-  // };
-
   const handleSaveInvoice = async (invoice: Invoice) => {
     try {
       let savedInvoice: Invoice | null;
 
-      // After creating the invoice, we need to sync it
       if (isCreatingInvoice) {
         savedInvoice = await invoiceService.createInvoiceWithItems(invoice);
       } else {
@@ -246,16 +230,6 @@ export default function Invoices() {
       1,
     );
 
-    // console.log("The filteredInvoices are: ", filteredInvoices);
-    // const weeklyRevenue = filteredInvoices
-    //   .filter((invoice) => new Date(invoice.date) >= oneWeekAgo)
-    //   .reduce((sum, invoice) => sum + invoice.total, 0);
-    // console.log("the weekly revenue is: ", weeklyRevenue);
-    //
-    // const monthlyRevenue = filteredInvoices
-    //   .filter((invoice) => new Date(invoice.date) >= firstDayOfMonth)
-    //   .reduce((sum, invoice) => sum + invoice.total, 0);
-
     const weeklyPercentage =
       monthlyRevenue !== 0 ? (weeklyRevenue / monthlyRevenue) * 100 : 0;
     if (areInvoicesLoading) return <div>Cargando invoices</div>;
@@ -272,19 +246,19 @@ export default function Invoices() {
           <CardFooter>
             <CreateInvoiceButton />
           </CardFooter>
-        </Card> 
+        </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Este Mes</CardDescription>
             <CardTitle className="text-4xl">
-              {`Lps. ${monthlyRevenue.toLocaleString('en')}`}
+              {`Lps. ${monthlyRevenue.toLocaleString("en")}`}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-xs text-muted-foreground">
               Ingresos totales del mes
             </div>
-          </CardContent>        
+          </CardContent>
         </Card>
       </div>
     );
@@ -307,8 +281,6 @@ export default function Invoices() {
           />
         </main>
       </div>
-      {/* {isDesktop ? ( */}
-      {/* This is the dialog box that opens when pressing on crear factura button */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="dialog-X sm:max-w-[900px] h-[90vh] p-1">
           <DialogHeader>
@@ -334,26 +306,6 @@ export default function Invoices() {
           )}
         </DialogContent>
       </Dialog>
-      {/* ) : (
-        <Drawer open={isOpen} onOpenChange={setIsOpen}>
-          <DrawerContent>
-            <div className="h-full overflow-y-auto px-4 py-6 px-0">
-              {(selectedInvoice || isCreatingInvoice) && company && (
-                <InvoiceView
-                  invoice={selectedInvoice}
-                  isEditable={isCreatingInvoice || !selectedInvoice}
-                  onSave={handleSaveInvoice}
-                />
-              )}
-            </div>
-            <DrawerFooter>
-              <DrawerClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DrawerClose>
-            </DrawerFooter>
-          </DrawerContent>
-        </Drawer>
-      )} */}
     </div>
   );
 }
