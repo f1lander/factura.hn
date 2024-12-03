@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import useWindowSize from "@/hooks/useWindowSize";
 
 export default function CreateInvoicePage() {
   const [loading, setLoading] = useState(true);
@@ -20,7 +19,6 @@ export default function CreateInvoicePage() {
   const searchParams = useSearchParams();
   const invoiceId = searchParams.get("invoice_id");
   const router = useRouter();
-  const { windowWidth } = useWindowSize();
 
   const methods = useForm<Invoice>({
     defaultValues: {
@@ -137,7 +135,7 @@ export default function CreateInvoicePage() {
   return (
     <FormProvider {...methods}>
       <section className="sm:px-2 lg:px-7 xl:px-10 flex gap-5 w-full pt-4">
-        {windowWidth < 1280 && (
+        <div className="w-full xl:hidden">
           <Tabs defaultValue="invoiceForm" className="px-auto w-full" id="tabs">
             <TabsList id="tabslist">
               <TabsTrigger value="invoiceForm">Crear factura</TabsTrigger>
@@ -156,17 +154,20 @@ export default function CreateInvoicePage() {
               <InvoicePreview />
             </TabsContent>
           </Tabs>
-        )}
-        {windowWidth >= 1280 && (
-          <>
+        </div>
+
+        <div className="hidden xl:flex xl:w-full xl:gap-5">
+          <div className="w-1/2">
             <InvoiceForm
               onSave={handleSaveInvoice}
               isEditing={!!invoiceId}
               invoice={currentInvoice}
             />
+          </div>
+          <div className="w-1/2">
             <InvoicePreview />
-          </>
-        )}
+          </div>
+        </div>
       </section>
     </FormProvider>
   );

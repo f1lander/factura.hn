@@ -18,6 +18,7 @@ export interface Invoice {
   numbers_to_letters: string;
   proforma_number: string | null;
   is_proforma: boolean;
+  exento: boolean;
   created_at: string;
   updated_at: string;
   customers: {
@@ -30,6 +31,7 @@ export interface Invoice {
   generated_invoice_id?: string | null;
   s3_key?: string | null;
   s3_url?: string | null;
+  notes?: string | null;
 }
 
 export interface InvoiceItem {
@@ -526,6 +528,7 @@ class InvoiceService extends BaseService {
       .from(this.tableName)
       .select("total")
       .eq("company_id", companyId)
+      .neq("status", "cancelled")
       .gte("date", startDate.toISOString())
       .lte("date", now.toISOString());
 

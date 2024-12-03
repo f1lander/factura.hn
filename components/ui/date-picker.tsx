@@ -11,6 +11,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
+import { es } from 'date-fns/locale';
+
 interface DatePickerProps {
   onChange?: (date: Date | undefined) => void,
   className?: string
@@ -38,11 +40,12 @@ export function DatePicker({ onChange, className }: DatePickerProps) {
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, "PPP") : <span>Seleccione fecha</span>}
+          {date ? format(date, "PP", { locale: es }) : <span>Seleccione fecha</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
+          locale={es}
           mode="single"
           selected={date}
           onSelect={handleDateChange}

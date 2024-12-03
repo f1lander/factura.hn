@@ -258,7 +258,7 @@ export default function Invoices() {
 
     const weeklyPercentage =
       monthlyRevenue !== 0 ? (weeklyRevenue / monthlyRevenue) * 100 : 0;
-    if (areInvoicesLoading) return <div>Loading invoices</div>;
+    if (areInvoicesLoading) return <div>Cargando invoices</div>;
 
     return (
       <div className="w-full grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -272,41 +272,19 @@ export default function Invoices() {
           <CardFooter>
             <CreateInvoiceButton />
           </CardFooter>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Esta Semana</CardDescription>
-            <CardTitle className="text-4xl">
-              {`Lps. ${weeklyRevenue.toFixed(2)}`}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xs text-muted-foreground">
-              {weeklyPercentage.toFixed(2)}% del mes actual
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Progress
-              value={weeklyPercentage}
-              aria-label="Incremento semanal"
-            />
-          </CardFooter>
-        </Card>
+        </Card> 
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Este Mes</CardDescription>
             <CardTitle className="text-4xl">
-              {`Lps. ${monthlyRevenue.toFixed(2)}`}
+              {`Lps. ${monthlyRevenue.toLocaleString('en')}`}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-xs text-muted-foreground">
               Ingresos totales del mes
             </div>
-          </CardContent>
-          {/* <CardFooter>
-            <Progress value={100} aria-label="Ingresos mensuales" />
-          </CardFooter> */}
+          </CardContent>        
         </Card>
       </div>
     );
@@ -314,7 +292,7 @@ export default function Invoices() {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
-      <div className="flex flex-col p-6 sm:gap-4 lg:p-12">
+      <div className="flex flex-col p-0 md:p-6 sm:gap-4 lg:p-12">
         <main className="flex w-full flex-col items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
           <WidgetsSection />
           <InvoicesTable
@@ -332,14 +310,14 @@ export default function Invoices() {
       {/* {isDesktop ? ( */}
       {/* This is the dialog box that opens when pressing on crear factura button */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-[900px] h-[90vh]">
+        <DialogContent className="dialog-X sm:max-w-[900px] h-[90vh] p-1">
           <DialogHeader>
             <VisuallyHidden.Root>
               <DialogTitle></DialogTitle>
             </VisuallyHidden.Root>
           </DialogHeader>
           {isInvoiceContentReady && (
-            <div className="h-full overflow-y-auto px-4 py-6">
+            <div className="h-full overflow-y-auto px-0 md:px-4 py-6">
               {(selectedInvoice || isCreatingInvoice) && company && (
                 <InvoiceView
                   invoice={selectedInvoice}

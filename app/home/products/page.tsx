@@ -232,7 +232,7 @@ export default function ProductsPage() {
                           </TableCell>
                           <TableCell
                             onClick={() => handleProductSelect(product)}
-                          >{`Lps. ${product.unit_cost.toFixed(2)}`}</TableCell>
+                          >{`Lps. ${product.unit_cost.toLocaleString('en')}`}</TableCell>
                           <TableCell
                             onClick={() => handleProductSelect(product)}
                           >
