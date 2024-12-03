@@ -157,12 +157,16 @@ export default function CreateInvoicePage() {
         </div>
 
         <div className="hidden xl:flex xl:w-full xl:gap-5">
-          <InvoiceForm
-            onSave={handleSaveInvoice}
-            isEditing={!!invoiceId}
-            invoice={currentInvoice}
-          />
-          <InvoicePreview />
+          <div className="w-1/2">
+            <InvoiceForm
+              onSave={handleSaveInvoice}
+              isEditing={!!invoiceId}
+              invoice={currentInvoice}
+            />
+          </div>
+          <div className="w-1/2">
+            <InvoicePreview />
+          </div>
         </div>
       </section>
     </FormProvider>

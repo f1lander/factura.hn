@@ -262,7 +262,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
               type="button"
               onClick={() => setIsAddClientDialogOpen(true)}
             >
-              Crear Cliente <PlusCircleIcon className="h-4 w-4 ml-2 text-[#00A1D4]" />
+              Cliente <PlusCircleIcon className="h-4 w-4 ml-2 text-[#00A1D4]" />
             </Button>
             {errors.customer_id && (
               <p className="text-red-500 text-sm">{errors.customer_id.message}</p>
@@ -335,7 +335,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   <TableHead>Producto</TableHead>
                   <TableHead>Cantidad</TableHead>
                   <TableHead>Precio</TableHead>
-                  <TableHead>Descuento</TableHead>
+                  <TableHead className="w-2">Descuento</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

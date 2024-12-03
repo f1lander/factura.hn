@@ -8,6 +8,8 @@ const DiscountInput = ({ index, control }: InputProps) => (
     control={control}
     render={({ field }) => (
       <Input
+        max={100}
+        min={0}
         type="number"
         {...field}
         onChange={(e) => {
