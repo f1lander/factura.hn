@@ -10,8 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import { Progress } from "@/components/ui/progress";
-
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 
 import { Invoice, invoiceService } from "@/lib/supabase/services/invoice";
@@ -21,14 +19,20 @@ import { useAccount, useDebounce, useMediaQuery } from "@/lib/hooks";
 import { toast } from "@/components/ui/use-toast";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
-// import { PlusCircleIcon } from "lucide-react";
 import CreateInvoiceButton from "@/components/molecules/CreateInvoiceButton";
-import { useInvoicesStore } from "@/store/invoicesStore";
 import { useCompanyStore } from "@/store/companyStore";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Invoices() {
-  // const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
-  const { allInvoices, syncInvoices } = useInvoicesStore();
+  const { data: allInvoices, isLoading: areInvoicesLoading } = useQuery(
+    ["allInvoices"],
+    () => invoiceService.getInvoices(),
+    {
+      staleTime: 300000,
+      cacheTime: 600000,
+      refetchOnWindowFocus: true,
+    },
+  );
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [weeklyRevenue, setWeeklyRevenue] = useState(0);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
@@ -57,24 +61,52 @@ export default function Invoices() {
   }, [isOpen, company]);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // const isDesktop = useMediaQuery("(min-width: 768px)");
   useEffect(() => {
     const initializeData = async () => {
       try {
-        setFilteredInvoices(allInvoices);
+        if (allInvoices) setFilteredInvoices(allInvoices);
         await fetchRevenue();
       } catch (error) {
         console.error("Error initializing data:", error);
-        // Handle the error appropriately (e.g., show an error message to the user)
       }
     };
 
     initializeData();
   }, [allInvoices]);
+  const applyFilters = useCallback(() => {
+    let filtered: Invoice[] = [];
+    if (!areInvoicesLoading && allInvoices) filtered = allInvoices;
+
+    if (debouncedSearchTerm) {
+      const lowerSearchTerm = debouncedSearchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (invoice) =>
+          invoice.invoice_number.toLowerCase().includes(lowerSearchTerm) ||
+          invoice.customers.name.toLowerCase().includes(lowerSearchTerm) ||
+          invoice.total.toString().includes(lowerSearchTerm) ||
+          invoice.invoice_items.some((item) =>
+            item.description.toLowerCase().includes(lowerSearchTerm),
+          ),
+      );
+    }
+
+    if (selectedStatuses.length > 0) {
+      filtered = filtered.filter((invoice) => {
+        const invoiceStatus = invoice.status?.toLowerCase() || "pending"; // Default to 'pending' if status is undefined
+        return selectedStatuses.some(
+          (status) => status.toLowerCase() === invoiceStatus,
+        );
+      });
+    }
+
+    setFilteredInvoices(filtered);
+  }, [allInvoices, debouncedSearchTerm, selectedStatuses, areInvoicesLoading]);
 
   useEffect(() => {
     applyFilters();
-  }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
+  }, [allInvoices, debouncedSearchTerm, selectedStatuses, applyFilters]);
+
+  // STARTS HERE
 
   const fetchRevenue = async () => {
     const weeklyRev = await invoiceService.getTotalRevenue("week");
@@ -93,17 +125,10 @@ export default function Invoices() {
     }
   };
 
-  // const handleCreateInvoice = () => {
-  //   setSelectedInvoice(undefined);
-  //   setIsCreatingInvoice(true);
-  //   setIsOpen(true);
-  // };
-
   const handleSaveInvoice = async (invoice: Invoice) => {
     try {
       let savedInvoice: Invoice | null;
 
-      // After creating the invoice, we need to sync it
       if (isCreatingInvoice) {
         savedInvoice = await invoiceService.createInvoiceWithItems(invoice);
       } else {
@@ -119,10 +144,7 @@ export default function Invoices() {
 
       setSelectedInvoice(savedInvoice);
       setIsCreatingInvoice(false);
-      // sync invoices
-      syncInvoices();
-      setFilteredInvoices(allInvoices);
-      // fetchInvoices();
+      if (allInvoices) setFilteredInvoices(allInvoices);
       setIsOpen(false);
     } catch (error) {
       console.error("An error occurred while saving the invoice:", error);
@@ -143,35 +165,6 @@ export default function Invoices() {
   const handleStatusFilterChange = (statuses: string[]) => {
     setSelectedStatuses(statuses);
   };
-  const applyFilters = useCallback(() => {
-    let filtered = allInvoices;
-
-    // Apply search filter
-    if (debouncedSearchTerm) {
-      const lowerSearchTerm = debouncedSearchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (invoice) =>
-          invoice.invoice_number.toLowerCase().includes(lowerSearchTerm) ||
-          invoice.customers.name.toLowerCase().includes(lowerSearchTerm) ||
-          invoice.total.toString().includes(lowerSearchTerm) ||
-          invoice.invoice_items.some((item) =>
-            item.description.toLowerCase().includes(lowerSearchTerm),
-          ),
-      );
-    }
-
-    // Apply status filter
-    if (selectedStatuses.length > 0) {
-      filtered = filtered.filter((invoice) => {
-        const invoiceStatus = invoice.status?.toLowerCase() || "pending"; // Default to 'pending' if status is undefined
-        return selectedStatuses.some(
-          (status) => status.toLowerCase() === invoiceStatus,
-        );
-      });
-    }
-
-    setFilteredInvoices(filtered);
-  }, [allInvoices, debouncedSearchTerm, selectedStatuses]);
   const handleDateSearch = () => {
     if (dateRange.start && dateRange.end) {
       const filtered = filteredInvoices.filter((invoice) => {
@@ -209,7 +202,6 @@ export default function Invoices() {
         await invoiceService.updateInvoicesStatus(invoiceIds, newStatus);
         // Refresh the invoices list after updating
         // fetchInvoices();
-        syncInvoices();
         toast({
           title: "Status Updated",
           description: `Successfully updated ${invoiceIds.length} invoice(s) to ${newStatus}`,
@@ -223,7 +215,7 @@ export default function Invoices() {
         });
       }
     },
-    [syncInvoices],
+    [],
   );
 
   // Widgets Section
@@ -238,18 +230,9 @@ export default function Invoices() {
       1,
     );
 
-    // console.log("The filteredInvoices are: ", filteredInvoices);
-    // const weeklyRevenue = filteredInvoices
-    //   .filter((invoice) => new Date(invoice.date) >= oneWeekAgo)
-    //   .reduce((sum, invoice) => sum + invoice.total, 0);
-    // console.log("the weekly revenue is: ", weeklyRevenue);
-    //
-    // const monthlyRevenue = filteredInvoices
-    //   .filter((invoice) => new Date(invoice.date) >= firstDayOfMonth)
-    //   .reduce((sum, invoice) => sum + invoice.total, 0);
-
     const weeklyPercentage =
       monthlyRevenue !== 0 ? (weeklyRevenue / monthlyRevenue) * 100 : 0;
+    if (areInvoicesLoading) return <div>Cargando invoices</div>;
 
     return (
       <div className="w-full grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -266,28 +249,9 @@ export default function Invoices() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Esta Semana</CardDescription>
-            <CardTitle className="text-4xl">
-              {`Lps. ${weeklyRevenue.toFixed(2)}`}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xs text-muted-foreground">
-              {weeklyPercentage.toFixed(2)}% del mes actual
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Progress
-              value={weeklyPercentage}
-              aria-label="Incremento semanal"
-            />
-          </CardFooter>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
             <CardDescription>Este Mes</CardDescription>
             <CardTitle className="text-4xl">
-              {`Lps. ${monthlyRevenue.toFixed(2)}`}
+              {`Lps. ${monthlyRevenue.toLocaleString("en")}`}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -295,9 +259,6 @@ export default function Invoices() {
               Ingresos totales del mes
             </div>
           </CardContent>
-          {/* <CardFooter>
-            <Progress value={100} aria-label="Ingresos mensuales" />
-          </CardFooter> */}
         </Card>
       </div>
     );
@@ -305,7 +266,7 @@ export default function Invoices() {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
-      <div className="flex flex-col p-6 sm:gap-4 lg:p-12">
+      <div className="flex flex-col p-0 md:p-6 sm:gap-4 lg:p-12">
         <main className="flex w-full flex-col items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
           <WidgetsSection />
           <InvoicesTable
@@ -320,17 +281,15 @@ export default function Invoices() {
           />
         </main>
       </div>
-      {/* {isDesktop ? ( */}
-      {/* This is the dialog box that opens when pressing on crear factura button */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-[900px] h-[90vh]">
+        <DialogContent className="dialog-X sm:max-w-[900px] h-[90vh] p-1">
           <DialogHeader>
             <VisuallyHidden.Root>
               <DialogTitle></DialogTitle>
             </VisuallyHidden.Root>
           </DialogHeader>
           {isInvoiceContentReady && (
-            <div className="h-full overflow-y-auto px-4 py-6">
+            <div className="h-full overflow-y-auto px-0 md:px-4 py-6">
               {(selectedInvoice || isCreatingInvoice) && company && (
                 <InvoiceView
                   invoice={selectedInvoice}
@@ -347,26 +306,6 @@ export default function Invoices() {
           )}
         </DialogContent>
       </Dialog>
-      {/* ) : (
-        <Drawer open={isOpen} onOpenChange={setIsOpen}>
-          <DrawerContent>
-            <div className="h-full overflow-y-auto px-4 py-6 px-0">
-              {(selectedInvoice || isCreatingInvoice) && company && (
-                <InvoiceView
-                  invoice={selectedInvoice}
-                  isEditable={isCreatingInvoice || !selectedInvoice}
-                  onSave={handleSaveInvoice}
-                />
-              )}
-            </div>
-            <DrawerFooter>
-              <DrawerClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DrawerClose>
-            </DrawerFooter>
-          </DrawerContent>
-        </Drawer>
-      )} */}
     </div>
   );
 }

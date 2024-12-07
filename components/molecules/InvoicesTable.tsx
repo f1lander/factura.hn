@@ -7,6 +7,13 @@ import {
   Search,
   XCircle,
   FilterXIcon,
+  Calendar,
+  Calculator,
+  ChevronDown,
+  ChevronUp,
+  CreditCard,
+  DollarSign,
+  Receipt,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -45,6 +52,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Toggle } from "@/components/ui/toggle";
+import { cn } from "@/lib/utils";
 
 const statusMap: { [key: string]: string } = {
   Pagadas: "paid",
@@ -67,6 +75,22 @@ export const getStatusBadge = (status: string) => {
       return null;
   }
 };
+
+export const getInvoiceStatusColor = (status: string) => {
+  switch (status.toLowerCase()) {
+    case "pagadas":
+    case "paid":
+      return "bg-green-100 text-green-500";
+    case "pendientes":
+    case "pending":
+      return "bg-yellow-100 text-yellow-500";
+    case "anuladas":
+    case "cancelled":
+      return "bg-red-100 text-red-500";
+    default:
+      return "bg-gray-100 text-gray-500";
+  }
+}
 
 export interface InvoicesTableProps {
   invoices: Invoice[];
@@ -235,6 +259,7 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
   return (
     <div className="flex w-full flex-col gap-4">
       <div className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4 w-full">
+        
         <div className="w-full lg:w-1/3">
           <Input
             placeholder="Buscar facturas..."
@@ -361,69 +386,196 @@ const EnhancedInvoiceTable = ({
       .slice(0, 2);
   };
 
+  const [expandedRows, setExpandedRows] = useState<any>({});
+
+  const toggleRow = (id: string) => {
+    setExpandedRows((prev: any) => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow className="bg-muted/50">
-          <TableHead className="w-[50px]">
-            <Checkbox
-              checked={selectedInvoices.length === invoices.length}
-              onCheckedChange={handleSelectAllChange}
-            />
-          </TableHead>
-          <TableHead className="font-semibold">Número de Factura</TableHead>
-          <TableHead className="font-semibold">Fecha</TableHead>
-          <TableHead className="font-semibold">Cliente</TableHead>
-          <TableHead className="text-right font-semibold">Subtotal</TableHead>
-          <TableHead className="text-right font-semibold">Impuesto</TableHead>
-          <TableHead className="text-right font-semibold">Total</TableHead>
-          <TableHead className="font-semibold">Estado</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
+    <div>
+      <div className="hidden sm:block">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50">
+              <TableHead className="w-[50px]">
+                <Checkbox
+                  checked={selectedInvoices.length === invoices.length}
+                  onCheckedChange={handleSelectAllChange}
+                />
+              </TableHead>
+              <TableHead className="font-semibold">Número de Factura</TableHead>
+              <TableHead className="font-semibold">Fecha</TableHead>
+              <TableHead className="font-semibold">Cliente</TableHead>
+              <TableHead className="text-right font-semibold">Subtotal</TableHead>
+              <TableHead className="text-right font-semibold">Impuesto</TableHead>
+              <TableHead className="text-right font-semibold">Total</TableHead>
+              <TableHead className="font-semibold">Estado</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {getCurrentPageItems().map((invoice: Invoice) => (
+              <TableRow
+                key={invoice.id}
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => onSelectInvoice(invoice)}
+              >
+                <TableCell className="py-4" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    checked={selectedInvoices.includes(invoice.id)}
+                    onCheckedChange={(checked) =>
+                      handleInvoiceSelect(invoice.id, checked)
+                    }
+                  />
+                </TableCell>
+                <TableCell className="py-4">{invoice.invoice_number}</TableCell>
+                <TableCell className="py-4">
+                  {new Date(invoice.date).toLocaleDateString()}
+                </TableCell>
+                <TableCell className="py-4">
+                  <div className="flex items-center space-x-2">
+                    <Avatar>
+                      <AvatarFallback>
+                        {getInitials(invoice.customers.name || "Unknown")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span>{invoice.customers.name || invoice.customer_id}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right py-4">
+                  {`Lps. ${invoice.subtotal.toLocaleString('en')}`}
+                </TableCell>
+                <TableCell className="text-right py-4">
+                  {`Lps. ${invoice.tax.toLocaleString('en')}`}
+                </TableCell>
+                <TableCell className="text-right py-4">
+                  {`Lps. ${invoice.total.toLocaleString('en')}`}
+                </TableCell>
+                <TableCell className="py-4">
+                  {getStatusBadge(invoice.status)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Mobile View */}
+      <div className="sm:hidden space-y-3">
         {getCurrentPageItems().map((invoice: Invoice) => (
-          <TableRow
+          <div
             key={invoice.id}
-            className="cursor-pointer hover:bg-muted/50 transition-colors"
-            onClick={() => onSelectInvoice(invoice)}
+            className="bg-white rounded-lg border shadow-sm overflow-hidden"
           >
-            <TableCell className="py-4" onClick={(e) => e.stopPropagation()}>
-              <Checkbox
-                checked={selectedInvoices.includes(invoice.id)}
-                onCheckedChange={(checked) =>
-                  handleInvoiceSelect(invoice.id, checked)
-                }
-              />
-            </TableCell>
-            <TableCell className="py-4">{invoice.invoice_number}</TableCell>
-            <TableCell className="py-4">
-              {new Date(invoice.date).toLocaleDateString()}
-            </TableCell>
-            <TableCell className="py-4">
-              <div className="flex items-center space-x-2">
-                <Avatar>
-                  <AvatarFallback>
-                    {getInitials(invoice.customers.name || "Unknown")}
-                  </AvatarFallback>
-                </Avatar>
-                <span>{invoice.customers.name || invoice.customer_id}</span>
+            {/* Main Content - Always Visible */}
+            <div className="p-4">
+              {/* Header Row */}
+              <div className="flex flex-col md:flex-row items-start justify-between mb-3 gap-2">
+                <div className="flex items-center gap-3">
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selectedInvoices.includes(invoice.id)}
+                      onCheckedChange={(checked) =>
+                        handleInvoiceSelect(invoice.id, checked)
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Receipt className="w-4 h-4 text-blue-500" />
+                    <span className="font-medium">{invoice.invoice_number}</span>
+                  </div>
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className={getInvoiceStatusColor(invoice.status)}>
+                      {getInitials(invoice.status || "Pendiente")}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+
               </div>
-            </TableCell>
-            <TableCell className="text-right py-4">
-              {`Lps. ${invoice.subtotal.toFixed(2)}`}
-            </TableCell>
-            <TableCell className="text-right py-4">
-              {`Lps. ${invoice.tax.toFixed(2)}`}
-            </TableCell>
-            <TableCell className="text-right py-4">
-              {`Lps. ${invoice.total.toFixed(2)}`}
-            </TableCell>
-            <TableCell className="py-4">
-              {getStatusBadge(invoice.status)}
-            </TableCell>
-          </TableRow>
+
+              {/* Customer and Date Row */}
+              <div className="flex flex-col items-start justify-between mb-3 gap-3">
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-blue-100 text-blue-600">
+                      {getInitials(invoice.customers.name || "Unknown")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium">{invoice.customers.name || invoice.customer_id}</span>
+                </div>
+                <div className="flex w-full items-center text-sm text-gray-500 gap-1">
+                  <Calendar className="w-4 h-4" />
+                  <span>{new Date(invoice.date).toLocaleDateString()}</span>
+                </div>
+              </div>
+
+              {/* Total Amount - Prominent Display */}
+              <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-md">
+                <div className="flex items-center gap-1 text-gray-600">
+                  <DollarSign className="w-4 h-4" />
+                  <span>Total</span>
+                </div>
+                <span className="font-semibold text-green-600">
+                  {`Lps. ${invoice.total.toLocaleString()}`}
+                </span>
+              </div>
+            </div>
+
+            {/* Expandable Section Button */}
+            <div
+              className="border-t px-4 py-2 flex items-center justify-center gap-2 text-sm text-gray-500 cursor-pointer hover:bg-gray-50 transition-colors"
+              onClick={() => toggleRow(invoice.id)}
+            >
+              {expandedRows[invoice.id] ? (
+                <>
+                  <span>Ver menos</span>
+                  <ChevronUp className="w-4 h-4" />
+                </>
+              ) : (
+                <>
+                  <span>Ver detalles</span>
+                  <ChevronDown className="w-4 h-4" />
+                </>
+              )}
+            </div>
+
+            {/* Expanded Details */}
+            {expandedRows[invoice.id] && (
+              <div className="bg-gray-50 p-4 space-y-3 border-t">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center gap-2">
+                    <Calculator className="w-4 h-4 text-gray-400" />
+                    <div>
+                      <div className="text-xs text-gray-500">Subtotal</div>
+                      <div className="font-medium">{`Lps. ${invoice.subtotal.toLocaleString('en')}`}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-gray-400" />
+                    <div>
+                      <div className="text-xs text-gray-500">Impuesto</div>
+                      <div className="font-medium">{`Lps. ${invoice.tax.toLocaleString('en')}`}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className="w-full text-center text-sm text-blue-600 cursor-pointer hover:text-blue-700 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectInvoice(invoice);
+                  }}
+                >
+                  Ver factura completa
+                </div>
+              </div>
+            )}
+          </div>
         ))}
-      </TableBody>
-    </Table>
+      </div>
+    </div>
   );
 };

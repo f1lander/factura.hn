@@ -4,10 +4,22 @@ import InvoiceForm from "@/components/organisms/invoices/InvoiceForm";
 import InvoicePreview from "@/components/organisms/invoices/InvoicePreview";
 import { Invoice, invoiceService } from "@/lib/supabase/services/invoice";
 import { useInvoicesStore } from "@/store/invoicesStore";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FormProvider, useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function CreateInvoicePage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentInvoice, setCurrentInvoice] = useState<Invoice | null>(null);
+  const searchParams = useSearchParams();
+  const invoiceId = searchParams.get("invoice_id");
+  const router = useRouter();
+
   const methods = useForm<Invoice>({
     defaultValues: {
       company_id: "",
@@ -32,17 +44,61 @@ export default function CreateInvoicePage() {
       status: "pending",
     },
   });
+
   const { syncInvoices } = useInvoicesStore();
-  const router = useRouter();
+
+  useEffect(() => {
+    const fetchInvoice = async () => {
+      if (!invoiceId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const invoice = await invoiceService.getInvoiceById(invoiceId);
+        if (!invoice) {
+          setError("No se encontró la factura especificada");
+          return;
+        }
+
+        // If invoice is paid, don't allow editing
+        if (invoice.status === "paid") {
+          setError("No se puede editar una factura que ya está pagada");
+          return;
+        }
+
+        setCurrentInvoice(invoice);
+        methods.reset(invoice);
+      } catch (err) {
+        setError("Error al cargar la factura");
+        console.error("Error fetching invoice:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInvoice();
+  }, [invoiceId, methods]);
+
   const handleSaveInvoice = async (invoice: Invoice) => {
     try {
       let savedInvoice: Invoice | null;
 
-      savedInvoice = await invoiceService.createInvoiceWithItems(invoice);
+      if (invoiceId) {
+        // Update existing invoice
+        savedInvoice = await invoiceService.updateInvoiceWithItems(
+          invoiceId,
+          invoice,
+        );
+      } else {
+        // Create new invoice
+        savedInvoice = await invoiceService.createInvoiceWithItems(invoice);
+      }
 
       if (!savedInvoice) {
         throw new Error("Failed to save invoice");
       }
+
       // If all went right, then sync the invoice list and redirect to next page
       syncInvoices();
       router.push("/home/invoices");
@@ -50,14 +106,67 @@ export default function CreateInvoicePage() {
       console.error("An error occurred while saving the invoice:", error);
     }
   };
+
+  const handleGoBack = () => {
+    router.push("/home/invoices");
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-lg">Cargando...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen gap-4">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+        <Button onClick={handleGoBack}>Volver a Facturas</Button>
+      </div>
+    );
+  }
+
   return (
     <FormProvider {...methods}>
-      <section className="lg:px-7 xl:px-10 flex gap-5 w-full">
-        <div className="w-1/2 py-2">
-          <InvoiceForm onSave={handleSaveInvoice} />
+      <section className="sm:px-2 lg:px-7 xl:px-10 flex gap-5 w-full pt-4">
+        <div className="w-full xl:hidden">
+          <Tabs defaultValue="invoiceForm" className="px-auto w-full" id="tabs">
+            <TabsList id="tabslist">
+              <TabsTrigger value="invoiceForm">Crear factura</TabsTrigger>
+              <TabsTrigger value="invoicePreview">
+                Previsualizar factura
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="invoiceForm">
+              <InvoiceForm
+                onSave={handleSaveInvoice}
+                isEditing={!!invoiceId}
+                invoice={currentInvoice}
+              />
+            </TabsContent>
+            <TabsContent value="invoicePreview">
+              <InvoicePreview />
+            </TabsContent>
+          </Tabs>
         </div>
-        <div className="w-1/2 py-2">
-          <InvoicePreview />
+
+        <div className="hidden xl:flex xl:w-full xl:gap-5">
+          <div className="w-1/2">
+            <InvoiceForm
+              onSave={handleSaveInvoice}
+              isEditing={!!invoiceId}
+              invoice={currentInvoice}
+            />
+          </div>
+          <div className="w-1/2">
+            <InvoicePreview />
+          </div>
         </div>
       </section>
     </FormProvider>

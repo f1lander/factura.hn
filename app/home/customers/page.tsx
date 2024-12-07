@@ -33,15 +33,22 @@ import { useToast } from "@/components/ui/use-toast";
 import { PlusIcon, Trash2Icon, Users } from "lucide-react";
 import GenericEmptyState from "@/components/molecules/GenericEmptyState";
 import { DialogClose } from "@radix-ui/react-dialog";
-import { useCustomersStore } from "@/store/customersStore";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function CustomersPage() {
-  // const [customers, setCustomers] = useState<Customer[]>([]);
-  const { customers, syncCustomers } = useCustomersStore();
+  const queryClient = useQueryClient();
+  const { data: customers, isLoading: areCustomersLoading } = useQuery(
+    ["customers"], // unique query key
+    () => customerService.getCustomersByCompany(), // the function for fetching
+    {
+      staleTime: 300000,
+      cacheTime: 600000,
+      refetchOnWindowFocus: true,
+    },
+  );
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null,
   );
-  // const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
@@ -58,27 +65,7 @@ export default function CustomersPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // useEffect(() => {
-  //   fetchCustomers();
-  // }, []);
-  //
-  // const fetchCustomers = async () => {
-  //   try {
-  //     setIsLoading(true);
-  //     const fetchedCustomers = await customerService.getCustomersByCompany();
-  //     setCustomers(fetchedCustomers);
-  //   } catch (err) {
-  //     console.error("Error al obtener clientes:", err);
-  //     setError(
-  //       "No se pudieron cargar los clientes. Por favor, intente de nuevo.",
-  //     );
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-  //
-  //
-  // Added a comment here
+  if (areCustomersLoading) return <div>cargando clientes...</div>;
 
   const handleCustomerSelect = (customer: Customer) => {
     setSelectedCustomer(customer);
@@ -97,8 +84,7 @@ export default function CustomersPage() {
       } else {
         await customerService.createCustomer(data as Customer);
       }
-      // fetchCustomers();
-      syncCustomers();
+      queryClient.invalidateQueries(["customers"]);
       setIsFormVisible(false);
       toast({
         title: selectedCustomer ? "Cliente Actualizado" : "Cliente Creado",
@@ -148,8 +134,7 @@ export default function CustomersPage() {
       await Promise.all(
         selectedCustomers.map((id) => customerService.deleteCustomer(id)),
       );
-      // fetchCustomers();
-      syncCustomers();
+      queryClient.invalidateQueries(["customers"]);
       setSelectedCustomers([]);
       setIsDeleteDialogOpen(false);
       toast({
@@ -168,10 +153,6 @@ export default function CustomersPage() {
     }
   };
 
-  // if (isLoading) {
-  //   return <div className="p-12">Cargando...</div>;
-  // }
-
   if (error) {
     return <div className="p-12">Error: {error}</div>;
   }
@@ -182,7 +163,7 @@ export default function CustomersPage() {
           <div
             className={`w-full ${isFormVisible ? "xl:w-1/2" : "xl:w-full"} transition-all duration-300 ease-in-out`}
           >
-            {customers.length === 0 ? (
+            {customers!.length === 0 ? (
               <GenericEmptyState
                 icon={Users}
                 title="No tienes clientes aún"
@@ -199,7 +180,7 @@ export default function CustomersPage() {
                       Gestiona tus clientes aquí
                     </CardDescription>
                   </div>
-                  {customers.length > 0 && (
+                  {customers!.length > 0 && (
                     <div className="flex gap-2">
                       <Button
                         onClick={handleDeleteClick}
@@ -236,7 +217,7 @@ export default function CustomersPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {customers.map((customer) => (
+                      {customers!.map((customer) => (
                         <TableRow
                           onClick={!customer.is_universal ? () => handleCustomerSelect(customer) : () => null}
                           key={customer.id}
