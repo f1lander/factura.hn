@@ -101,9 +101,8 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-muted/40">
-      <div className="flex flex-col sm:gap-4 p-12">
-        <main className="flex flex-col xl:flex-row items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
+    <div className="flex w-full flex-col bg-muted/40 p-4">
+        <div className="flex flex-col xl:flex-row items-start gap-4 sm:px-6 sm:py-0 md:gap-8">
           <div className={`w-full ${isFormVisible ? "xl:w-1/2" : "xl:w-full"} transition-all duration-300 ease-in-out`}>
             {products.length === 0 ? (
               <GenericEmptyState
@@ -144,8 +143,7 @@ export default function ProductsPage() {
               />
             </div>
           )}
-        </main>
-      </div>
+        </div>
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         {/* Dialog content */}
       </Dialog>
