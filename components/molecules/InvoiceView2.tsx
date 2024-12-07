@@ -37,7 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, DollarSign, DownloadIcon, Edit2Icon, EditIcon, Hash, Package, Percent, ShoppingCart, Trash2 } from "lucide-react";
 import {
   Invoice,
   InvoiceItem,
@@ -46,7 +46,7 @@ import {
 // import { Customer, customerService } from "@/lib/supabase/services/customer";
 import { Product } from "@/lib/supabase/services/product";
 // import { Company, companyService } from "@/lib/supabase/services/company";
-import { numberToWords } from "@/lib/utils";
+import { formatDate, getSignedLogoUrl, numberToWords } from "@/lib/utils";
 import { getStatusBadge } from "./InvoicesTable";
 import { renderPdf, getSignedPdfUrl } from "@/app/do-functions";
 import { toast } from "@/components/ui/use-toast";
@@ -57,6 +57,7 @@ import { useCompanyStore } from "@/store/companyStore";
 import { CustomerForm } from "./CustomerForm";
 import { Customer, customerService } from "@/lib/supabase/services/customer";
 import { useInvoicesStore } from "@/store/invoicesStore";
+import { useRouter } from "next/navigation";
 
 interface InvoiceViewProps {
   invoice?: Invoice;
@@ -88,6 +89,15 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     }
   }, [setLastInvoiceExists, allInvoices]);
 
+  const [expandedRows, setExpandedRows] = useState<any>({});
+
+  const toggleRow = (id: string) => {
+    setExpandedRows((prev: any) => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
   const handleFormSubmit = async (data: Partial<Customer>) => {
     try {
       await customerService.createCustomer(data as Customer);
@@ -114,14 +124,22 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     try {
       let s3Url = invoice?.s3_url;
       let s3Key = invoice?.s3_key;
-
+      debugger;
       if (!s3Key && !s3Url) {
         if (!company) {
           throw new Error("No se pudo obtener la información de la empresa");
         }
 
+        const logoUrl = await getSignedLogoUrl(company?.logo_url);
+
+        console.log("Generating PDF for invoice:", invoice);
+        console.log("logoUrl:", logoUrl);
+        const invoiceDate = formatDate(invoice?.date);
+        console.log("formatted:", invoiceDate);
         const renderResult = await renderPdf({
           data: {
+            date: invoiceDate,
+            exento: invoice?.exento,
             invoice_number: invoice?.invoice_number,
             rtn: invoice?.customers.rtn,
             company: invoice?.customers.name,
@@ -148,6 +166,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             rangeInvoice1: company?.range_invoice1,
             rangeInvoice2: company?.range_invoice2,
             email: company?.email,
+            logo_url: logoUrl,
           },
           template_url: `https://factura-hn.nyc3.digitaloceanspaces.com/templates/${company?.template_url ?? "default_template2.html"}`,
         });
@@ -193,7 +212,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
 
         toast({
           title: "Success",
-          description: "Tu facse descargó correctamente.",
+          description: "Tu factura se descargó correctamente.",
           duration: 3000,
         });
       } else {
@@ -247,7 +266,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
       status: "pending",
     },
   });
-
+  const router = useRouter();
   const { fields, append, remove } = useFieldArray({
     control,
     name: "invoice_items",
@@ -289,7 +308,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
       (sum, item) => sum + (item.quantity * item.unit_cost - item.discount),
       0,
     );
-    const tax = subtotal * 0.15; // Assuming 15% tax rate
+    const tax = invoice?.exento ? 0 : subtotal * 0.15; // Assuming 15% tax rate if not exento
     const total = subtotal + tax;
 
     setValue("subtotal", subtotal);
@@ -579,6 +598,10 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     </>
   );
 
+  const handleEditInvoice = () => {
+    router.push(`/home/invoices/create-invoice?invoice_id=${invoice?.id}`);
+  };
+
   const renderReadOnlyContent = () => (
     <>
       <div className="grid gap-3">
@@ -601,34 +624,99 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
       <Separator className="my-4" />
       <div className="grid gap-3">
         <div className="font-semibold">Detalles de la factura</div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Descripción</TableHead>
-              <TableHead className="text-right">Cantidad</TableHead>
-              <TableHead className="text-right">Precio</TableHead>
-              <TableHead className="text-right">Descuento</TableHead>
-              <TableHead className="text-right">Total</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {watch("invoice_items").map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.description}</TableCell>
-                <TableCell className="text-right">{item.quantity}</TableCell>
-                <TableCell className="text-right">
-                  {`Lps. ${item.unit_cost.toFixed(2)}`}
-                </TableCell>
-                <TableCell className="text-right">
-                  {`Lps. ${item.discount.toFixed(2)}`}
-                </TableCell>
-                <TableCell className="text-right">
-                  {`Lps. ${(item.quantity * item.unit_cost - item.discount).toFixed(2)}`}
-                </TableCell>
+
+        {/* Desktop/Tablet View */}
+        <div className="hidden sm:block">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Descripción</TableHead>
+                <TableHead className="text-right">Cantidad</TableHead>
+                <TableHead className="text-right">Precio</TableHead>
+                <TableHead className="text-right">Descuento</TableHead>
+                <TableHead className="text-right">Total</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {watch("invoice_items").map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>{item.description}</TableCell>
+                  <TableCell className="text-right">{item.quantity}</TableCell>
+                  <TableCell className="text-right">
+                    {`Lps. ${item.unit_cost.toLocaleString('en')}`}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {`Lps. ${item.discount.toLocaleString('en')}`}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {`Lps. ${(item.quantity * item.unit_cost - item.discount).toLocaleString('en')}`}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Mobile View with Collapsible Rows */}
+        <div className="sm:hidden divide-y divide-gray-200">
+          {watch("invoice_items").map((item) => (
+            <div key={item.id} className="bg-white">
+              <div
+                className="py-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+                onClick={() => toggleRow(item.id)}
+              >
+                {/* Description with icon */}
+                <div className="flex items-start gap-3 mb-3">
+                  <Package className="w-5 h-5 text-blue-500 mt-1 flex-shrink-0" />
+                  <div className="text-sm text-gray-900 font-medium leading-snug">
+                    {item.description}
+                  </div>
+                </div>
+
+                {/* Quantity x Price and Total */}
+                <div className="flex justify-between items-center mb-2 pl-8">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <ShoppingCart className="w-4 h-4" />
+                    <span>{item.quantity} x {`Lps. ${item.unit_cost.toLocaleString('en')}`}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center text-green-600">
+                      <DollarSign className="w-4 h-4" />
+                      <span className="font-medium">
+                        {`${(item.quantity * item.unit_cost - item.discount).toLocaleString('en')}`}
+                      </span>
+                    </div>
+                    {expandedRows[item.id] ? (
+                      <ChevronUp className="w-5 h-5 text-gray-400 ml-2" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-gray-400 ml-2" />
+                    )}
+                  </div>
+                </div>
+
+                {/* Expanded Details */}
+                {expandedRows[item.id] && (
+                  <div className="mt-3 pt-3 border-t border-gray-200 text-sm pl-8">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Hash className="w-4 h-4 text-gray-400" />
+                        <span className="text-gray-500">ID:</span>
+                        <span className="font-medium text-gray-700">{item.product_id}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Percent className="w-4 h-4 text-orange-500" />
+                        <span className="text-gray-500">Descuento:</span>
+                        <span className="font-medium text-orange-600">
+                          {`Lps. ${item.discount.toLocaleString('en')}`}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
       <Separator className="my-4" />
       <div className="grid gap-4">
@@ -637,35 +725,35 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
           <dl className="grid gap-1">
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Subtotal:</dt>
-              <dd>{`Lps. ${watch("subtotal").toFixed(2)}`}</dd>
+              <dd>{`Lps. ${watch("subtotal").toLocaleString('en')}`}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Exonerado:</dt>
-              <dd>{`Lps. ${watch("tax_exonerado").toFixed(2)}`}</dd>
+              <dd>{`Lps. ${watch("tax_exonerado").toLocaleString('en')}`}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Exento:</dt>
-              <dd>{`Lps. ${watch("tax_exento").toFixed(2)}`}</dd>
+              <dd>{`Lps. ${watch("tax_exento").toLocaleString('en')}`}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Gravado 15%:</dt>
-              <dd>{`Lps. ${watch("tax_gravado_15").toFixed(2)}`}</dd>
+              <dd>{`Lps. ${watch("tax_gravado_15").toLocaleString('en')}`}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Gravado 18%:</dt>
-              <dd>{`Lps. ${watch("tax_gravado_18").toFixed(2)}`}</dd>
+              <dd>{`Lps. ${watch("tax_gravado_18").toLocaleString('en')}`}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">ISV 15%:</dt>
-              <dd>{`Lps. ${watch("tax").toFixed(2)}`}</dd>
+              <dd>{`Lps. ${watch("tax").toLocaleString('en')}`}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">ISV 18%:</dt>
-              <dd>{`Lps. ${watch("tax_18").toFixed(2)}`}</dd>
+              <dd>{`Lps. ${watch("tax_18").toLocaleString('en')}`}</dd>
             </div>
             <div className="flex items-center justify-between font-semibold">
               <dt>Total:</dt>
-              <dd>{`Lps. ${watch("total").toFixed(2)}`}</dd>
+              <dd>{`Lps. ${watch("total").toLocaleString('en')}`}</dd>
             </div>
           </dl>
         </div>
@@ -681,10 +769,11 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   );
 
   return (
-    <Card className="card-invoice overflow-hidden border-none shadow-none rounded-sm">
-      <CardHeader className="flex flex-row items-start justify-between bg-muted/50">
-        <div className="grid gap-0.5">
+    <Card className="card-invoice overflow-hidden shadow-none rounded-sm px-0">
+      <CardHeader className="flex flex-col md:flex-row items-start justify-between bg-muted/50">
+        <div className="w-full grid gap-0.5">
           <CardTitle className="group flex items-center gap-2 text-lg">
+
             {isEditable
               ? "Crear Factura"
               : `Número de Factura ${invoice?.invoice_number}`}
@@ -696,15 +785,30 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
               : new Date(invoice?.date || "").toLocaleDateString()}
           </CardDescription>
         </div>
-        {!isEditable && (
-          <Button
-            onClick={handleDownloadPdf}
-            disabled={isDownloading}
-            size="sm"
-          >
-            {isDownloading ? "Descargando..." : "Descargar PDF"}
-          </Button>
-        )}
+        <div className="flex gap-2 w-full justify-end">
+          {!isEditable && (
+            <>
+              {invoice?.status === 'pending' && (
+                <Button
+                  className="bg-yellow-500"
+                  onClick={handleEditInvoice}
+                  variant="outline"
+                  size="sm"
+                >
+                  Editar <EditIcon className="h-4 w-4 ml-2" />
+                </Button>
+              )}
+              <Button
+                className="bg-slate-800"
+                onClick={handleDownloadPdf}
+                disabled={isDownloading}
+                size="sm"
+              >
+                {isDownloading ? "Descargando..." : "PDF"} <DownloadIcon className="h-4 w-4 ml-2" />
+              </Button>
+            </>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="p-6 text-sm">
         {isEditable ? renderEditableContent() : renderReadOnlyContent()}
@@ -844,7 +948,7 @@ const DiscountInput = ({ index, control }: InputProps) => (
 
 const calculateItemTotal = (index: number, items: InvoiceItem[]) => {
   const item = items[index];
-  return (item.quantity * item.unit_cost - item.discount).toFixed(2);
+  return (item.quantity * item.unit_cost - item.discount).toLocaleString('en');
 };
 
 export default InvoiceView2;

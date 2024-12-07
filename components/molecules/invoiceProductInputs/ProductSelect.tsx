@@ -43,7 +43,10 @@ const ProductSelect = ({
         value={field.value}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Seleccione producto" />
+          <SelectValue
+            placeholder="Seleccione producto"
+            className="w-6 overflow-hidden"
+          />
         </SelectTrigger>
         <SelectContent>
           {products.map((product) => (

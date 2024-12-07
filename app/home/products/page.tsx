@@ -30,11 +30,19 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { Package, PlusIcon, Trash2Icon } from "lucide-react";
 import GenericEmptyState from "@/components/molecules/GenericEmptyState";
-import { useProductsStore } from "@/store/productsStore";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function ProductsPage() {
-  // const [products, setProducts] = useState<Product[]>([]);
-  const { products, syncProducts } = useProductsStore();
+  const queryClient = useQueryClient();
+  const { data: products, isLoading: areProductsLoading } = useQuery(
+    ["products"],
+    () => productService.getProductsByCompany(),
+    {
+      staleTime: 300000,
+      cacheTime: 600000,
+      refetchOnWindowFocus: true,
+    },
+  );
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   // const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +50,8 @@ export default function ProductsPage() {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  if (areProductsLoading) return <div>Cargando productos</div>;
 
   const handleProductSelect = (product: Product) => {
     setSelectedProduct(product);
@@ -60,8 +70,8 @@ export default function ProductsPage() {
       } else {
         await productService.createProduct(data as Product);
       }
+      queryClient.invalidateQueries(["products"]);
       // fetchProducts();
-      syncProducts();
       setIsFormVisible(false);
       toast({
         title: selectedProduct ? "Producto Actualizado" : "Producto Creado",
@@ -93,7 +103,7 @@ export default function ProductsPage() {
   };
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedProducts(products.map((product) => product.id!));
+      setSelectedProducts(products!.map((product) => product.id!));
     } else {
       setSelectedProducts([]);
     }
@@ -110,8 +120,7 @@ export default function ProductsPage() {
       await Promise.all(
         selectedProducts.map((id) => productService.deleteProduct(id)),
       );
-      // fetchProducts();
-      syncProducts();
+      queryClient.invalidateQueries(["products"]);
       setSelectedProducts([]);
       setIsDeleteDialogOpen(false);
       toast({
@@ -130,22 +139,18 @@ export default function ProductsPage() {
     }
   };
 
-  // if (isLoading) {
-  //   return <div className="p-12">Cargando...</div>;
-  // }
-
   if (error) {
     return <div className="p-12">Error: {error}</div>;
   }
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
-      <div className="flex flex-col sm:gap-4 p-12">
+      <div className="flex flex-col sm:gap-4 sm:p-6 md:p-12">
         <main className="flex flex-col xl:flex-row items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
           <div
             className={`w-full ${isFormVisible ? "xl:w-1/2" : "xl:w-full"} transition-all duration-300 ease-in-out`}
           >
-            {products.length === 0 ? (
+            {products!.length === 0 ? (
               <GenericEmptyState
                 icon={Package}
                 title="No tienes productos aún"
@@ -155,7 +160,7 @@ export default function ProductsPage() {
               />
             ) : (
               <Card className="w-full">
-                <CardHeader className="flex flex-row items-center justify-between">
+                <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <CardTitle>Productos y Servicios</CardTitle>
                     <CardDescription>
@@ -178,13 +183,69 @@ export default function ProductsPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Table>
+                  {/* I think this table is only visible for large screens */}
+                  <div className="sm:hidden flex flex-col gap-2">
+                    <div className="flex gap-2 items-center">
+                      <Checkbox
+                        checked={selectedProducts.length === products!.length}
+                        onCheckedChange={handleSelectAll}
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        Seleccionar todos los productos
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {products!.map((product) => (
+                        <div
+                          key={product.id}
+                          className="bg-white rounded-lg border shadow-sm overflow-hidden"
+                        >
+                          <div
+                            className="p-4"
+                            onClick={() => handleProductSelect(product)}
+                          >
+                            {/* Header Row */}
+                            <div className="flex flex-col md:flex-row items-start justify-between mb-3 gap-2">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className="flex gap-2 items-center"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Checkbox
+                                    checked={selectedProducts.includes(
+                                      product.id!,
+                                    )}
+                                    onCheckedChange={() =>
+                                      handleCheckboxChange(product.id!)
+                                    }
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                  <span>{product.sku}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium"></span>
+                                </div>
+                              </div>
+                              <span className="text-2xl font-medium">
+                                {product.description}
+                              </span>
+                              <span className="font-semibold text-green-600 text-lg">{`Lps. ${product.unit_cost}`}</span>
+                              {product.quantity_in_stock !== undefined && (
+                                <span>{`Stock: ${product.quantity_in_stock}`}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <Table className="hidden sm:block">
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-[50px]">
                           <Checkbox
                             checked={
-                              selectedProducts.length === products.length
+                              selectedProducts.length === products!.length
                             }
                             onCheckedChange={handleSelectAll}
                           />
@@ -197,7 +258,7 @@ export default function ProductsPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {products.map((product) => (
+                      {products!.map((product) => (
                         <TableRow
                           key={product.id}
                           className="cursor-pointer hover:bg-muted/50"
@@ -223,7 +284,7 @@ export default function ProductsPage() {
                           </TableCell>
                           <TableCell
                             onClick={() => handleProductSelect(product)}
-                          >{`Lps. ${product.unit_cost.toFixed(2)}`}</TableCell>
+                          >{`Lps. ${product.unit_cost.toLocaleString("en")}`}</TableCell>
                           <TableCell
                             onClick={() => handleProductSelect(product)}
                           >
@@ -245,13 +306,26 @@ export default function ProductsPage() {
             )}
           </div>
           {isFormVisible && (
-            <div className="w-full xl:w-1/2 transition-all duration-300 ease-in-out">
-              <ProductForm
-                product={selectedProduct || undefined}
-                onSubmit={handleFormSubmit}
-                onCancel={handleFormCancel}
-              />
-            </div>
+            <>
+              <div className="hidden sm:block w-full xl:w-1/2 transition-all duration-300 ease-in-out">
+                <ProductForm
+                  product={selectedProduct || undefined}
+                  onSubmit={handleFormSubmit}
+                  onCancel={handleFormCancel}
+                />
+              </div>
+              <div className="sm:hidden">
+                <Dialog open={isFormVisible} onOpenChange={setIsFormVisible}>
+                  <DialogContent className="h-[80vh] w-[80vw] overflow-auto sm:hidden">
+                    <ProductForm
+                      product={selectedProduct || undefined}
+                      onSubmit={handleFormSubmit}
+                      onCancel={handleFormCancel}
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </>
           )}
         </main>
       </div>

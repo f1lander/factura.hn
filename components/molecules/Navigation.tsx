@@ -131,12 +131,6 @@ export function Navigation() {
 
   return (
     <header className="sticky flex flex-col top-0 z-50">
-      {/* {!hasCompanyData && (
-        <Banner
-          message="Por favor, ingresa tus datos de compañía"
-          variant="error"
-        />
-      )} */}
       <div className="flex top-0 h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
         <nav className="hidden flex-col gap-6 text-lg items-end font-medium lg:flex lg:flex-row md:gap-5 lg:text-sm lg:gap-6 z-50">
           <Link

@@ -116,10 +116,10 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice }) => {
                   <TableCell>{item.description}</TableCell>
                   <TableCell className="text-right">{item.quantity}</TableCell>
                   <TableCell className="text-right">
-                    ${item.unit_cost.toFixed(2)}
+                    ${item.unit_cost.toLocaleString('en')}
                   </TableCell>
                   <TableCell className="text-right">
-                    ${item.discount.toFixed(2)}
+                    ${item.discount.toLocaleString('en')}
                   </TableCell>
                   <TableCell className="text-right">
                     $
@@ -139,35 +139,35 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice }) => {
             <dl className="grid gap-1">
               <div className="flex items-center justify-between">
                 <dt className="text-muted-foreground">Subtotal:</dt>
-                <dd>${invoice.subtotal.toFixed(2)}</dd>
+                <dd>${invoice.subtotal.toLocaleString('en')}</dd>
               </div>
               <div className="flex items-center justify-between">
                 <dt className="text-muted-foreground">Exonerado:</dt>
-                <dd>${invoice.tax_exonerado.toFixed(2)}</dd>
+                <dd>${invoice.tax_exonerado.toLocaleString('en')}</dd>
               </div>
               <div className="flex items-center justify-between">
                 <dt className="text-muted-foreground">Exento:</dt>
-                <dd>${invoice.tax_exento.toFixed(2)}</dd>
+                <dd>${invoice.tax_exento.toLocaleString('en')}</dd>
               </div>
               <div className="flex items-center justify-between">
                 <dt className="text-muted-foreground">Gravado 15%:</dt>
-                <dd>${invoice.tax_gravado_15.toFixed(2)}</dd>
+                <dd>${invoice.tax_gravado_15.toLocaleString('en')}</dd>
               </div>
               <div className="flex items-center justify-between">
                 <dt className="text-muted-foreground">Gravado 18%:</dt>
-                <dd>${invoice.tax_gravado_18.toFixed(2)}</dd>
+                <dd>${invoice.tax_gravado_18.toLocaleString('en')}</dd>
               </div>
               <div className="flex items-center justify-between">
                 <dt className="text-muted-foreground">ISV 15%:</dt>
-                <dd>${invoice.tax.toFixed(2)}</dd>
+                <dd>${invoice.tax.toLocaleString('en')}</dd>
               </div>
               <div className="flex items-center justify-between">
                 <dt className="text-muted-foreground">ISV 18%:</dt>
-                <dd>${invoice.tax_18.toFixed(2)}</dd>
+                <dd>${invoice.tax_18.toLocaleString('en')}</dd>
               </div>
               <div className="flex items-center justify-between font-semibold">
                 <dt>Total:</dt>
-                <dd>${invoice.total.toFixed(2)}</dd>
+                <dd>${invoice.total.toLocaleString('en')}</dd>
               </div>
             </dl>
           </div>
