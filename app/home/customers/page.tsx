@@ -116,8 +116,9 @@ export default function CustomersPage() {
   };
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedCustomers(customers!.map((customer) => customer.id!));
+    if (checked && customers) {
+      setSelectedCustomers(customers.filter(item => !item.is_universal).map((customer) => customer.id!));
+
     } else {
       setSelectedCustomers([]);
     }
@@ -203,8 +204,9 @@ export default function CustomersPage() {
                       <TableRow>
                         <TableHead className="w-[50px]">
                           <Checkbox
+                            disabled={customers?.every((c) => c.is_universal)}
                             checked={
-                              selectedCustomers.length === customers!.length
+                              selectedCustomers.length === customers?.filter(item => !item.is_universal).length
                             }
                             onCheckedChange={handleSelectAll}
                           />
@@ -218,35 +220,39 @@ export default function CustomersPage() {
                     <TableBody>
                       {customers!.map((customer) => (
                         <TableRow
+                          onClick={!customer.is_universal ? () => handleCustomerSelect(customer) : () => null}
                           key={customer.id}
                           className="cursor-pointer hover:bg-muted/50"
                         >
                           <TableCell>
-                            <Checkbox
-                              checked={selectedCustomers.includes(customer.id!)}
-                              onCheckedChange={() =>
-                                handleCheckboxChange(customer.id!)
-                              }
-                              onClick={(e) => e.stopPropagation()}
-                            />
+                            {
+                              !customer.is_universal &&
+                              <Checkbox
+                                checked={selectedCustomers.includes(customer.id!)}
+                                onCheckedChange={() =>
+                                  handleCheckboxChange(customer.id!)
+                                }
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            }
                           </TableCell>
                           <TableCell
-                            onClick={() => handleCustomerSelect(customer)}
+
                           >
                             {customer.name}
                           </TableCell>
                           <TableCell
-                            onClick={() => handleCustomerSelect(customer)}
+
                           >
                             {customer.rtn}
                           </TableCell>
                           <TableCell
-                            onClick={() => handleCustomerSelect(customer)}
+
                           >
                             {customer.email}
                           </TableCell>
                           <TableCell
-                            onClick={() => handleCustomerSelect(customer)}
+
                           >
                             {customer.contacts?.length || 0}
                           </TableCell>
@@ -286,7 +292,7 @@ export default function CustomersPage() {
               </Dialog>
             ))}
         </main>
-      </div>
+      </div >
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -312,6 +318,6 @@ export default function CustomersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   );
 }

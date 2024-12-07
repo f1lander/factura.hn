@@ -1,4 +1,4 @@
-import { BaseService, Table } from '@/lib/supabase/services/BaseService';
+import { BaseService, Table, PaginatedResponse } from '@/lib/supabase/services/BaseService';
 
 export interface Product {
   id: string;
@@ -15,6 +15,12 @@ export interface Product {
 class ProductService extends BaseService {
   private tableName: Table = 'products';
 
+  async getProductsPaginated(
+    page: number,
+    pageSize: number
+  ): Promise<PaginatedResponse<Product>> {
+    return this.getAllPaginated<Product>(this.tableName, { page, pageSize });
+  }
   async createProduct(
     product: Omit<Product, "id" | "company_id" | "created_at" | "updated_at">
   ): Promise<Product | null> {

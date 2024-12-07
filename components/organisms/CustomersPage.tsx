@@ -94,6 +94,7 @@ const CustomersPage = () => {
       <div
         className={`w-full ${isFormVisible ? "xl:w-1/2" : "xl:w-full"} transition-all duration-300 ease-in-out`}
       >
+        HELLO
         <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
