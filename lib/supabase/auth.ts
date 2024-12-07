@@ -279,7 +279,12 @@ export async function signupv2(
     message,
     data: companyData,
   } = await companyService.createCompanyv2(
-    { name: signupForm.company_name, rtn: signupForm.rtn },
+    {
+      name: signupForm.company_name,
+      rtn: signupForm.rtn,
+      email: signupForm.email,
+      ceo_name: signupForm.full_name,
+    },
     registeredUserData.user!.id,
   );
   console.log("The company data is: ", companyData);

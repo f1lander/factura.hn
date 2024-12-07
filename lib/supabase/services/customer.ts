@@ -15,6 +15,7 @@ export interface Customer {
   name: string;
   rtn: string;
   email: string;
+  is_universal?: boolean;
   contacts: Contact[];
   created_at?: string;
   updated_at?: string;
