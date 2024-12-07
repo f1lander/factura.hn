@@ -14,7 +14,6 @@ import { ColDef } from "ag-grid-community";
 import { Package } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Product, productService } from "@/lib/supabase/services/product";
-import { useProductsStore } from "@/store/productsStore";
 import GenericEmptyState from "@/components/molecules/GenericEmptyState";
 import { ProductForm } from "@/components/molecules/ProductForm";
 import { Dialog } from "@radix-ui/react-dialog";
@@ -25,6 +24,7 @@ import useUploadXls from "@/hooks/useUploadXls";
 import { Button } from "@/components/ui/button";
 import { DialogContent } from "@/components/ui/dialog";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
+import { useQuery  } from "@tanstack/react-query";
 
 interface ProductKeyMappings {
   sku: string;
@@ -57,7 +57,16 @@ export default function ProductsPage() {
       quantity_in_stock: "",
     },
   });
-  const { products, setProducts } = useProductsStore();
+  // const queryClient = useQueryClient();
+  const { data: products, isLoading: areProductsFromDBLoading } = useQuery(
+    ["products"],
+    () => productService.getProductsByCompany(),
+    {
+      staleTime: 300000,
+      cacheTime: 600000,
+      refetchOnWindowFocus: true,
+    },
+  );
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>();
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
@@ -99,7 +108,6 @@ export default function ProductsPage() {
     async (page: number, size: number) => {
       try {
         const response = await productService.getProductsPaginated(page, size);
-        setProducts(response.data);
         setTotalProducts(response.total);
       } catch (err) {
         console.error("Error loading products:", err);
@@ -111,7 +119,7 @@ export default function ProductsPage() {
         });
       }
     },
-    [setProducts, setTotalProducts, toast],
+    [setTotalProducts, toast],
   );
 
   const columnDefs: ColDef<Product>[] = [
@@ -179,6 +187,7 @@ export default function ProductsPage() {
     setPageSize(params.pageSize);
   };
 
+  if(areProductsFromDBLoading) return <div className="p-10 text-center"><h1>Cargando productos...</h1></div>
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <div className="flex flex-col sm:gap-4 p-12">
@@ -186,7 +195,7 @@ export default function ProductsPage() {
           <div
             className={`w-full ${isFormVisible ? "xl:w-1/2" : "xl:w-full"} transition-all duration-300 ease-in-out`}
           >
-            {products.length === 0 ? (
+            {products!.length === 0 ? (
               <GenericEmptyState
                 icon={Package}
                 title="No tienes productos aún"
@@ -198,12 +207,12 @@ export default function ProductsPage() {
               <DataGrid
                 title="Productos y Servicios"
                 description="Gestiona tus productos y servicios aquí"
-                data={products}
+                data={products!}
                 columnDefs={columnDefs}
-                onRowClick={(data) => {
-                  setSelectedProduct(data);
-                  setIsFormVisible(true);
-                }}
+                // onRowClick={(data) => {
+                //   setSelectedProduct(data);
+                //   setIsFormVisible(true);
+                // }}
                 onSelectionChange={setSelectedProducts}
                 onCreateNew={handleCreateProduct}
                 onDelete={() => setIsDeleteDialogOpen(true)}
