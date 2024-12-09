@@ -59,7 +59,7 @@ export class BaseService {
 
   protected async getAllPaginated<T>(
     table: Table,
-    { page, pageSize }: PaginationOptions
+    { page, pageSize }: PaginationOptions,
   ): Promise<PaginatedResponse<T>> {
     const companyId = await this.ensureCompanyId();
     if (!companyId) return { data: [], total: 0 };
@@ -71,7 +71,7 @@ export class BaseService {
     // Get total count
     const countQuery = this.supabase
       .from(table)
-      .select('*', { count: 'exact', head: true });
+      .select("*", { count: "exact", head: true });
 
     if (table === "customers") {
       countQuery.or(`company_id.eq.${companyId},is_universal.eq.true`);
@@ -87,9 +87,7 @@ export class BaseService {
     }
 
     // Get paginated data
-    const dataQuery = this.supabase
-      .from(table)
-      .select('*');
+    const dataQuery = this.supabase.from(table).select("*");
 
     if (table === "customers") {
       dataQuery.or(`company_id.eq.${companyId},is_universal.eq.true`);
@@ -99,7 +97,7 @@ export class BaseService {
 
     const { data, error } = await dataQuery
       .range(start, end)
-      .order('created_at', { ascending: false });
+      .order("created_at", { ascending: false });
 
     if (error) {
       console.error(`Error fetching paginated ${table}:`, error);
@@ -108,7 +106,7 @@ export class BaseService {
 
     return {
       data: data as T[],
-      total: count || 0
+      total: count || 0,
     };
   }
 
@@ -168,6 +166,41 @@ export class BaseService {
     }
 
     return data as T;
+  }
+
+  protected async createMultiple<T>(
+    table: Table,
+    items: Partial<T>[],
+  ): Promise<{ success: boolean; message: string }> {
+    const companyId = await this.ensureCompanyId();
+    if (!companyId)
+      return {
+        success: false,
+        message: "No existe ninguna compañía. ¿Has iniciado sesión?",
+      };
+
+    const rowsWithId = items.map((item) => {
+      const newItem = {
+        company_id: companyId,
+        ...item,
+      };
+      return newItem;
+    });
+
+    console.log("length: ", rowsWithId.length);
+    const { error } = await this.supabase.from(table).insert(rowsWithId);
+
+    if (error) {
+      console.error(`Error creating ${table}:`, error);
+      return {
+        success: false,
+        message: "Hubo un error al subir los productos",
+      };
+    } else {
+      console.log("Se han subido los productos con éxito");
+    }
+
+    return { success: true, message: "Se subieron los productos con éxito" };
   }
 
   protected async update<T>(

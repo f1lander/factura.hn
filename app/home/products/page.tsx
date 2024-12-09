@@ -1,4 +1,5 @@
 "use client";
+import { FileSpreadsheet } from "lucide-react";
 import React, { useState } from "react";
 import {
   Card,
@@ -44,11 +45,12 @@ export default function ProductsPage() {
     },
   );
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  // const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isAddSpreadsheetDialogOpen, setIsAddSpreadsheetDialogOpen] =
+    useState<boolean>(false);
   const { toast } = useToast();
 
   if (areProductsLoading) return <div>Cargando productos</div>;
@@ -168,6 +170,13 @@ export default function ProductsPage() {
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
+                    <Button
+                      className="flex gap-2 bg-[#1D6F42] hover:bg-[#144E2E] items-center"
+                      onClick={() => setIsAddSpreadsheetDialogOpen(true)}
+                    >
+                      <FileSpreadsheet />
+                      Subir productos de Excel
+                    </Button>
                     <Button
                       onClick={handleDeleteClick}
                       variant="destructive"
@@ -353,6 +362,14 @@ export default function ProductsPage() {
               Eliminar
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={isAddSpreadsheetDialogOpen}
+        onOpenChange={setIsAddSpreadsheetDialogOpen}
+      >
+        <DialogContent className="w-[90%]" id="contenido del dialogo papa">
+          <div className="transition-all duration-300 ease-in-out">buenas</div>
         </DialogContent>
       </Dialog>
     </div>

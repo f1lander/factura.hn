@@ -116,9 +116,8 @@ export default function CustomersPage() {
   };
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked && customers) {
-      setSelectedCustomers(customers.filter(item => !item.is_universal).map((customer) => customer.id!));
-
+    if (checked) {
+      setSelectedCustomers(customers!.filter(item => !item.is_universal).map((customer) => customer.id!));
     } else {
       setSelectedCustomers([]);
     }
@@ -204,9 +203,11 @@ export default function CustomersPage() {
                       <TableRow>
                         <TableHead className="w-[50px]">
                           <Checkbox
+
                             disabled={customers?.every((c) => c.is_universal)}
                             checked={
                               selectedCustomers.length === customers?.filter(item => !item.is_universal).length
+
                             }
                             onCheckedChange={handleSelectAll}
                           />
