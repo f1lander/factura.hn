@@ -3,7 +3,11 @@
 import { InputMask } from "@react-input/mask";
 import React, { useState } from "react";
 import { FileInputIcon } from "lucide-react";
-import { signupv2 } from "@/lib/supabase/auth";
+import {
+  addUserAndCompany,
+  checkUserExistence,
+  createUser,
+} from "@/lib/supabase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,11 +19,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
-import { useIsLoadedStore } from "@/store/isLoadedStore";
-import { useCompanyStore } from "@/store/companyStore";
-import { useCustomersStore } from "@/store/customersStore";
-import { useInvoicesStore } from "@/store/invoicesStore";
-import { useProductsStore } from "@/store/productsStore";
 import Link from "next/link";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useRouter } from "next/navigation";
@@ -33,13 +32,8 @@ export interface SignupForm {
 }
 
 const SignupPage: React.FC = () => {
-  const { resetCompany } = useCompanyStore();
-  const { resetCustomers } = useCustomersStore();
-  const { resetInvoices } = useInvoicesStore();
-  const { resetIsLoaded } = useIsLoadedStore();
-  const { resetProducts } = useProductsStore();
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const { register, handleSubmit } = useForm<SignupForm>({
     defaultValues: {
       company_name: "",
@@ -50,19 +44,12 @@ const SignupPage: React.FC = () => {
     },
   });
   const onSubmit: SubmitHandler<SignupForm> = async (data) => {
-    // reset stores
-    resetProducts();
-    resetIsLoaded();
-    resetInvoices();
-    resetCustomers();
-    resetCompany();
     setIsLoading(true);
     toast({
-      title: "Creando cuenta...",
-      description:
-        "Por favor espera mientras procesamos tu solicitud. Esto puede tardar unos segundos",
+      title: "(1 de 4) Verificando existencia de usuario...",
     });
-    const { success, message } = await signupv2(data);
+
+    const { success, message } = await checkUserExistence(data);
     if (!success) {
       setIsLoading(false);
       return toast({
@@ -71,10 +58,55 @@ const SignupPage: React.FC = () => {
         description: message,
       });
     }
-
+    toast({
+      title: "(2 de 4) Creando usuario...",
+    });
+    const {
+      success: createUserSuccess,
+      message: userCreationMessage,
+      userId,
+    } = await createUser(data);
+    if (!createUserSuccess || userId === undefined) {
+      return toast({
+        title: "Registro fallido",
+        variant: "destructive",
+        description: userCreationMessage,
+      });
+    }
+    toast({
+      title: "(3 de 4) Añadiendo usuario y compañía...",
+    });
+    const { success: companySuccess, message: companyCreationMessage } =
+      await addUserAndCompany(data, userId);
+    if (!companySuccess) {
+      return toast({
+        title: "Registro fallido",
+        variant: "destructive",
+        description: companyCreationMessage,
+      });
+    }
+    toast({
+      title: "(4 de 4) Registro exitoso",
+      description:
+        "Te has registrado exitosamente. Lee las instrucciones que te mostramos a continuación",
+    });
     return router.push(
       `/auth/confirm-email?name=${data.full_name}&email=${data.email}`,
     );
+
+    // const { success, message } = await signupv2(data);
+    // if (!success) {
+    //   setIsLoading(false);
+    //   return toast({
+    //     title: "Registro fallido",
+    //     variant: "destructive",
+    //     description: message,
+    //   });
+    // }
+    //
+    // return router.push(
+    //   `/auth/confirm-email?name=${data.full_name}&email=${data.email}`,
+    // );
   };
 
   return (

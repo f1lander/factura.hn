@@ -71,63 +71,66 @@ export function DataGrid<T>({
   }, [onRowClick]);
 
   return (
-    <Card className="w-full">
-      <CardHeader className="space-y-4">
+    <div className="w-full bg-white">
+      <div className="space-y-4 mb-4">
         <div className="flex justify-between items-center">
           <div>
-            {title && <CardTitle>{title}</CardTitle>}
-            {description && <CardDescription>{description}</CardDescription>}
+            {title && <h2 className="text-lg font-semibold">{title}</h2>}
+            {description && <p className="text-sm text-gray-500">{description}</p>}
           </div>
           <div className="flex gap-2">
             {onDelete && (
-              <Button
+              <button
                 onClick={onDelete}
-                variant="destructive"
+                className="px-4 py-2 text-sm text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                 disabled={selectedRows.length === 0}
               >
                 <Trash2Icon className="h-4 w-4 mr-2" />
                 Eliminar
-              </Button>
+              </button>
             )}
             {onCreateNew && (
-              <Button onClick={onCreateNew}>
+              <button
+                onClick={onCreateNew}
+                className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 flex items-center"
+              >
                 <PlusIcon className="h-4 w-4 mr-2" />
                 Nuevo
-              </Button>
+              </button>
             )}
           </div>
         </div>
         <div className="relative">
-          <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
             type="text"
             placeholder="Buscar producto..."
             onInput={onFilterTextBoxChanged}
-            className="h-9 w-full max-w-sm rounded-md border border-input bg-background px-8 py-2 text-sm ring-offset-background transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-9 w-full max-w-sm rounded-md border px-8 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
           />
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="ag-theme-quartz w-full" style={{ height }}>
-          <AgGridReact
-            gridOptions={{
-              localeText: AG_GRID_LOCALE_ES
-            }}
-            rowData={data}
-            columnDefs={columnDefs}
-            defaultColDef={defaultColDef}
-            onGridReady={onGridReady}
-            onSelectionChanged={handleSelectionChange}
-            onRowClicked={handleRowClick}
-            rowSelection="multiple"
-            suppressRowClickSelection={true}
-            quickFilterText={quickFilterText}
-            pagination={true}
-            paginationPageSize={pageSize}
-            paginationPageSizeSelector={pageSizeOptions}
-          />
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      <div className="ag-theme-quartz w-full" style={{ height }}>
+        <AgGridReact
+          gridOptions={{
+            localeText: AG_GRID_LOCALE_ES
+          }}
+          rowData={data}
+          columnDefs={columnDefs}
+          defaultColDef={defaultColDef}
+          onGridReady={onGridReady}
+          onSelectionChanged={handleSelectionChange}
+          onRowClicked={handleRowClick}
+          rowSelection="multiple"
+          suppressRowClickSelection={true}
+          quickFilterText={quickFilterText}
+          pagination={true}
+          paginationPageSize={pageSize}
+          paginationPageSizeSelector={pageSizeOptions}
+        />
+      </div>
+
+    </div>
   );
 }

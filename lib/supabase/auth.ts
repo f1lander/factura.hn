@@ -303,3 +303,91 @@ export async function logout() {
   revalidatePath("/", "page");
   redirect("/");
 }
+
+export async function checkUserExistence(
+  signupForm: SignupForm,
+): Promise<{ success: boolean; message: string }> {
+  const supabase = createClientWithServiceRole();
+  const user = await supabase
+    .from("users")
+    .select("id")
+    .eq("email", signupForm.email);
+  const userAlreadyExists: boolean = user.data!.length > 0;
+  // 1.1 If the user already exists, return the function
+  if (userAlreadyExists) {
+    return {
+      success: false,
+      message:
+        "El usuario ya existe. Si el inicio de sesión falla, intenta revisando tu bandeja de entrada y cliquear en el enlace de confirmación",
+    };
+  }
+  return {
+    success: true,
+    message: "",
+  };
+}
+
+export async function createUser(
+  signupForm: SignupForm,
+): Promise<{ success: boolean; message: string; userId?: string }> {
+  const supabase = createClientWithServiceRole();
+  const signupCredentials: SignUpWithPasswordCredentials = {
+    email: signupForm.email,
+    password: signupForm.password,
+    options: {
+      data: {
+        full_name: signupForm.full_name,
+      },
+    },
+  };
+  const { data: registeredUserData, error: registrationError } =
+    await supabase.auth.signUp(signupCredentials);
+
+  // 2.1 if something fails, return
+  if (registrationError !== null || registeredUserData.user === null) {
+    console.log(
+      "Algo falló al crear un nuevo usuario. El error es el siguiente: ",
+      registrationError,
+    );
+    if (registrationError?.code === "over_email_send_rate_limit")
+      return {
+        success: false,
+        message:
+          "Has alcanzado el límite de envíos de correo de confirmación. Por favor, intenta dentro de una hora",
+      };
+    return { success: false, message: "Hubo un fallo al crear el usuario" };
+  }
+  return { success: true, message: "", userId: registeredUserData.user.id };
+}
+
+export async function addUserAndCompany(
+  signupForm: SignupForm,
+  userId: string,
+): Promise<{ success: boolean; message: string }> {
+  const supabase = createClientWithServiceRole();
+  const insertedUser = await supabase
+    .from("users")
+    .insert({
+      id: userId,
+      email: signupForm.email,
+      full_name: signupForm.full_name,
+    })
+    .select();
+  console.log("The insertedUser is: ", insertedUser);
+
+  // 4. Add information about the company
+  const {
+    success,
+    message,
+    data: companyData,
+  } = await companyService.createCompanyv2(
+    { name: signupForm.company_name, rtn: signupForm.rtn },
+    userId,
+  );
+  console.log("The company data is: ", companyData);
+  if (!success) {
+    console.log("Hubo un problema al intentar crear la companía");
+    return { success: false, message };
+  }
+  return { success: true, message: "El usuario se ha creado exitosamente" };
+}

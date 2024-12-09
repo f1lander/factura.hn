@@ -203,9 +203,11 @@ export default function CustomersPage() {
                       <TableRow>
                         <TableHead className="w-[50px]">
                           <Checkbox
-                            disabled={customers!.every((c) => c.is_universal)}
+
+                            disabled={customers?.every((c) => c.is_universal)}
                             checked={
-                              selectedCustomers.length === customers!.filter(item => !item.is_universal).length
+                              selectedCustomers.length === customers?.filter(item => !item.is_universal).length
+
                             }
                             onCheckedChange={handleSelectAll}
                           />
