@@ -329,6 +329,7 @@ export default function ProductsPage() {
           )}
         </main>
       </div>
+
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
