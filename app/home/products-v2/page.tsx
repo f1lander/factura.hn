@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { DialogContent } from "@/components/ui/dialog";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
+import { productColumns } from "@/utils/tableColumns";
 
 interface ProductKeyMappings {
   sku: string;
@@ -129,32 +130,6 @@ export default function ProductsPage() {
     [setTotalProducts, toast]
   );
 
-  const columnDefs: ColDef<Product>[] = [
-    {
-      field: "sku",
-      headerName: "SKU",
-      checkboxSelection: true,
-      headerCheckboxSelection: true,
-    },
-    { field: "description", headerName: "Descripción" },
-    {
-      field: "unit_cost",
-      headerName: "Precio Unitario",
-      valueFormatter: (params) => `Lps. ${params.value.toFixed(2)}`,
-    },
-    {
-      field: "is_service",
-      headerName: "Tipo",
-      valueFormatter: (params) => (params.value ? "Servicio" : "Producto"),
-    },
-    {
-      field: "quantity_in_stock",
-      headerName: "Inventario",
-      valueFormatter: (params) =>
-        params.data?.is_service ? "N/A" : params.value,
-    },
-  ];
-
   const handleCreateProduct = () => {
     setSelectedProduct(undefined);
     setIsFormVisible(true);
@@ -167,8 +142,6 @@ export default function ProductsPage() {
       } else {
         await productService.createProduct(data);
       }
-      // TODO: Implement syncProducts if is needed now with pagination
-      // syncProducts();
       setIsFormVisible(false);
       toast({
         title: selectedProduct ? "Producto Actualizado" : "Producto Creado",
@@ -222,7 +195,7 @@ export default function ProductsPage() {
                 title="Productos y Servicios"
                 description="Gestiona tus productos y servicios aquí"
                 data={products!}
-                columnDefs={columnDefs}
+                columnDefs={productColumns}
                 onSelectionChange={setSelectedProducts}
                 onCreateNew={handleCreateProduct}
                 onDelete={() => setIsDeleteDialogOpen(true)}
