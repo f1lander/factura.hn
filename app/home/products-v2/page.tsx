@@ -181,20 +181,26 @@ export default function ProductsPage() {
     setPageSize(params.pageSize);
   };
 
-  if (areProductsFromDBLoading)
+  if (areProductsFromDBLoading) {
     return (
       <div className="p-10 text-center">
         <h1>Cargando productos...</h1>
       </div>
     );
+
+  }
+
+  const handleOnUpdateRows = () => {
+    // TODO: update the rows callin a service 
+  };
+
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <div className="flex flex-col sm:gap-4 p-12">
         <main className="flex flex-col xl:flex-row items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
           <div
-            className={`w-full ${
-              isFormVisible ? "xl:w-1/2" : "xl:w-full"
-            } transition-all duration-300 ease-in-out`}
+            className={`w-full ${isFormVisible ? "xl:w-1/2" : "xl:w-full"
+              } transition-all duration-300 ease-in-out`}
           >
             {products!.length === 0 ? (
               <GenericEmptyState
@@ -216,6 +222,8 @@ export default function ProductsPage() {
                 pageSize={pageSize}
                 pageSizeOptions={[5, 10, 20, 50]}
                 onAddExcelSpreadSheet={triggerFileInput}
+                handleOnUpdateRows={() => handleOnUpdateRows()}
+
               />
             )}
           </div>

@@ -8,21 +8,25 @@ export const productColumns: ColDef<Product>[] = [
     headerName: "SKU",
     checkboxSelection: true,
     headerCheckboxSelection: true,
+    editable: true,
   },
-  { field: "description", headerName: "Descripción" },
+  { field: "description", headerName: "Descripción", minWidth:500 },
   {
     field: "unit_cost",
     headerName: "Precio Unitario",
-    valueFormatter: (params) => `Lps. ${params.value.toFixed(2)}`,
+    valueFormatter: (params) => `Lps. ${params.value.toLocaleString('en')}`,
+    editable: true,
   },
   {
     field: "is_service",
-    headerName: "Tipo",
+    headerName: "Inventario indefinido", 
+  
     valueFormatter: (params) => (params.value ? "Servicio" : "Producto"),
   },
   {
     field: "quantity_in_stock",
     headerName: "Inventario",
+    editable: true,
     valueFormatter: (params) =>
       params.data?.is_service ? "N/A" : params.value,
   },
