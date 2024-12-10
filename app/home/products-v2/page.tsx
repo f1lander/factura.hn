@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ColDef } from "ag-grid-community";
 import { Package } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -24,7 +24,7 @@ import useUploadXls from "@/hooks/useUploadXls";
 import { Button } from "@/components/ui/button";
 import { DialogContent } from "@/components/ui/dialog";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
-import { useQuery  } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 interface ProductKeyMappings {
   sku: string;
@@ -35,6 +35,12 @@ interface ProductKeyMappings {
 }
 
 export default function ProductsPage() {
+  const excelFileInputRef = useRef<HTMLInputElement | null>(null);
+  const triggerFileInput = () => {
+    if (excelFileInputRef.current) {
+      excelFileInputRef.current.click();
+    }
+  };
   const {
     handleXlsFileUpload,
     xlsFile,
@@ -65,7 +71,7 @@ export default function ProductsPage() {
       staleTime: 300000,
       cacheTime: 600000,
       refetchOnWindowFocus: true,
-    },
+    }
   );
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>();
   const [isFormVisible, setIsFormVisible] = useState(false);
@@ -89,8 +95,9 @@ export default function ProductsPage() {
       }
       return newRow;
     });
-    const { success, message } =
-      await productService.createMultipleProducts(transformedRows);
+    const { success, message } = await productService.createMultipleProducts(
+      transformedRows
+    );
     if (!success) {
       toast({
         title: "No se pudieron subir los productos",
@@ -119,7 +126,7 @@ export default function ProductsPage() {
         });
       }
     },
-    [setTotalProducts, toast],
+    [setTotalProducts, toast]
   );
 
   const columnDefs: ColDef<Product>[] = [
@@ -187,13 +194,20 @@ export default function ProductsPage() {
     setPageSize(params.pageSize);
   };
 
-  if(areProductsFromDBLoading) return <div className="p-10 text-center"><h1>Cargando productos...</h1></div>
+  if (areProductsFromDBLoading)
+    return (
+      <div className="p-10 text-center">
+        <h1>Cargando productos...</h1>
+      </div>
+    );
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <div className="flex flex-col sm:gap-4 p-12">
         <main className="flex flex-col xl:flex-row items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
           <div
-            className={`w-full ${isFormVisible ? "xl:w-1/2" : "xl:w-full"} transition-all duration-300 ease-in-out`}
+            className={`w-full ${
+              isFormVisible ? "xl:w-1/2" : "xl:w-full"
+            } transition-all duration-300 ease-in-out`}
           >
             {products!.length === 0 ? (
               <GenericEmptyState
@@ -209,16 +223,12 @@ export default function ProductsPage() {
                 description="Gestiona tus productos y servicios aquí"
                 data={products!}
                 columnDefs={columnDefs}
-                // onRowClick={(data) => {
-                //   setSelectedProduct(data);
-                //   setIsFormVisible(true);
-                // }}
                 onSelectionChange={setSelectedProducts}
                 onCreateNew={handleCreateProduct}
                 onDelete={() => setIsDeleteDialogOpen(true)}
                 pageSize={pageSize}
                 pageSizeOptions={[5, 10, 20, 50]}
-              // onPageChange={handlePageChange}
+                onAddExcelSpreadSheet={triggerFileInput}
               />
             )}
           </div>
@@ -258,6 +268,7 @@ export default function ProductsPage() {
                 accept=".xlsx,.xls,.csv"
                 className="hidden"
                 onChange={handleXlsFileUpload}
+                ref={excelFileInputRef}
               />
             </div>
           </Label>

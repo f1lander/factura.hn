@@ -1,13 +1,20 @@
-'use client';
-import React, { type ChangeEvent, useState, useCallback } from 'react';
-import { AgGridReact } from 'ag-grid-react';
-import { ColDef, GridReadyEvent, GridApi } from 'ag-grid-community';
+"use client";
+import React, { type ChangeEvent, useState, useCallback } from "react";
+import { FileSpreadsheet } from "lucide-react";
+import { AgGridReact } from "ag-grid-react";
+import { ColDef, GridReadyEvent, GridApi } from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { PlusIcon, Trash2Icon, SearchIcon } from 'lucide-react';
-import { AG_GRID_LOCALE_ES } from '@ag-grid-community/locale';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { PlusIcon, Trash2Icon, SearchIcon } from "lucide-react";
+import { AG_GRID_LOCALE_ES } from "@ag-grid-community/locale";
 
 interface DataGridProps<T> {
   title?: string;
@@ -18,6 +25,7 @@ interface DataGridProps<T> {
   onSelectionChange?: (selectedIds: string[]) => void;
   onCreateNew?: () => void;
   onDelete?: () => void;
+  onAddExcelSpreadSheet: () => void;
   height?: string;
   idField?: keyof T;
   pageSize?: number;
@@ -33,10 +41,11 @@ export function DataGrid<T>({
   onSelectionChange,
   onCreateNew,
   onDelete,
-  height = '500px',
-  idField = 'id' as keyof T,
+  onAddExcelSpreadSheet,
+  height = "500px",
+  idField = "id" as keyof T,
   pageSize = 10,
-  pageSizeOptions = [5, 10, 20]
+  pageSizeOptions = [5, 10, 20],
 }: DataGridProps<T>) {
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
@@ -60,15 +69,20 @@ export function DataGrid<T>({
 
   const handleSelectionChange = useCallback(() => {
     if (gridApi) {
-      const selected = gridApi.getSelectedRows().map(row => row[idField] as string);
+      const selected = gridApi
+        .getSelectedRows()
+        .map((row) => row[idField] as string);
       setSelectedRows(selected);
       onSelectionChange?.(selected);
     }
   }, [gridApi, onSelectionChange, idField]);
 
-  const handleRowClick = useCallback((event: any) => {
-    onRowClick?.(event.data);
-  }, [onRowClick]);
+  const handleRowClick = useCallback(
+    (event: any) => {
+      onRowClick?.(event.data);
+    },
+    [onRowClick]
+  );
 
   return (
     <div className="w-full bg-white">
@@ -76,9 +90,18 @@ export function DataGrid<T>({
         <div className="flex justify-between items-center">
           <div>
             {title && <h2 className="text-lg font-semibold">{title}</h2>}
-            {description && <p className="text-sm text-gray-500">{description}</p>}
+            {description && (
+              <p className="text-sm text-gray-500">{description}</p>
+            )}
           </div>
           <div className="flex gap-2">
+            <Button
+              onClick={onAddExcelSpreadSheet}
+              className="flex gap-2 items-center bg-[#008000]"
+            >
+              <FileSpreadsheet />
+              <span>Añadir productos desde archivo de Excel</span>
+            </Button>
             {onDelete && (
               <button
                 onClick={onDelete}
@@ -114,7 +137,7 @@ export function DataGrid<T>({
       <div className="ag-theme-quartz w-full" style={{ height }}>
         <AgGridReact
           gridOptions={{
-            localeText: AG_GRID_LOCALE_ES
+            localeText: AG_GRID_LOCALE_ES,
           }}
           rowData={data}
           columnDefs={columnDefs}
@@ -130,7 +153,6 @@ export function DataGrid<T>({
           paginationPageSizeSelector={pageSizeOptions}
         />
       </div>
-
     </div>
   );
 }
