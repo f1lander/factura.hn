@@ -38,6 +38,23 @@ import { DataGrid } from "@/components/molecules/DataGrid";
 import { customerColumns } from "@/utils/tableColumns";
 import useUploadXls from "@/hooks/useUploadXls";
 import { Input } from "@/components/ui/input";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface CustomerKeyMappings {
+  name: string;
+  rtn: string;
+  email: string;
+  contacts: string;
+}
 
 export default function CustomersPage() {
   const excelFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -46,6 +63,14 @@ export default function CustomersPage() {
       excelFileInputRef.current.click();
     }
   };
+  const { control, handleSubmit } = useForm<CustomerKeyMappings>({
+    defaultValues: {
+      name: "",
+      rtn: "",
+      email: "",
+      contacts: "",
+    },
+  });
   const {
     handleXlsFileUpload,
     xlsFile,
@@ -150,11 +175,11 @@ export default function CustomersPage() {
     }
   };
 
-  const handleDeleteClick = () => {
-    if (selectedCustomers.length > 0) {
-      setIsDeleteDialogOpen(true);
-    }
-  };
+  // const handleDeleteClick = () => {
+  //   if (selectedCustomers.length > 0) {
+  //     setIsDeleteDialogOpen(true);
+  //   }
+  // };
 
   const handleConfirmDelete = async () => {
     try {
@@ -178,6 +203,35 @@ export default function CustomersPage() {
         variant: "destructive",
       });
     }
+  };
+
+  const onSubmit: SubmitHandler<CustomerKeyMappings> = async (data) => {
+    setAreProductsLoading(true);
+    if (!xlsFile) {
+      setAreProductsLoading(false);
+      return alert("No se ha subido ningún archivo de Excel");
+    }
+    const transformedRows = xlsFile.map((row) => {
+      const newRow: Record<string, any> = {};
+      for (const [newKey, oldKey] of Object.entries(data)) {
+        newRow[newKey] = row[oldKey];
+      }
+      return newRow;
+    });
+    const { success, message } = await customerService.createMultipleCustomers(
+      transformedRows
+    );
+    if (!success) {
+      toast({
+        title: "No se pudieron subir los clientes",
+        description: message,
+      });
+      return setAreProductsLoading(false);
+    }
+    toast({ title: "Carga de clientes exitosa", description: message });
+    setIsAddProductsWithSpreadsheetDialogOpen(false);
+    setXlsFile(null);
+    setAreProductsLoading(false);
   };
 
   if (error) {
@@ -308,6 +362,171 @@ export default function CustomersPage() {
               Eliminar
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={isAddProductsWithSpreadsheetDialogOpen}
+        onOpenChange={setIsAddProductsWithSpreadsheetDialogOpen}
+      >
+        <DialogContent className="w-3/5 flex flex-col gap-5">
+          <h1 className="text-2xl font-medium">Mapeo de columnas</h1>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-3"
+          >
+            <div className="flex justify-between">
+              <span>Nombre</span>
+              <Controller
+                control={control}
+                name="name"
+                render={({ field }) => {
+                  if (
+                    tableFieldnames.includes("Nombre") &&
+                    field.value === ""
+                  ) {
+                    field.onChange("Nombre"); // Update the form state
+                  }
+                  return (
+                    <Select
+                      defaultValue={
+                        tableFieldnames.includes("Nombre")
+                          ? "Nombre"
+                          : field.value
+                      }
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger className="w-fit">
+                        <SelectValue placeholder="Selecciona una columna" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Columnas</SelectLabel>
+                          {tableFieldnames.map((fieldName, index) => (
+                            <SelectItem key={index} value={fieldName}>
+                              {fieldName}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  );
+                }}
+              />
+            </div>
+            <div className="flex justify-between">
+              <span>RTN</span>
+              <Controller
+                control={control}
+                name="rtn"
+                render={({ field }) => {
+                  if (tableFieldnames.includes("RTN") && field.value === "") {
+                    field.onChange("RTN"); // Update the form state
+                  }
+                  return (
+                    <Select
+                      defaultValue={
+                        tableFieldnames.includes("RTN") ? "RTN" : field.value
+                      }
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger className="w-fit">
+                        <SelectValue placeholder="Selecciona una columna" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Columnas</SelectLabel>
+                          {tableFieldnames.map((fieldName, index) => (
+                            <SelectItem key={index} value={fieldName}>
+                              {fieldName}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  );
+                }}
+              />
+            </div>
+            <div className="flex justify-between">
+              <span>Email</span>
+              <Controller
+                control={control}
+                name="email"
+                render={({ field }) => {
+                  if (tableFieldnames.includes("Email") && field.value === "") {
+                    field.onChange("Email"); // Update the form state
+                  }
+                  return (
+                    <Select
+                      defaultValue={
+                        tableFieldnames.includes("Email")
+                          ? "Email"
+                          : field.value
+                      }
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger className="w-fit">
+                        <SelectValue placeholder="Selecciona una columna" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Columnas</SelectLabel>
+                          {tableFieldnames.map((fieldName, index) => (
+                            <SelectItem key={index} value={fieldName}>
+                              {fieldName}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  );
+                }}
+              />
+            </div>
+            <div className="flex justify-between">
+              <span>Tipo</span>
+              <Controller
+                control={control}
+                name="contacts"
+                render={({ field }) => {
+                  if (
+                    tableFieldnames.includes("Contactos") &&
+                    field.value === ""
+                  ) {
+                    field.onChange("Contactos"); // Update the form state
+                  }
+                  return (
+                    <Select
+                      defaultValue={
+                        tableFieldnames.includes("Contactos")
+                          ? "Contactos"
+                          : field.value
+                      }
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger className="w-fit">
+                        <SelectValue placeholder="Selecciona una columna" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Columnas</SelectLabel>
+                          {tableFieldnames.map((fieldName, index) => (
+                            <SelectItem key={index} value={fieldName}>
+                              {fieldName}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  );
+                }}
+              />
+            </div>
+            {/* <Button type="submit" disabled={areProductsLoading}>Subir productos</Button> */}
+            <Button type="submit" disabled={areProductsLoading}>
+              {areProductsLoading ? "Subiendo clientes..." : "Subir clientes"}
+            </Button>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
