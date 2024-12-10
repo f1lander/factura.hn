@@ -10,7 +10,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ColDef } from "ag-grid-community";
 import { Package } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Product, productService } from "@/lib/supabase/services/product";
@@ -85,15 +84,29 @@ export default function ProductsPage() {
 
   const onSubmit: SubmitHandler<ProductKeyMappings> = async (data) => {
     setAreProductsLoading(true);
+
     if (!xlsFile) {
       setAreProductsLoading(false);
       return alert("No se ha subido ningún archivo de Excel");
     }
+
     const transformedRows = xlsFile.map((row) => {
-      const newRow: Record<string, any> = {};
+      const newRow: Record<string, any> = {
+        // Initialize with default values
+        sku: '',
+        description: '',
+        unit_cost: '',
+        is_service: false,
+        quantity_in_stock: ''
+      };
+
+      // Override defaults with mapped values if they exist
       for (const [newKey, oldKey] of Object.entries(data)) {
-        newRow[newKey] = row[oldKey];
+        if (oldKey) { // Only map if a key was provided
+          newRow[newKey] = row[oldKey];
+        }
       }
+
       return newRow;
     });
     const { success, message } = await productService.createMultipleProducts(
@@ -106,6 +119,7 @@ export default function ProductsPage() {
       });
       return setAreProductsLoading(false);
     }
+
     toast({ title: "Carga de productos exitosa", description: message });
     setIsAddProductsWithSpreadsheetDialogOpen(false);
     setXlsFile(null);
