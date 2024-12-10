@@ -59,7 +59,7 @@ export class BaseService {
 
   protected async getAllPaginated<T>(
     table: Table,
-    { page, pageSize }: PaginationOptions,
+    { page, pageSize }: PaginationOptions
   ): Promise<PaginatedResponse<T>> {
     const companyId = await this.ensureCompanyId();
     if (!companyId) return { data: [], total: 0 };
@@ -170,7 +170,7 @@ export class BaseService {
 
   protected async createMultiple<T>(
     table: Table,
-    items: Partial<T>[],
+    items: Partial<T>[]
   ): Promise<{ success: boolean; message: string }> {
     const companyId = await this.ensureCompanyId();
     if (!companyId)
@@ -194,19 +194,19 @@ export class BaseService {
       console.error(`Error creating ${table}:`, error);
       return {
         success: false,
-        message: "Hubo un error al subir los productos",
+        message: "Hubo un error al subir los elementos",
       };
     } else {
-      console.log("Se han subido los productos con éxito");
+      console.log("Se han subido los elementos con éxito");
     }
 
-    return { success: true, message: "Se subieron los productos con éxito" };
+    return { success: true, message: "Se subieron los elementos con éxito" };
   }
 
   protected async update<T>(
     table: Table,
     id: string,
-    updates: Partial<T>,
+    updates: Partial<T>
   ): Promise<T | null> {
     const companyId = await this.ensureCompanyId();
     if (!companyId) return null;
@@ -247,7 +247,7 @@ export class BaseService {
   protected async search<T>(
     table: Table,
     column: string,
-    query: string,
+    query: string
   ): Promise<T[]> {
     const companyId = await this.ensureCompanyId();
     if (!companyId) return [];
