@@ -26,6 +26,7 @@ interface DataGridProps<T> {
   onCreateNew?: () => void;
   onDelete?: () => void;
   onAddExcelSpreadSheet: () => void;
+  searchPlaceholder?: string;
   height?: string;
   idField?: keyof T;
   pageSize?: number;
@@ -42,6 +43,7 @@ export function DataGrid<T>({
   onCreateNew,
   onDelete,
   onAddExcelSpreadSheet,
+  searchPlaceholder,
   height = "500px",
   idField = "id" as keyof T,
   pageSize = 10,
@@ -100,7 +102,7 @@ export function DataGrid<T>({
               className="flex gap-2 items-center bg-[#008000]"
             >
               <FileSpreadsheet />
-              <span>Añadir productos desde archivo de Excel</span>
+              <span>Añadir desde archivo de Excel</span>
             </Button>
             {onDelete && (
               <button
@@ -127,7 +129,7 @@ export function DataGrid<T>({
           <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Buscar producto..."
+            placeholder={searchPlaceholder ? searchPlaceholder : "Buscar..."}
             onInput={onFilterTextBoxChanged}
             className="h-9 w-full max-w-sm rounded-md border px-8 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
           />
