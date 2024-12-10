@@ -85,7 +85,7 @@ export function DataGrid<T>({
   );
 
   return (
-    <div className="w-full bg-white">
+    <div className="w-full bg-white p-4">
       <div className="space-y-4 mb-4">
         <div className="flex justify-between items-center">
           <div>
