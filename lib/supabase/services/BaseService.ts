@@ -226,6 +226,30 @@ export class BaseService {
     return data as T;
   }
 
+  /** This function assumes the items have an id embedded to it */
+  protected async updateMultiple<T extends { id: string }>(
+    table: Table,
+    updates: Array<Partial<T> & { id: string }>
+  ): Promise<{ success: boolean; message: string }> {
+    const updatedRowsPromise = updates.map(async (update) => {
+      const { id, ...otherUpdateFields } = update;
+      return await this.supabase
+        .from(table)
+        .update(otherUpdateFields)
+        .eq("id", id);
+    });
+    const updatedRows = await Promise.all(updatedRowsPromise);
+    const didSomeRowUpdateFail = updatedRows.some(
+      (updatedRow) => updatedRow.error !== null
+    );
+    if (didSomeRowUpdateFail)
+      return {
+        success: false,
+        message: "No se pudieron actualizar los valores",
+      };
+    return { success: true, message: "Se actualizaron los valores con éxito" };
+  }
+
   protected async delete(table: Table, id: string): Promise<boolean> {
     const companyId = await this.ensureCompanyId();
     if (!companyId) return false;
