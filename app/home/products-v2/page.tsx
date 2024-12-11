@@ -211,14 +211,33 @@ export default function ProductsPage() {
               isFormVisible ? "xl:w-1/2" : "xl:w-full"
             } transition-all duration-300 ease-in-out`}
           >
+            {/* in case there are elements from a spreadsheet, take the columns and data, and display
+            the table. */}
             {products!.length === 0 ? (
-              <GenericEmptyState
-                icon={Package}
-                title="No tienes productos aún"
-                description="Agrega tus productos o servicios para incluirlos en tus facturas"
-                buttonText="Agregar Producto"
-                onAction={handleCreateProduct}
-              />
+              <>
+                {tableFieldnames.length > 0 ? (
+                  <DataGrid
+                    title="Previsualización"
+                    description="previsualiza tus productos"
+                    data={xlsFile!}
+                    columnDefs={tableFieldnames.map((fieldName) => {
+                      return {
+                        field: fieldName,
+                        headerName: fieldName,
+                      };
+                    })}
+                  />
+                ) : (
+                  <GenericEmptyState
+                    icon={Package}
+                    title="No tienes productos aún"
+                    description="Agrega tus productos o servicios para incluirlos en tus facturas"
+                    buttonText="Agregar Producto"
+                    onAction={handleCreateProduct}
+                    onAddExcelSpreadSheet={triggerFileInput}
+                  />
+                )}
+              </>
             ) : (
               <DataGrid
                 title="Productos y Servicios"
