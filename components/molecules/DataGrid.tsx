@@ -1,7 +1,20 @@
-import React, { type ChangeEvent, useState, useCallback, useMemo, useRef, useEffect } from "react";
+import React, {
+  type ChangeEvent,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  useEffect,
+} from "react";
 import { FileSpreadsheet, Redo2Icon, Undo2Icon } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef, GridReadyEvent, GridApi, CellValueChangedEvent, RowValueChangedEvent } from "ag-grid-community";
+import {
+  ColDef,
+  GridReadyEvent,
+  GridApi,
+  CellValueChangedEvent,
+  RowValueChangedEvent,
+} from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 
@@ -69,8 +82,10 @@ export function DataGrid<T>({
   pageSizeOptions = [5, 10, 20],
 }: DataGridProps<T>) {
   const gridRef = useRef<AgGridReact>(null);
-  const gridStyle = useMemo(() => ({ height: '500px', width: '100%' }), []);
-  const [originalData, setOriginalData] = useState<T[]>(data.map((row) => ({ ...row })));
+  const gridStyle = useMemo(() => ({ height: "500px", width: "100%" }), []);
+  const [originalData, setOriginalData] = useState<T[]>(
+    data.map((row) => ({ ...row }))
+  );
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [quickFilterText, setQuickFilterText] = useState<string>();
@@ -78,27 +93,39 @@ export function DataGrid<T>({
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
-  const onCellValueChanged = useCallback((event: CellValueChangedEvent) => {
-    const { data, source } = event;
+  const onCellValueChanged = useCallback(
+    (event: CellValueChangedEvent) => {
+      const { data, source } = event;
 
-    if (source === 'redo') {
-      setEditedRows(prev => {
-        const filtered = prev.filter(row => row[idField as keyof T] !== data[idField]);
-        return [...filtered, data];
-      })
-    }
-  }, []);
+      if (source === "redo") {
+        setEditedRows((prev) => {
+          const filtered = prev.filter(
+            (row) => row[idField as keyof T] !== data[idField]
+          );
+          return [...filtered, data];
+        });
+      }
+    },
+    [idField]
+  );
 
-  const onRowValueChanged = useCallback((event: RowValueChangedEvent) => {
-    const newData = event.data;
+  const onRowValueChanged = useCallback(
+    (event: RowValueChangedEvent) => {
+      const newData = event.data;
+      // I can't do this because I need the id to locate the product I'm gonna update
+      // if (newData.id !== undefined) delete newData.id;
 
-    const rowId = newData[idField as keyof typeof newData] as string;
+      const rowId = newData[idField as keyof typeof newData] as string;
 
-    setEditedRows(prev => {
-      const filtered = prev.filter(row => row[idField as keyof T] !== rowId);
-      return [...filtered, newData];
-    });
-  }, [idField]);
+      setEditedRows((prev) => {
+        const filtered = prev.filter(
+          (row) => row[idField as keyof T] !== rowId
+        );
+        return [...filtered, newData];
+      });
+    },
+    [idField]
+  );
 
   const handleSaveChanges = useCallback(() => {
     if (handleOnUpdateRows) {
@@ -110,12 +137,11 @@ export function DataGrid<T>({
 
   const handleDiscardChanges = useCallback(() => {
     if (gridApi) {
-      debugger;
-      gridApi.setGridOption('rowData', [...originalData]);
+      gridApi.setGridOption("rowData", [...originalData]);
       setEditedRows([]);
     }
     setShowDiscardDialog(false);
-  }, [gridApi, data]);
+  }, [gridApi, originalData]);
 
   const onGridReady = (params: GridReadyEvent) => {
     setGridApi(params.api);
@@ -146,20 +172,22 @@ export function DataGrid<T>({
 
   const handleOnUndo = () => {
     gridApi?.undoCellEditing();
-    // remove the last edited row from the editedRows array, but also need to save 
-    setEditedRows(prev => {
+    // remove the last edited row from the editedRows array, but also need to save
+    setEditedRows((prev) => {
       const lastEditedRow = prev[prev.length - 1];
-      const filtered = prev.filter(row => row[idField as keyof T] !== lastEditedRow[idField as keyof T]);
+      const filtered = prev.filter(
+        (row) => row[idField as keyof T] !== lastEditedRow[idField as keyof T]
+      );
       return filtered;
     });
-  }
+  };
 
   const handleOnRedo = () => {
     gridApi?.redoCellEditing();
-  }
+  };
 
   useEffect(() => {
-    console.log('editedRows', editedRows);
+    console.log("editedRows", editedRows);
   }, [editedRows]);
   return (
     <div className="w-full bg-white p-4">
@@ -185,7 +213,6 @@ export function DataGrid<T>({
                 onClick={onDelete}
                 variant="outline"
                 className="border-red-600 text-gray-900 hover:bg-red-50 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-
               >
                 <Trash2Icon className="h-4 w-4 mr-2" />
                 Eliminar
@@ -229,10 +256,16 @@ export function DataGrid<T>({
               >
                 Descartar Cambios
               </Button>
-              <Button onClick={() => handleOnUndo()} className="border-gray-600 bg-transparent text-gray-900 hover:bg-gray-200 hover:text-gray-700">
+              <Button
+                onClick={() => handleOnUndo()}
+                className="border-gray-600 bg-transparent text-gray-900 hover:bg-gray-200 hover:text-gray-700"
+              >
                 <Undo2Icon className="h-4 w-4" />
               </Button>
-              <Button onClick={() => handleOnRedo()} className="border-gray-600 bg-transparent text-gray-900 hover:bg-gray-200 hover:text-gray-700">
+              <Button
+                onClick={() => handleOnRedo()}
+                className="border-gray-600 bg-transparent text-gray-900 hover:bg-gray-200 hover:text-gray-700"
+              >
                 <Redo2Icon className="h-4 w-4" />
               </Button>
             </div>
@@ -269,7 +302,8 @@ export function DataGrid<T>({
           <AlertDialogHeader>
             <AlertDialogTitle>¿Guardar cambios?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción guardará los cambios realizados en {editedRows.length} fila(s).
+              Esta acción guardará los cambios realizados en {editedRows.length}{" "}
+              fila(s).
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -286,12 +320,16 @@ export function DataGrid<T>({
           <AlertDialogHeader>
             <AlertDialogTitle>¿Descartar cambios?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción descartará todos los cambios no guardados. Esta acción no se puede deshacer.
+              Esta acción descartará todos los cambios no guardados. Esta acción
+              no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDiscardChanges} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={handleDiscardChanges}
+              className="bg-red-600 hover:bg-red-700"
+            >
               Descartar
             </AlertDialogAction>
           </AlertDialogFooter>

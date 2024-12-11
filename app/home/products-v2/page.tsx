@@ -1,5 +1,4 @@
 "use client";
-import { Upload } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -18,12 +17,11 @@ import { ProductForm } from "@/components/molecules/ProductForm";
 import { Dialog } from "@radix-ui/react-dialog";
 import { DataGrid } from "@/components/molecules/DataGrid";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import useUploadXls from "@/hooks/useUploadXls";
 import { Button } from "@/components/ui/button";
 import { DialogContent } from "@/components/ui/dialog";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { productColumns } from "@/utils/tableColumns";
 
 interface ProductKeyMappings {
@@ -63,7 +61,7 @@ export default function ProductsPage() {
       quantity_in_stock: "",
     },
   });
-  // const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
   const { data: products, isLoading: areProductsFromDBLoading } = useQuery(
     ["products"],
     () => productService.getProductsByCompany(),
@@ -93,16 +91,17 @@ export default function ProductsPage() {
     const transformedRows = xlsFile.map((row) => {
       const newRow: Record<string, any> = {
         // Initialize with default values
-        sku: '',
-        description: '',
-        unit_cost: '',
+        sku: "",
+        description: "",
+        unit_cost: "",
         is_service: false,
-        quantity_in_stock: ''
+        quantity_in_stock: "",
       };
 
       // Override defaults with mapped values if they exist
       for (const [newKey, oldKey] of Object.entries(data)) {
-        if (oldKey) { // Only map if a key was provided
+        if (oldKey) {
+          // Only map if a key was provided
           newRow[newKey] = row[oldKey];
         }
       }
@@ -156,6 +155,7 @@ export default function ProductsPage() {
       } else {
         await productService.createProduct(data);
       }
+      queryClient.invalidateQueries({ queryKey: ["products"] });
       setIsFormVisible(false);
       toast({
         title: selectedProduct ? "Producto Actualizado" : "Producto Creado",
@@ -187,11 +187,19 @@ export default function ProductsPage() {
         <h1>Cargando productos...</h1>
       </div>
     );
-
   }
 
-  const handleOnUpdateRows = () => {
-    // TODO: update the rows callin a service 
+  const handleOnUpdateRows = async (rows: Product[]) => {
+    const { success } = await productService.updateMultipleProducts(rows);
+    if (!success)
+      toast({
+        title: "Actualización de productos fallido",
+        description: "Revisa si algún dato que ingresaste fue inválido",
+      });
+    toast({
+      title: "Actualización de productos exitosa",
+      description: "Tus productos se han actualizado en la base de datos",
+    });
   };
 
   return (
@@ -199,8 +207,9 @@ export default function ProductsPage() {
       <div className="flex flex-col sm:gap-4 p-12">
         <main className="flex flex-col xl:flex-row items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
           <div
-            className={`w-full ${isFormVisible ? "xl:w-1/2" : "xl:w-full"
-              } transition-all duration-300 ease-in-out`}
+            className={`w-full ${
+              isFormVisible ? "xl:w-1/2" : "xl:w-full"
+            } transition-all duration-300 ease-in-out`}
           >
             {products!.length === 0 ? (
               <GenericEmptyState
@@ -222,8 +231,7 @@ export default function ProductsPage() {
                 pageSize={pageSize}
                 pageSizeOptions={[5, 10, 20, 50]}
                 onAddExcelSpreadSheet={triggerFileInput}
-                handleOnUpdateRows={() => handleOnUpdateRows()}
-
+                handleOnUpdateRows={handleOnUpdateRows}
               />
             )}
           </div>
@@ -242,32 +250,15 @@ export default function ProductsPage() {
         </main>
       </div>
       <section className="px-16 flex flex-col gap-5 pb-16">
-        <h2 className="text-xl font-bold">
-          ¿Tienes una tabla de Excel con tus productos? Añádelos aquí{" "}
-        </h2>
-        {!xlsFile && (
-          <Label
-            htmlFor="xls"
-            className="mt-2 inline-block cursor-pointer w-[60%] mx-auto"
-          >
-            <div className="flex flex-col gap-4 mx-auto w-full border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <Upload className="mx-auto h-12 w-12 text-gray-400" />
-              <p className="mt-1">
-                Arrastra y suelta tu archivo de Excel, o dale click en este
-                recuadro para seleccionar un archivo
-              </p>
-              <Input
-                id="xls"
-                name="xls"
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                className="hidden"
-                onChange={handleXlsFileUpload}
-                ref={excelFileInputRef}
-              />
-            </div>
-          </Label>
-        )}
+        <Input
+          id="xls"
+          name="xls"
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          className="hidden"
+          onChange={handleXlsFileUpload}
+          ref={excelFileInputRef}
+        />
         {xlsFile && (
           <div className="flex gap-3 mt-2 w-[60%] mx-auto border-2 border-gray-300 rounded p-5 justify-around items-center">
             <div className="flex flex-col gap-3">
@@ -301,10 +292,6 @@ export default function ProductsPage() {
           </div>
         )}
       </section>
-      {/* <Dialog */}
-      {/*   open={isDeleteDialogOpen} */}
-      {/*   onOpenChange={setIsDeleteDialogOpen} */}
-      {/* ></Dialog> */}
       <Dialog
         open={isAddProductsWithSpreadsheetDialogOpen}
         onOpenChange={setIsAddProductsWithSpreadsheetDialogOpen}
