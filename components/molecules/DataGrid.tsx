@@ -47,7 +47,7 @@ interface DataGridProps<T> {
   onSelectionChange?: (selectedIds: string[]) => void;
   onCreateNew?: () => void;
   onDelete?: () => void;
-  onAddExcelSpreadSheet: () => void;
+  onAddExcelSpreadSheet?: () => void;
   handleOnUpdateRows?: (rows: T[]) => void;
   searchPlaceholder?: string;
   height?: string;
