@@ -21,22 +21,22 @@ class ProductService extends BaseService {
 
   async getProductsPaginated(
     page: number,
-    pageSize: number,
+    pageSize: number
   ): Promise<PaginatedResponse<Product>> {
     return this.getAllPaginated<Product>(this.tableName, { page, pageSize });
   }
   async createProduct(
-    product: Omit<Product, "id" | "company_id" | "created_at" | "updated_at">,
+    product: Omit<Product, "id" | "company_id" | "created_at" | "updated_at">
   ): Promise<Product | null> {
     return this.create<Product>(this.tableName, product);
   }
 
   async createMultipleProducts(
-    products: Record<string, any>[],
+    products: Record<string, any>[]
   ): Promise<{ success: boolean; message: string }> {
     const response = await this.createMultiple<Product>(
       this.tableName,
-      products,
+      products
     );
     return response;
   }
@@ -51,9 +51,16 @@ class ProductService extends BaseService {
 
   async updateProduct(
     id: string,
-    updates: Partial<Product>,
+    updates: Partial<Product>
   ): Promise<Product | null> {
     return this.update<Product>(this.tableName, id, updates);
+  }
+
+  async updateMultipleProducts(
+    // id: string,
+    updates: Product[]
+  ): Promise<{ success: boolean; message: string }> {
+    return this.updateMultiple<Product>(this.tableName, updates);
   }
 
   async deleteProduct(id: string): Promise<boolean> {
@@ -70,7 +77,7 @@ class ProductService extends BaseService {
       {
         product_id: productId,
         quantity_change: quantity,
-      },
+      }
     );
 
     if (error) {
