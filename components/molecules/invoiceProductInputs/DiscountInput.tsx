@@ -2,6 +2,7 @@ import { Controller } from "react-hook-form";
 import InputProps from "./InputProps";
 import { Input } from "@/components/ui/input";
 import preventMinusAndDecimals from "@/utils/preventMinusAndDecimals";
+import preventMinus from "@/utils/preventMinus";
 
 const DiscountInput = ({ index, control }: InputProps) => (
   <Controller
@@ -9,13 +10,11 @@ const DiscountInput = ({ index, control }: InputProps) => (
     control={control}
     render={({ field }) => (
       <Input
-        max={100}
-        min={0}
         type="number"
         {...field}
         placeholder="Discount"
         className="mt-2"
-        onKeyDown={preventMinusAndDecimals}
+        onKeyDown={preventMinus}
         onInput={(e: React.FormEvent<HTMLInputElement>) => {
           const target = e.currentTarget;
           const value = target.value;
@@ -28,16 +27,6 @@ const DiscountInput = ({ index, control }: InputProps) => (
             field.onChange(sanitizedValue);
           } else {
             field.onChange(value);
-          }
-        }}
-        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-          const target = e.currentTarget;
-          const value = parseFloat(target.value);
-
-          // Truncate the value to 100 if it's greater than 100
-          if (!isNaN(value) && value > 100) {
-            target.value = "100";
-            field.onChange(100);
           }
         }}
       />
