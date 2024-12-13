@@ -34,11 +34,6 @@ interface ProductKeyMappings {
 
 export default function ProductsPage() {
   const excelFileInputRef = useRef<HTMLInputElement | null>(null);
-  const triggerFileInput = () => {
-    if (excelFileInputRef.current) {
-      excelFileInputRef.current.click();
-    }
-  };
   const {
     handleXlsFileUpload,
     xlsFile,
@@ -71,6 +66,11 @@ export default function ProductsPage() {
       refetchOnWindowFocus: true,
     }
   );
+  const triggerFileInput = () => {
+    if (excelFileInputRef.current) {
+      excelFileInputRef.current.click();
+    }
+  };
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>();
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
@@ -123,6 +123,7 @@ export default function ProductsPage() {
     setIsAddProductsWithSpreadsheetDialogOpen(false);
     setXlsFile(null);
     setAreProductsLoading(false);
+    queryClient.invalidateQueries({ queryKey: ["products"] });
   };
 
   const loadProducts = useCallback(

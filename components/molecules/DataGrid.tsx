@@ -84,7 +84,7 @@ export function DataGrid<T>({
   const gridRef = useRef<AgGridReact>(null);
   const gridStyle = useMemo(() => ({ height: "500px", width: "100%" }), []);
   const [originalData, setOriginalData] = useState<T[]>(
-    data.map((row) => ({ ...row }))
+    data ? data.map((row) => ({ ...row })) : []
   );
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
@@ -200,14 +200,16 @@ export function DataGrid<T>({
             )}
           </div>
           <div className="flex gap-2">
-            <Button
-              onClick={onAddExcelSpreadSheet}
-              variant="outline"
-              className="flex gap-2 items-center border-green-600 text-gray-900 hover:bg-green-50 hover:text-green-700"
-            >
-              <FileSpreadsheet className="h-4 w-4" />
-              <span>Añadir desde archivo de Excel</span>
-            </Button>
+            {onAddExcelSpreadSheet && (
+              <Button
+                onClick={onAddExcelSpreadSheet}
+                variant="outline"
+                className="flex gap-2 items-center border-green-600 text-gray-900 hover:bg-green-50 hover:text-green-700"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                <span>Añadir desde archivo de Excel</span>
+              </Button>
+            )}
             {onDelete && selectedRows.length > 0 && (
               <Button
                 onClick={onDelete}
