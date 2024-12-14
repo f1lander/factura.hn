@@ -59,14 +59,15 @@ class CustomerService extends BaseService {
     return this.getAll<Customer>(this.tableName);
   }
 
-  async getCustomersByCompanyAndCustomerName(
-    customerName: string
-  ): Promise<{ id: string | number; name: string }[]> {
+  async getCustomersByCompanyAndCustomerName(customerName: string): Promise<
+    // { id: string | number; name: string; email: string; rtn: string }[]
+    Pick<Customer, "id" | "name" | "rtn" | "email">[]
+  > {
     const companyId = await this.ensureCompanyIdForCustomer();
     if (!companyId) return [];
     const { data, error } = await this.supabase
       .from(this.tableName)
-      .select("id, name")
+      .select("id, name, email, rtn")
       .eq("company_id", companyId)
       .ilike("name", `%${customerName}%`);
     if (error || !data) return [];

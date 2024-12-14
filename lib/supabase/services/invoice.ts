@@ -109,7 +109,6 @@ class InvoiceService extends BaseService {
       thereAreNoProductEntries ||
       noCustomerDefined
     ) {
-      debugger;
       return true;
     }
     return false;
