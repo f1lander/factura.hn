@@ -103,15 +103,15 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
       : "Escribe algo para buscar a un cliente";
   };
 
-  const { data: customers, isLoading: areCustomersLoading } = useQuery(
-    ["customers"], // unique query key
-    () => customerService.getCustomersByCompany(), // the function for fetching
-    {
-      staleTime: 300000,
-      cacheTime: 600000,
-      refetchOnWindowFocus: true,
-    }
-  );
+  // const { data: customers, isLoading: areCustomersLoading } = useQuery(
+  //   ["customers"], // unique query key
+  //   () => customerService.getCustomersByCompany(), // the function for fetching
+  //   {
+  //     staleTime: 300000,
+  //     cacheTime: 600000,
+  //     refetchOnWindowFocus: true,
+  //   }
+  // );
   const { data: products, isLoading: areProductsLoading } = useQuery(
     ["products"],
     () => productService.getProductsByCompany(),
@@ -241,18 +241,18 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
   /** Logic for setting the customer */
   // we're not going to need this since we'll retrieve this from the server, not from a list
-  useEffect(() => {
-    if (customerId) {
-      const selectedCustomer = customers!?.find((c) => c.id === customerId);
-      if (selectedCustomer) {
-        setValue("customers", {
-          name: selectedCustomer.name,
-          rtn: selectedCustomer.rtn,
-          email: selectedCustomer.email,
-        });
-      }
-    }
-  }, [customerId, customers, setValue]);
+  // useEffect(() => {
+  //   if (customerId) {
+  //     const selectedCustomer = customers!?.find((c) => c.id === customerId);
+  //     if (selectedCustomer) {
+  //       setValue("customers", {
+  //         name: selectedCustomer.name,
+  //         rtn: selectedCustomer.rtn,
+  //         email: selectedCustomer.email,
+  //       });
+  //     }
+  //   }
+  // }, [customerId, customers, setValue]);
 
   const onSubmit = (data: Invoice) => {
     if (data.invoice_items.length < 1)
@@ -285,6 +285,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                         rtn: value.rtn,
                         email: value.email,
                       });
+                    field.onChange(value?.id);
                   }}
                 />
               )}
@@ -504,9 +505,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
       </Dialog>
     </>
   );
-  if (areCustomersLoading) {
-    return <div>Cargando clientes...</div>;
-  }
+  // if (areCustomersLoading) {
+  //   return <div>Cargando clientes...</div>;
+  // }
   if (areProductsLoading) {
     return <div>Cargando productos...</div>;
   }
