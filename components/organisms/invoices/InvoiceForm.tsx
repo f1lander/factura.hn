@@ -86,14 +86,15 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
 }) => {
   const queryClient = useQueryClient();
 
+  /** Here we retrieve the list of customers */
   const loadOptions = async (inputValue: string) => {
     if (!inputValue) return [];
     const retrievedCustomers =
       await customerService.getCustomersByCompanyAndCustomerName(inputValue);
-    console.log("The retrieved customers are: ", retrievedCustomers);
     return retrievedCustomers.map((retrievedCustomer) => ({
       value: retrievedCustomer.id,
       label: retrievedCustomer.name,
+      ...retrievedCustomer,
     }));
   };
   const noOptionsMessage = (inputValue: { inputValue: string }) => {
@@ -239,6 +240,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   }, [company, allInvoices, setValue, isEditing]);
 
   /** Logic for setting the customer */
+  // we're not going to need this since we'll retrieve this from the server, not from a list
   useEffect(() => {
     if (customerId) {
       const selectedCustomer = customers!?.find((c) => c.id === customerId);
@@ -272,12 +274,18 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
               rules={{ required: "Debes asociar un cliente a tu factura" }}
               render={({ field }) => (
                 <AsyncSelect
-                  {...field}
                   className="w-full"
                   loadOptions={loadOptions}
                   noOptionsMessage={noOptionsMessage}
                   placeholder="Buscar cliente"
-                  onChange={(value) => field.onChange(value)}
+                  onChange={(value) => {
+                    if (value !== null)
+                      setValue("customers", {
+                        name: value.name,
+                        rtn: value.rtn,
+                        email: value.email,
+                      });
+                  }}
                 />
               )}
             />
