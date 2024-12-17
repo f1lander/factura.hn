@@ -1,8 +1,8 @@
 "use client";
 
 import AsyncSelect from "react-select/async";
-import OptionsOrGroups from "react-select/async";
-import GroupBase from "react-select/async";
+// import OptionsOrGroups from "react-select/async";
+// import GroupBase from "react-select/async";
 import React, { useState, useEffect } from "react";
 import { InputMask } from "@react-input/mask";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -119,7 +119,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
       staleTime: 300000,
       cacheTime: 600000,
       refetchOnWindowFocus: true,
-    }
+    },
   );
   // const { products } = useProductsStore();
   const { company } = useCompanyStore();
@@ -201,13 +201,13 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const isGenerateInvoiceButtonDisabled =
     invoiceService.generateInvoiceButtonShouldBeDisabled(
       watchInvoiceItems,
-      watchClient
+      watchClient,
     );
 
   useEffect(() => {
     const subtotal = watchInvoiceItems.reduce(
       (sum, item) => sum + (item.quantity * item.unit_cost - item.discount),
-      0
+      0,
     );
     const tax = isExento ? 0 : subtotal * 0.15; // Modified this line
     const total = subtotal + tax;
@@ -229,7 +229,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
       if (lastInvoice) {
         setLastInvoiceNumber(lastInvoice.invoice_number);
         nextInvoiceNumber = invoiceService.generateNextInvoiceNumber(
-          lastInvoice.invoice_number
+          lastInvoice.invoice_number,
         );
         setValue("invoice_number", nextInvoiceNumber);
       } else if (company && company.range_invoice1) {
@@ -310,7 +310,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
             render={({ field }) => (
               <DatePicker
                 onChange={(date) => field.onChange(date?.toISOString())}
-                // value={field.value ? new Date(field.value) : undefined}
+              // value={field.value ? new Date(field.value) : undefined}
               />
             )}
           />
@@ -344,7 +344,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                         previousInvoiceNumber,
                         nextInvoiceNumber,
                         lastInvoiceRange,
-                        lastInvoiceExists
+                        lastInvoiceExists,
                       );
                     },
                   })}
@@ -427,7 +427,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 <div className="mt-2">
                   {`Total: Lps. ${calculateItemTotal(
                     index,
-                    watchInvoiceItems
+                    watchInvoiceItems,
                   )}`}
                 </div>
                 <Button

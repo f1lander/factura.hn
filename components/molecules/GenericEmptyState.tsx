@@ -4,21 +4,21 @@ import { FileSpreadsheet, LucideIcon } from "lucide-react";
 
 type GenericEmptyStateProps =
   | {
-      icon: LucideIcon;
-      title: string;
-      description: string;
-      buttonText: string;
-      onAction: () => void;
-      onAddExcelSpreadSheet: () => void;
-    }
+    icon: LucideIcon;
+    title: string;
+    description: string;
+    buttonText: string;
+    onAction: () => void;
+    onAddExcelSpreadSheet?: () => void;
+  }
   | {
-      icon: LucideIcon;
-      title: string;
-      description: string;
-      buttonText?: string;
-      onAction?: () => void;
-      onAddExcelSpreadSheet: () => void;
-    };
+    icon: LucideIcon;
+    title: string;
+    description: string;
+    buttonText?: string;
+    onAction?: () => void;
+    onAddExcelSpreadSheet?: () => void;
+  };
 
 const GenericEmptyState: React.FC<GenericEmptyStateProps> = ({
   icon: Icon,
