@@ -37,6 +37,7 @@ export default function useUploadXls() {
       setXlsFile(sheetData);
       setTableFieldnames(Object.keys(sheetData[0]));
     };
+    setIsAddProductsWithSpreadsheetDialogOpen(true); // when you upload a file, always open the dialog for uploading xls
   };
 
   useEffect(() => {

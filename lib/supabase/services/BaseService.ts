@@ -59,7 +59,7 @@ export class BaseService {
 
   protected async getAllPaginated<T>(
     table: Table,
-    { page, pageSize }: PaginationOptions,
+    { page, pageSize }: PaginationOptions
   ): Promise<PaginatedResponse<T>> {
     const companyId = await this.ensureCompanyId();
     if (!companyId) return { data: [], total: 0 };
@@ -170,7 +170,7 @@ export class BaseService {
 
   protected async createMultiple<T>(
     table: Table,
-    items: Partial<T>[],
+    items: Partial<T>[]
   ): Promise<{ success: boolean; message: string }> {
     const companyId = await this.ensureCompanyId();
     if (!companyId)
@@ -194,19 +194,19 @@ export class BaseService {
       console.error(`Error creating ${table}:`, error);
       return {
         success: false,
-        message: "Hubo un error al subir los productos",
+        message: "Hubo un error al subir los elementos",
       };
     } else {
-      console.log("Se han subido los productos con éxito");
+      console.log("Se han subido los elementos con éxito");
     }
 
-    return { success: true, message: "Se subieron los productos con éxito" };
+    return { success: true, message: "Se subieron los elementos con éxito" };
   }
 
   protected async update<T>(
     table: Table,
     id: string,
-    updates: Partial<T>,
+    updates: Partial<T>
   ): Promise<T | null> {
     const companyId = await this.ensureCompanyId();
     if (!companyId) return null;
@@ -224,6 +224,30 @@ export class BaseService {
     }
 
     return data as T;
+  }
+
+  /** This function assumes the items have an id embedded to it */
+  protected async updateMultiple<T extends { id: string }>(
+    table: Table,
+    updates: Array<Partial<T> & { id: string }>
+  ): Promise<{ success: boolean; message: string }> {
+    const updatedRowsPromise = updates.map(async (update) => {
+      const { id, ...otherUpdateFields } = update;
+      return await this.supabase
+        .from(table)
+        .update(otherUpdateFields)
+        .eq("id", id);
+    });
+    const updatedRows = await Promise.all(updatedRowsPromise);
+    const didSomeRowUpdateFail = updatedRows.some(
+      (updatedRow) => updatedRow.error !== null
+    );
+    if (didSomeRowUpdateFail)
+      return {
+        success: false,
+        message: "No se pudieron actualizar los valores",
+      };
+    return { success: true, message: "Se actualizaron los valores con éxito" };
   }
 
   protected async delete(table: Table, id: string): Promise<boolean> {
@@ -247,7 +271,7 @@ export class BaseService {
   protected async search<T>(
     table: Table,
     column: string,
-    query: string,
+    query: string
   ): Promise<T[]> {
     const companyId = await this.ensureCompanyId();
     if (!companyId) return [];

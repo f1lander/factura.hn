@@ -1,6 +1,7 @@
 import { Controller } from "react-hook-form";
 import InputProps from "./InputProps";
 import { Input } from "@/components/ui/input";
+import preventMinusAndDecimals from "@/utils/preventMinusAndDecimals";
 
 const QuantityInput = ({ index, control }: InputProps) => (
   <Controller
@@ -11,13 +12,23 @@ const QuantityInput = ({ index, control }: InputProps) => (
       <Input
         type="number"
         {...field}
-        onChange={(e) => {
-          const productAmount = Number(e.target.value);
-          if (productAmount < 1) return field.onChange(1);
-          return field.onChange(productAmount);
-        }}
         placeholder="Quantity"
         className="mt-2"
+        onKeyDown={preventMinusAndDecimals}
+        onInput={(e: React.FormEvent<HTMLInputElement>) => {
+          const target = e.currentTarget;
+          const value = target.value;
+
+          // Allow only valid numeric values and remove leading zeros
+          const sanitizedValue = value.replace(/^0+(?=\d)|[^\d.]/g, "");
+
+          if (value !== sanitizedValue) {
+            target.value = sanitizedValue;
+            field.onChange(sanitizedValue);
+          } else {
+            field.onChange(value);
+          }
+        }}
       />
     )}
   />

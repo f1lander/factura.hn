@@ -76,41 +76,43 @@ export default function CompanyDataForm({
       const fileExtension = fileType.split("/")[1];
       const imageData = photoBase64.replace(/^data:image\/\w+;base64,/, "");
       const buffer = Buffer.from(imageData, "base64");
-  
+
       const { data: uploadedPhoto, error: uploadPhotoError } = await supabase()
         .storage.from("company-logos")
         .upload(`public/company_${companyId}.${fileExtension}`, buffer, {
           cacheControl: "3600",
           contentType: fileType,
-          upsert: true // Add this to update existing files
+          upsert: true, // Add this to update existing files
         });
-  
+
       if (uploadPhotoError || !uploadedPhoto) {
         console.error("Photo upload failed:", uploadPhotoError);
         return null;
       }
-  
+
       return uploadedPhoto.path;
     } catch (error) {
       console.error("Error uploading logo:", error);
       return null;
     }
   };
-  
+
   const onSubmit = async (data: Omit<Company, "id">) => {
     data.logo_url = "";
-    
+
     try {
-      const { data: { user } } = await supabase().auth.getUser();
+      const {
+        data: { user },
+      } = await supabase().auth.getUser();
       data.user_id = user?.id!;
-  
+
       if (initialCompany) {
         toast({
           title: "Actualizando datos de compañía...",
         });
-  
+
         const updates: Partial<Company> = { ...data };
-        
+
         // Handle logo update if photo changed
         if (photo) {
           const logoPath = await handleLogoUpload(initialCompany.id, photo);
@@ -118,18 +120,21 @@ export default function CompanyDataForm({
             updates.logo_url = logoPath;
           }
         }
-        debugger;
-        const result = await companyService.updateCompany(initialCompany.id, updates);
+        const result = await companyService.updateCompany(
+          initialCompany.id,
+          updates
+        );
         syncCompany();
-  
+
         if (result.error !== null) {
           return toast({
             variant: "destructive",
             title: "Error al actualizar la compañía",
-            description: "Hubo un error al intentar actualizar los datos de compañía. Por favor, intente más tarde",
+            description:
+              "Hubo un error al intentar actualizar los datos de compañía. Por favor, intente más tarde",
           });
         }
-  
+
         return toast({
           title: "Se actualizaron los datos de compañía con éxito",
         });
@@ -142,7 +147,7 @@ export default function CompanyDataForm({
             title: "Error al crear la compañía",
           });
         }
-  
+
         if (photo) {
           const logoPath = await handleLogoUpload(result[0].id, photo);
           if (logoPath) {
@@ -151,10 +156,11 @@ export default function CompanyDataForm({
             });
           }
         }
-  
+
         toast({
           title: "Éxito",
-          description: "Los datos de la compañía se han guardado correctamente. En unos instantes te redirigiremos a la página de facturas.",
+          description:
+            "Los datos de la compañía se han guardado correctamente. En unos instantes te redirigiremos a la página de facturas.",
         });
         router.push("/home/load-data");
       }
@@ -162,7 +168,8 @@ export default function CompanyDataForm({
       console.error("Error saving company data:", error);
       toast({
         title: "Error",
-        description: "Ocurrió un error al guardar los datos. Por favor, intente de nuevo.",
+        description:
+          "Ocurrió un error al guardar los datos. Por favor, intente de nuevo.",
         variant: "destructive",
       });
     }
@@ -404,7 +411,7 @@ export default function CompanyDataForm({
                     const isRange1LessThanRange2 =
                       invoiceService.compareInvoiceNumbers(
                         invoiceRange1,
-                        invoiceRange2,
+                        invoiceRange2
                       ) === "first less than second";
                     if (!isRange1LessThanRange2)
                       return "El rango de factura fin debe ser mayor que el rango de factura de inicio";
@@ -425,8 +432,8 @@ export default function CompanyDataForm({
             {isSubmitting
               ? "Guardando..."
               : initialCompany
-                ? "Guardar cambios"
-                : "Crear compañía"}
+              ? "Guardar cambios"
+              : "Crear compañía"}
           </Button>
         </CardFooter>
       </Card>

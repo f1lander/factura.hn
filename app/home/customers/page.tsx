@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Card,
   CardContent,
@@ -34,8 +34,56 @@ import { PlusIcon, Trash2Icon, Users } from "lucide-react";
 import GenericEmptyState from "@/components/molecules/GenericEmptyState";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { DataGrid } from "@/components/molecules/DataGrid";
+import { customerColumns } from "@/utils/tableColumns";
+import useUploadXls from "@/hooks/useUploadXls";
+import { Input } from "@/components/ui/input";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface CustomerKeyMappings {
+  name: string;
+  rtn: string;
+  email: string;
+  contacts: string;
+}
 
 export default function CustomersPage() {
+  const excelFileInputRef = useRef<HTMLInputElement | null>(null);
+  const triggerFileInput = () => {
+    if (excelFileInputRef.current) {
+      excelFileInputRef.current.click();
+    }
+  };
+  const { control, handleSubmit } = useForm<CustomerKeyMappings>({
+    defaultValues: {
+      name: "",
+      rtn: "",
+      email: "",
+      contacts: "",
+    },
+  });
+  const {
+    handleXlsFileUpload,
+    xlsFile,
+    fileName,
+    isAddProductsWithSpreadsheetDialogOpen,
+    setIsAddProductsWithSpreadsheetDialogOpen,
+    isTablePreviewDialogOpen,
+    setIsTablePreviewDialogOpen,
+    tableFieldnames,
+    areProductsLoading,
+    setAreProductsLoading,
+    setXlsFile,
+  } = useUploadXls();
   const queryClient = useQueryClient();
   const { data: customers, isLoading: areCustomersLoading } = useQuery(
     ["customers"], // unique query key
@@ -44,10 +92,10 @@ export default function CustomersPage() {
       staleTime: 300000,
       cacheTime: 600000,
       refetchOnWindowFocus: true,
-    },
+    }
   );
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
-    null,
+    null
   );
   const [error, setError] = useState<string | null>(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
@@ -111,28 +159,32 @@ export default function CustomersPage() {
     setSelectedCustomers((prev) =>
       prev.includes(customerId)
         ? prev.filter((id) => id !== customerId)
-        : [...prev, customerId],
+        : [...prev, customerId]
     );
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedCustomers(customers!.filter(item => !item.is_universal).map((customer) => customer.id!));
+      setSelectedCustomers(
+        customers!
+          .filter((item) => !item.is_universal)
+          .map((customer) => customer.id!)
+      );
     } else {
       setSelectedCustomers([]);
     }
   };
 
-  const handleDeleteClick = () => {
-    if (selectedCustomers.length > 0) {
-      setIsDeleteDialogOpen(true);
-    }
-  };
+  // const handleDeleteClick = () => {
+  //   if (selectedCustomers.length > 0) {
+  //     setIsDeleteDialogOpen(true);
+  //   }
+  // };
 
   const handleConfirmDelete = async () => {
     try {
       await Promise.all(
-        selectedCustomers.map((id) => customerService.deleteCustomer(id)),
+        selectedCustomers.map((id) => customerService.deleteCustomer(id))
       );
       queryClient.invalidateQueries(["customers"]);
       setSelectedCustomers([]);
@@ -153,6 +205,35 @@ export default function CustomersPage() {
     }
   };
 
+  const onSubmit: SubmitHandler<CustomerKeyMappings> = async (data) => {
+    setAreProductsLoading(true);
+    if (!xlsFile) {
+      setAreProductsLoading(false);
+      return alert("No se ha subido ningún archivo de Excel");
+    }
+    const transformedRows = xlsFile.map((row) => {
+      const newRow: Record<string, any> = {};
+      for (const [newKey, oldKey] of Object.entries(data)) {
+        newRow[newKey] = row[oldKey];
+      }
+      return newRow;
+    });
+    const { success, message } = await customerService.createMultipleCustomers(
+      transformedRows
+    );
+    if (!success) {
+      toast({
+        title: "No se pudieron subir los clientes",
+        description: message,
+      });
+      return setAreProductsLoading(false);
+    }
+    toast({ title: "Carga de clientes exitosa", description: message });
+    setIsAddProductsWithSpreadsheetDialogOpen(false);
+    setXlsFile(null);
+    setAreProductsLoading(false);
+  };
+
   if (error) {
     return <div className="p-12">Error: {error}</div>;
   }
@@ -161,7 +242,7 @@ export default function CustomersPage() {
       <div className="flex flex-col sm:gap-4 p-2 sm:p-4">
         <main className="flex flex-col xl:flex-row items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
           <div
-            className={`w-full ${isFormVisible ? "xl:w-1/2" : "xl:w-full"} transition-all duration-300 ease-in-out`}
+            className={`w-full xl:w-full transition-all duration-300 ease-in-out`}
           >
             {customers!.length === 0 ? (
               <GenericEmptyState
@@ -172,97 +253,20 @@ export default function CustomersPage() {
                 onAction={handleCreateCustomer}
               />
             ) : (
-              <Card className="w-full">
-                <CardHeader className="flex flex-col customersPageMin:flex-row items-center justify-between gap-2">
-                  <div className="flex flex-col gap-1">
-                    <CardTitle>Clientes</CardTitle>
-                    <CardDescription>
-                      Gestiona tus clientes aquí
-                    </CardDescription>
-                  </div>
-                  {customers!.length > 0 && (
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handleDeleteClick}
-                        variant="destructive"
-                        disabled={selectedCustomers.length === 0}
-                      >
-                        <Trash2Icon />
-                        Eliminar
-                      </Button>
-                      <Button onClick={handleCreateCustomer}>
-                        <PlusIcon />
-                        Nuevo
-                      </Button>
-                    </div>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[50px]">
-                          <Checkbox
-
-                            disabled={customers?.every((c) => c.is_universal)}
-                            checked={
-                              selectedCustomers.length === customers?.filter(item => !item.is_universal).length
-
-                            }
-                            onCheckedChange={handleSelectAll}
-                          />
-                        </TableHead>
-                        <TableHead>Nombre</TableHead>
-                        <TableHead>RTN</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Contactos</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {customers!.map((customer) => (
-                        <TableRow
-                          onClick={!customer.is_universal ? () => handleCustomerSelect(customer) : () => null}
-                          key={customer.id}
-                          className="cursor-pointer hover:bg-muted/50"
-                        >
-                          <TableCell>
-                            {
-                              !customer.is_universal &&
-                              <Checkbox
-                                checked={selectedCustomers.includes(customer.id!)}
-                                onCheckedChange={() =>
-                                  handleCheckboxChange(customer.id!)
-                                }
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            }
-                          </TableCell>
-                          <TableCell
-
-                          >
-                            {customer.name}
-                          </TableCell>
-                          <TableCell
-
-                          >
-                            {customer.rtn}
-                          </TableCell>
-                          <TableCell
-
-                          >
-                            {customer.email}
-                          </TableCell>
-                          <TableCell
-
-                          >
-                            {customer.contacts?.length || 0}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+              <>
+                <DataGrid
+                  title="Clientes"
+                  description="Gestiona tus clientes aquí"
+                  data={customers!}
+                  columnDefs={customerColumns}
+                  onCreateNew={handleCreateCustomer}
+                  onDelete={() => setIsDeleteDialogOpen(true)}
+                  pageSize={10}
+                  pageSizeOptions={[5, 10, 20, 50]}
+                  searchPlaceholder="Buscar clientes..."
+                  onAddExcelSpreadSheet={triggerFileInput}
+                />
+              </>
             )}
           </div>
           {isFormVisible &&
@@ -293,7 +297,48 @@ export default function CustomersPage() {
               </Dialog>
             ))}
         </main>
-      </div >
+        <Input
+          id="xls"
+          name="xls"
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          className="hidden"
+          onChange={handleXlsFileUpload}
+          ref={excelFileInputRef}
+        />
+        {xlsFile && (
+          <div className="flex gap-3 mt-2 w-[60%] mx-auto border-2 border-gray-300 rounded p-5 justify-around items-center">
+            <div className="flex flex-col gap-3">
+              <h2 className="text-lg font-medium">Nombre de archivo subido:</h2>
+              <span>{fileName}</span>
+              <label
+                htmlFor="xls"
+                className="bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 w-fit cursor-pointer rounded"
+              >
+                cambiar archivo
+              </label>
+              <Input
+                id="xls"
+                name="xls"
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                className="hidden"
+                onChange={handleXlsFileUpload}
+              />
+            </div>
+            <div className="flex flex-col gap-4">
+              <Button onClick={() => setIsTablePreviewDialogOpen(true)}>
+                Previsualizar tabla
+              </Button>
+              <Button
+                onClick={() => setIsAddProductsWithSpreadsheetDialogOpen(true)}
+              >
+                Subir tabla de productos
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -319,6 +364,171 @@ export default function CustomersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div >
+      <Dialog
+        open={isAddProductsWithSpreadsheetDialogOpen}
+        onOpenChange={setIsAddProductsWithSpreadsheetDialogOpen}
+      >
+        <DialogContent className="w-3/5 flex flex-col gap-5">
+          <h1 className="text-2xl font-medium">Mapeo de columnas</h1>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-3"
+          >
+            <div className="flex justify-between">
+              <span>Nombre</span>
+              <Controller
+                control={control}
+                name="name"
+                render={({ field }) => {
+                  if (
+                    tableFieldnames.includes("Nombre") &&
+                    field.value === ""
+                  ) {
+                    field.onChange("Nombre"); // Update the form state
+                  }
+                  return (
+                    <Select
+                      defaultValue={
+                        tableFieldnames.includes("Nombre")
+                          ? "Nombre"
+                          : field.value
+                      }
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger className="w-fit">
+                        <SelectValue placeholder="Selecciona una columna" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Columnas</SelectLabel>
+                          {tableFieldnames.map((fieldName, index) => (
+                            <SelectItem key={index} value={fieldName}>
+                              {fieldName}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  );
+                }}
+              />
+            </div>
+            <div className="flex justify-between">
+              <span>RTN</span>
+              <Controller
+                control={control}
+                name="rtn"
+                render={({ field }) => {
+                  if (tableFieldnames.includes("RTN") && field.value === "") {
+                    field.onChange("RTN"); // Update the form state
+                  }
+                  return (
+                    <Select
+                      defaultValue={
+                        tableFieldnames.includes("RTN") ? "RTN" : field.value
+                      }
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger className="w-fit">
+                        <SelectValue placeholder="Selecciona una columna" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Columnas</SelectLabel>
+                          {tableFieldnames.map((fieldName, index) => (
+                            <SelectItem key={index} value={fieldName}>
+                              {fieldName}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  );
+                }}
+              />
+            </div>
+            <div className="flex justify-between">
+              <span>Email</span>
+              <Controller
+                control={control}
+                name="email"
+                render={({ field }) => {
+                  if (tableFieldnames.includes("Email") && field.value === "") {
+                    field.onChange("Email"); // Update the form state
+                  }
+                  return (
+                    <Select
+                      defaultValue={
+                        tableFieldnames.includes("Email")
+                          ? "Email"
+                          : field.value
+                      }
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger className="w-fit">
+                        <SelectValue placeholder="Selecciona una columna" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Columnas</SelectLabel>
+                          {tableFieldnames.map((fieldName, index) => (
+                            <SelectItem key={index} value={fieldName}>
+                              {fieldName}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  );
+                }}
+              />
+            </div>
+            <div className="flex justify-between">
+              <span>Tipo</span>
+              <Controller
+                control={control}
+                name="contacts"
+                render={({ field }) => {
+                  if (
+                    tableFieldnames.includes("Contactos") &&
+                    field.value === ""
+                  ) {
+                    field.onChange("Contactos"); // Update the form state
+                  }
+                  return (
+                    <Select
+                      defaultValue={
+                        tableFieldnames.includes("Contactos")
+                          ? "Contactos"
+                          : field.value
+                      }
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger className="w-fit">
+                        <SelectValue placeholder="Selecciona una columna" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Columnas</SelectLabel>
+                          {tableFieldnames.map((fieldName, index) => (
+                            <SelectItem key={index} value={fieldName}>
+                              {fieldName}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  );
+                }}
+              />
+            </div>
+            {/* <Button type="submit" disabled={areProductsLoading}>Subir productos</Button> */}
+            <Button type="submit" disabled={areProductsLoading}>
+              {areProductsLoading ? "Subiendo clientes..." : "Subir clientes"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

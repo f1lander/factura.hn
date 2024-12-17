@@ -37,7 +37,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
-import { ChevronDown, ChevronUp, DollarSign, DownloadIcon, Edit2Icon, EditIcon, Hash, Package, Percent, ShoppingCart, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  DollarSign,
+  DownloadIcon,
+  Edit2Icon,
+  EditIcon,
+  Hash,
+  Package,
+  Percent,
+  ShoppingCart,
+  Trash2,
+} from "lucide-react";
 import {
   Invoice,
   InvoiceItem,
@@ -94,7 +106,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   const toggleRow = (id: string) => {
     setExpandedRows((prev: any) => ({
       ...prev,
-      [id]: !prev[id]
+      [id]: !prev[id],
     }));
   };
 
@@ -124,7 +136,6 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     try {
       let s3Url = invoice?.s3_url;
       let s3Key = invoice?.s3_key;
-      debugger;
       if (!s3Key && !s3Url) {
         if (!company) {
           throw new Error("No se pudo obtener la información de la empresa");
@@ -168,7 +179,9 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             email: company?.email,
             logo_url: logoUrl,
           },
-          template_url: `https://factura-hn.nyc3.digitaloceanspaces.com/templates/${company?.template_url ?? "default_template2.html"}`,
+          template_url: `https://factura-hn.nyc3.digitaloceanspaces.com/templates/${
+            company?.template_url ?? "default_template2.html"
+          }`,
         });
 
         s3Key = renderResult.s3_key;
@@ -181,7 +194,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             {
               s3_url: s3Url,
               s3_key: s3Key,
-            },
+            }
           );
 
           console.log("Updated invoice:", updatedInvoice);
@@ -306,7 +319,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   useEffect(() => {
     const subtotal = watchInvoiceItems.reduce(
       (sum, item) => sum + (item.quantity * item.unit_cost - item.discount),
-      0,
+      0
     );
     const tax = invoice?.exento ? 0 : subtotal * 0.15; // Assuming 15% tax rate if not exento
     const total = subtotal + tax;
@@ -342,7 +355,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   const onSubmit = (data: Invoice) => {
     // return console.log(data);
     const { subtotal, total, tax } = invoiceService.computeInvoiceData(
-      data.invoice_items,
+      data.invoice_items
     );
     data.subtotal = subtotal;
     data.total = total;
@@ -366,7 +379,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
       return "El número de factura está fuera del rango de facturación actual";
     const nextAndPreviousComparison = invoiceService.compareInvoiceNumbers(
       nextInvoiceNumber,
-      previousInvoiceNumber,
+      previousInvoiceNumber
     );
     if (!lastInvoiceExists) {
       const nextGreaterOrEqualThanPrevious =
@@ -535,7 +548,10 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
                 <UnitCostInput index={index} control={control} />
                 <DiscountInput index={index} control={control} />
                 <div className="mt-2">
-                  {`Total: Lps. ${calculateItemTotal(index, watchInvoiceItems)}`}
+                  {`Total: Lps. ${calculateItemTotal(
+                    index,
+                    watchInvoiceItems
+                  )}`}
                 </div>
                 <Button
                   type="button"
@@ -643,13 +659,16 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
                   <TableCell>{item.description}</TableCell>
                   <TableCell className="text-right">{item.quantity}</TableCell>
                   <TableCell className="text-right">
-                    {`Lps. ${item.unit_cost.toLocaleString('en')}`}
+                    {`Lps. ${item.unit_cost.toLocaleString("en")}`}
                   </TableCell>
                   <TableCell className="text-right">
-                    {`Lps. ${item.discount.toLocaleString('en')}`}
+                    {`Lps. ${item.discount.toLocaleString("en")}`}
                   </TableCell>
                   <TableCell className="text-right">
-                    {`Lps. ${(item.quantity * item.unit_cost - item.discount).toLocaleString('en')}`}
+                    {`Lps. ${(
+                      item.quantity * item.unit_cost -
+                      item.discount
+                    ).toLocaleString("en")}`}
                   </TableCell>
                 </TableRow>
               ))}
@@ -677,13 +696,19 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
                 <div className="flex justify-between items-center mb-2 pl-8">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <ShoppingCart className="w-4 h-4" />
-                    <span>{item.quantity} x {`Lps. ${item.unit_cost.toLocaleString('en')}`}</span>
+                    <span>
+                      {item.quantity} x{" "}
+                      {`Lps. ${item.unit_cost.toLocaleString("en")}`}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center text-green-600">
                       <DollarSign className="w-4 h-4" />
                       <span className="font-medium">
-                        {`${(item.quantity * item.unit_cost - item.discount).toLocaleString('en')}`}
+                        {`${(
+                          item.quantity * item.unit_cost -
+                          item.discount
+                        ).toLocaleString("en")}`}
                       </span>
                     </div>
                     {expandedRows[item.id] ? (
@@ -701,13 +726,15 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
                       <div className="flex items-center gap-2">
                         <Hash className="w-4 h-4 text-gray-400" />
                         <span className="text-gray-500">ID:</span>
-                        <span className="font-medium text-gray-700">{item.product_id}</span>
+                        <span className="font-medium text-gray-700">
+                          {item.product_id}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Percent className="w-4 h-4 text-orange-500" />
                         <span className="text-gray-500">Descuento:</span>
                         <span className="font-medium text-orange-600">
-                          {`Lps. ${item.discount.toLocaleString('en')}`}
+                          {`Lps. ${item.discount.toLocaleString("en")}`}
                         </span>
                       </div>
                     </div>
@@ -725,35 +752,35 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
           <dl className="grid gap-1">
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Subtotal:</dt>
-              <dd>{`Lps. ${watch("subtotal").toLocaleString('en')}`}</dd>
+              <dd>{`Lps. ${watch("subtotal").toLocaleString("en")}`}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Exonerado:</dt>
-              <dd>{`Lps. ${watch("tax_exonerado").toLocaleString('en')}`}</dd>
+              <dd>{`Lps. ${watch("tax_exonerado").toLocaleString("en")}`}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Exento:</dt>
-              <dd>{`Lps. ${watch("tax_exento").toLocaleString('en')}`}</dd>
+              <dd>{`Lps. ${watch("tax_exento").toLocaleString("en")}`}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Gravado 15%:</dt>
-              <dd>{`Lps. ${watch("tax_gravado_15").toLocaleString('en')}`}</dd>
+              <dd>{`Lps. ${watch("tax_gravado_15").toLocaleString("en")}`}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Gravado 18%:</dt>
-              <dd>{`Lps. ${watch("tax_gravado_18").toLocaleString('en')}`}</dd>
+              <dd>{`Lps. ${watch("tax_gravado_18").toLocaleString("en")}`}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">ISV 15%:</dt>
-              <dd>{`Lps. ${watch("tax").toLocaleString('en')}`}</dd>
+              <dd>{`Lps. ${watch("tax").toLocaleString("en")}`}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">ISV 18%:</dt>
-              <dd>{`Lps. ${watch("tax_18").toLocaleString('en')}`}</dd>
+              <dd>{`Lps. ${watch("tax_18").toLocaleString("en")}`}</dd>
             </div>
             <div className="flex items-center justify-between font-semibold">
               <dt>Total:</dt>
-              <dd>{`Lps. ${watch("total").toLocaleString('en')}`}</dd>
+              <dd>{`Lps. ${watch("total").toLocaleString("en")}`}</dd>
             </div>
           </dl>
         </div>
@@ -773,7 +800,6 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
       <CardHeader className="flex flex-col md:flex-row items-start justify-between bg-muted/50">
         <div className="w-full grid gap-0.5">
           <CardTitle className="group flex items-center gap-2 text-lg">
-
             {isEditable
               ? "Crear Factura"
               : `Número de Factura ${invoice?.invoice_number}`}
@@ -788,7 +814,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
         <div className="flex gap-2 w-full justify-end">
           {!isEditable && (
             <>
-              {invoice?.status === 'pending' && (
+              {invoice?.status === "pending" && (
                 <Button
                   className="bg-yellow-500"
                   onClick={handleEditInvoice}
@@ -804,7 +830,8 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
                 disabled={isDownloading}
                 size="sm"
               >
-                {isDownloading ? "Descargando..." : "PDF"} <DownloadIcon className="h-4 w-4 ml-2" />
+                {isDownloading ? "Descargando..." : "PDF"}{" "}
+                <DownloadIcon className="h-4 w-4 ml-2" />
               </Button>
             </>
           )}
@@ -857,11 +884,11 @@ const ProductSelect = ({
           if (selectedProduct) {
             setValue(
               `invoice_items.${index}.unit_cost`,
-              selectedProduct.unit_cost,
+              selectedProduct.unit_cost
             );
             setValue(
               `invoice_items.${index}.description`,
-              selectedProduct.description,
+              selectedProduct.description
             );
           }
         }}
@@ -948,7 +975,7 @@ const DiscountInput = ({ index, control }: InputProps) => (
 
 const calculateItemTotal = (index: number, items: InvoiceItem[]) => {
   const item = items[index];
-  return (item.quantity * item.unit_cost - item.discount).toLocaleString('en');
+  return (item.quantity * item.unit_cost - item.discount).toLocaleString("en");
 };
 
 export default InvoiceView2;

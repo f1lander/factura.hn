@@ -95,21 +95,22 @@ class InvoiceService extends BaseService {
    */
   generateInvoiceButtonShouldBeDisabled(
     invoiceItems: InvoiceItem[],
-    customer: CustomerInfo,
+    customer: CustomerInfo
   ): boolean {
     const anInvoiceItemHasNotSpecifiedProduct: boolean = invoiceItems.some(
-      (invoiceItem) => invoiceItem.description.length < 1,
+      (invoiceItem) => invoiceItem.description.length < 1
     );
     const thereAreNoProductEntries: boolean = invoiceItems.length < 1;
     const noCustomerDefined: boolean = Object.values(customer).some(
-      (value) => value.length < 1,
+      (value) => value.length < 1
     );
     if (
       anInvoiceItemHasNotSpecifiedProduct ||
       thereAreNoProductEntries ||
       noCustomerDefined
-    )
+    ) {
       return true;
+    }
     return false;
   }
 
@@ -224,7 +225,7 @@ class InvoiceService extends BaseService {
    */
   isInvoiceNumberValid(
     invoiceNumber: string,
-    lastInvoiceNumber: string,
+    lastInvoiceNumber: string
   ): boolean {
     const invoiceNumberStructure = /^(\d{3})-(\d{3})-(\d{2})-(\d{8})$/;
     const invoiceNumberHasCorrectFormat: boolean =
@@ -276,7 +277,7 @@ class InvoiceService extends BaseService {
 
   compareInvoiceNumbers(
     invoiceNumber1: string,
-    invoiceNumber2: string,
+    invoiceNumber2: string
   ):
     | "first less than second"
     | "first greater than second"
@@ -330,7 +331,7 @@ class InvoiceService extends BaseService {
     previousInvoiceNumber: string,
     nextInvoiceNumber: string,
     lastInvoiceRange: string,
-    lastInvoiceExists: boolean,
+    lastInvoiceExists: boolean
   ): string | true {
     const invoiceNumberPattern = /^\d{3}-\d{3}-\d{2}-\d{8}$/;
     if (!invoiceNumberPattern.test(previousInvoiceNumber)) {
@@ -346,7 +347,7 @@ class InvoiceService extends BaseService {
       return "El siguiente número de factura está fuera del rango de facturación actual";
     const nextAndPreviousComparison = this.compareInvoiceNumbers(
       nextInvoiceNumber,
-      previousInvoiceNumber,
+      previousInvoiceNumber
     );
     if (!lastInvoiceExists) {
       const nextGreaterOrEqualThanPrevious =
@@ -370,7 +371,7 @@ class InvoiceService extends BaseService {
     searchTerm: string,
     startDate?: Date,
     endDate?: Date,
-    statuses?: string[],
+    statuses?: string[]
   ): Promise<Invoice[]> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return [];
@@ -382,11 +383,11 @@ class InvoiceService extends BaseService {
         *,
         customers (rtn, name, email),
         invoice_items (*)
-      `,
+      `
       )
       .eq("company_id", companyId)
       .or(
-        `invoice_number.ilike.%${searchTerm}%,customers.name.ilike.%${searchTerm}%,invoice_items.description.ilike.%${searchTerm}%`,
+        `invoice_number.ilike.%${searchTerm}%,customers.name.ilike.%${searchTerm}%,invoice_items.description.ilike.%${searchTerm}%`
       )
       .order("date", { ascending: false });
 
@@ -420,7 +421,7 @@ class InvoiceService extends BaseService {
 
   async updateInvoicesStatus(
     invoiceIds: string[],
-    newStatus: string,
+    newStatus: string
   ): Promise<void | PostgrestError> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return;
@@ -457,7 +458,7 @@ class InvoiceService extends BaseService {
           created_at,
           updated_at
         )
-      `,
+      `
       )
       .eq("company_id", companyId)
       .order("date", { ascending: false });
@@ -481,7 +482,7 @@ class InvoiceService extends BaseService {
         *,
         customers (rtn, name, email),
         invoice_items (*)
-      `,
+      `
       )
       .eq("id", id)
       .eq("company_id", companyId)
@@ -514,13 +515,13 @@ class InvoiceService extends BaseService {
       startDate = new Date(
         now.getFullYear(),
         now.getMonth(),
-        now.getDate() - 7,
+        now.getDate() - 7
       );
     } else {
       startDate = new Date(
         now.getFullYear(),
         now.getMonth() - 1,
-        now.getDate(),
+        now.getDate()
       );
     }
 
@@ -539,12 +540,12 @@ class InvoiceService extends BaseService {
 
     return data.reduce(
       (sum: number, invoice: { total: number }) => sum + invoice.total,
-      0,
+      0
     );
   }
 
   async createInvoiceWithItems(
-    invoice: Omit<Invoice, "id" | "created_at" | "updated_at">,
+    invoice: Omit<Invoice, "id" | "created_at" | "updated_at">
   ): Promise<Invoice | null> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
@@ -583,7 +584,7 @@ class InvoiceService extends BaseService {
 
   async updateInvoiceWithItems(
     id: string,
-    updates: Partial<Invoice>,
+    updates: Partial<Invoice>
   ): Promise<Invoice | null> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
@@ -631,7 +632,7 @@ class InvoiceService extends BaseService {
   }
 
   async createInvoice(
-    invoiceData: Omit<Invoice, "id" | "created_at" | "updated_at">,
+    invoiceData: Omit<Invoice, "id" | "created_at" | "updated_at">
   ): Promise<Invoice | null> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
@@ -644,7 +645,7 @@ class InvoiceService extends BaseService {
 
   async updateInvoice(
     id: string,
-    updates: Partial<Invoice>,
+    updates: Partial<Invoice>
   ): Promise<Invoice | null> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
@@ -653,7 +654,7 @@ class InvoiceService extends BaseService {
   }
 
   async createInvoiceItem(
-    invoiceItemData: Omit<InvoiceItem, "id" | "created_at" | "updated_at">,
+    invoiceItemData: Omit<InvoiceItem, "id" | "created_at" | "updated_at">
   ): Promise<InvoiceItem | null> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
@@ -663,7 +664,7 @@ class InvoiceService extends BaseService {
 
   async updateInvoiceItem(
     id: string,
-    updates: Partial<InvoiceItem>,
+    updates: Partial<InvoiceItem>
   ): Promise<InvoiceItem | null> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
