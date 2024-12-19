@@ -56,12 +56,33 @@ class ProductService extends BaseService {
     return this.update<Product>(this.tableName, id, updates);
   }
 
+  async updateMultipleProducts(
+    // id: string,
+    updates: Product[],
+  ): Promise<{ success: boolean; message: string }> {
+    return this.updateMultiple<Product>(this.tableName, updates);
+  }
+
   async deleteProduct(id: string): Promise<boolean> {
     return this.delete(this.tableName, id);
   }
 
   async searchProducts(query: string): Promise<Product[]> {
     return this.search<Product>(this.tableName, "description", query);
+  }
+
+  async searchProductsByCompany(
+    searchString: string,
+  ): Promise<Pick<Product, "id" | "unit_cost" | "description">[]> {
+    const companyId = await this.ensureCompanyId();
+    if (!companyId) return [];
+    const { data, error } = await this.supabase
+      .from(this.tableName)
+      .select("*")
+      .eq("company_id", companyId)
+      .or(`sku.ilike.%${searchString}%,description.ilike.%${searchString}%`);
+    if (error || !data) return [];
+    return data;
   }
 
   async updateInventory(productId: string, quantity: number): Promise<boolean> {

@@ -1,4 +1,4 @@
-import { BaseService, Table } from '@/lib/supabase/services/BaseService';
+import { BaseService, Table } from "@/lib/supabase/services/BaseService";
 
 // Contact type definition
 export interface Contact {
@@ -22,7 +22,7 @@ export interface Customer {
 }
 
 class CustomerService extends BaseService {
-  private tableName: Table = 'customers';
+  private tableName: Table = "customers";
 
   // Helper method to ensure company ID is available
   private async ensureCompanyIdForCustomer(): Promise<string | null> {
@@ -34,10 +34,15 @@ class CustomerService extends BaseService {
   }
 
   // Create a new customer
-  async createCustomer(customer: Omit<Customer, 'id' | 'company_id' | 'created_at' | 'updated_at'>): Promise<Customer | null> {
+  async createCustomer(
+    customer: Omit<Customer, "id" | "company_id" | "created_at" | "updated_at">
+  ): Promise<Customer | null> {
     const companyId = await this.ensureCompanyIdForCustomer();
     if (!companyId) return null;
-    return this.create<Customer>(this.tableName, { ...customer, company_id: companyId });
+    return this.create<Customer>(this.tableName, {
+      ...customer,
+      company_id: companyId,
+    });
   }
 
   // Get a customer by ID
@@ -54,8 +59,26 @@ class CustomerService extends BaseService {
     return this.getAll<Customer>(this.tableName);
   }
 
+  async getCustomersByCompanyAndCustomerName(customerName: string): Promise<
+    // { id: string | number; name: string; email: string; rtn: string }[]
+    Pick<Customer, "id" | "name" | "rtn" | "email">[]
+  > {
+    const companyId = await this.ensureCompanyIdForCustomer();
+    if (!companyId) return [];
+    const { data, error } = await this.supabase
+      .from(this.tableName)
+      .select("id, name, email, rtn")
+      .eq("company_id", companyId)
+      .ilike("name", `%${customerName}%`);
+    if (error || !data) return [];
+    return data;
+  }
+
   // Update a customer
-  async updateCustomer(id: string, updates: Partial<Customer>): Promise<Customer | null> {
+  async updateCustomer(
+    id: string,
+    updates: Partial<Customer>
+  ): Promise<Customer | null> {
     const companyId = await this.ensureCompanyIdForCustomer();
     if (!companyId) return null;
     return this.update<Customer>(this.tableName, id, updates);
@@ -69,7 +92,10 @@ class CustomerService extends BaseService {
   }
 
   // Add a contact to a customer
-  async addContactToCustomer(customerId: string, contact: Contact): Promise<Customer | null> {
+  async addContactToCustomer(
+    customerId: string,
+    contact: Contact
+  ): Promise<Customer | null> {
     const companyId = await this.ensureCompanyIdForCustomer();
     if (!companyId) return null;
 
@@ -80,27 +106,46 @@ class CustomerService extends BaseService {
     return this.updateCustomer(customerId, { contacts: updatedContacts });
   }
 
+  async createMultipleCustomers(
+    customers: Record<string, any>[]
+  ): Promise<{ success: boolean; message: string }> {
+    const response = await this.createMultiple<Customer>(
+      this.tableName,
+      customers
+    );
+    return response;
+  }
+
   // Remove a contact from a customer
-  async removeContactFromCustomer(customerId: string, contactIndex: number): Promise<Customer | null> {
+  async removeContactFromCustomer(
+    customerId: string,
+    contactIndex: number
+  ): Promise<Customer | null> {
     const companyId = await this.ensureCompanyIdForCustomer();
     if (!companyId) return null;
 
     const customer = await this.getCustomerById(customerId);
     if (!customer) return null;
 
-    const updatedContacts = customer.contacts.filter((_, index) => index !== contactIndex);
+    const updatedContacts = customer.contacts.filter(
+      (_, index) => index !== contactIndex
+    );
     return this.updateCustomer(customerId, { contacts: updatedContacts });
   }
 
   // Update a contact for a customer
-  async updateContactForCustomer(customerId: string, contactIndex: number, updatedContact: Contact): Promise<Customer | null> {
+  async updateContactForCustomer(
+    customerId: string,
+    contactIndex: number,
+    updatedContact: Contact
+  ): Promise<Customer | null> {
     const companyId = await this.ensureCompanyIdForCustomer();
     if (!companyId) return null;
 
     const customer = await this.getCustomerById(customerId);
     if (!customer) return null;
 
-    const updatedContacts = customer.contacts.map((contact, index) => 
+    const updatedContacts = customer.contacts.map((contact, index) =>
       index === contactIndex ? updatedContact : contact
     );
     return this.updateCustomer(customerId, { contacts: updatedContacts });
@@ -113,12 +158,12 @@ class CustomerService extends BaseService {
 
     const { data, error } = await this.supabase
       .from(this.tableName)
-      .select('*')
-      .eq('company_id', companyId)
+      .select("*")
+      .eq("company_id", companyId)
       .or(`name.ilike.%${query}%,email.ilike.%${query}%`);
 
     if (error) {
-      console.error('Error searching customers:', error);
+      console.error("Error searching customers:", error);
       return [];
     }
 

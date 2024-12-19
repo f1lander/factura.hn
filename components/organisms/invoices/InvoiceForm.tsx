@@ -1,5 +1,8 @@
 "use client";
 
+import AsyncSelect from "react-select/async";
+// import OptionsOrGroups from "react-select/async";
+// import GroupBase from "react-select/async";
 import React, { useState, useEffect } from "react";
 import { InputMask } from "@react-input/mask";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -37,7 +40,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
-import { CheckIcon, PlusCircleIcon, Trash2 } from "lucide-react";
+import {
+  CheckIcon,
+  FileSlidersIcon,
+  PlusCircleIcon,
+  Trash2,
+} from "lucide-react";
 import {
   Invoice,
   InvoiceItem,
@@ -66,6 +74,11 @@ interface InvoiceFormProps {
   invoice?: Invoice | null;
 }
 
+interface CustomerOption {
+  value: string | number;
+  label: string;
+}
+
 const InvoiceForm: React.FC<InvoiceFormProps> = ({
   onSave,
   isEditing,
@@ -73,15 +86,32 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
 }) => {
   const queryClient = useQueryClient();
 
-  const { data: customers, isLoading: areCustomersLoading } = useQuery(
-    ["customers"], // unique query key
-    () => customerService.getCustomersByCompany(), // the function for fetching
-    {
-      staleTime: 300000,
-      cacheTime: 600000,
-      refetchOnWindowFocus: true,
-    },
-  );
+  /** Here we retrieve the list of customers */
+  const loadOptions = async (inputValue: string) => {
+    if (!inputValue) return [];
+    const retrievedCustomers =
+      await customerService.getCustomersByCompanyAndCustomerName(inputValue);
+    return retrievedCustomers.map((retrievedCustomer) => ({
+      value: retrievedCustomer.id,
+      label: retrievedCustomer.name,
+      ...retrievedCustomer,
+    }));
+  };
+  const noOptionsMessage = (inputValue: { inputValue: string }) => {
+    return inputValue.inputValue
+      ? "No se encontraron clientes"
+      : "Escribe algo para buscar a un cliente";
+  };
+
+  // const { data: customers, isLoading: areCustomersLoading } = useQuery(
+  //   ["customers"], // unique query key
+  //   () => customerService.getCustomersByCompany(), // the function for fetching
+  //   {
+  //     staleTime: 300000,
+  //     cacheTime: 600000,
+  //     refetchOnWindowFocus: true,
+  //   }
+  // );
   const { data: products, isLoading: areProductsLoading } = useQuery(
     ["products"],
     () => productService.getProductsByCompany(),
@@ -210,18 +240,19 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   }, [company, allInvoices, setValue, isEditing]);
 
   /** Logic for setting the customer */
-  useEffect(() => {
-    if (customerId) {
-      const selectedCustomer = customers!?.find((c) => c.id === customerId);
-      if (selectedCustomer) {
-        setValue("customers", {
-          name: selectedCustomer.name,
-          rtn: selectedCustomer.rtn,
-          email: selectedCustomer.email,
-        });
-      }
-    }
-  }, [customerId, customers, setValue]);
+  // we're not going to need this since we'll retrieve this from the server, not from a list
+  // useEffect(() => {
+  //   if (customerId) {
+  //     const selectedCustomer = customers!?.find((c) => c.id === customerId);
+  //     if (selectedCustomer) {
+  //       setValue("customers", {
+  //         name: selectedCustomer.name,
+  //         rtn: selectedCustomer.rtn,
+  //         email: selectedCustomer.email,
+  //       });
+  //     }
+  //   }
+  // }, [customerId, customers, setValue]);
 
   const onSubmit = (data: Invoice) => {
     if (data.invoice_items.length < 1)
@@ -242,18 +273,21 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
               control={control}
               rules={{ required: "Debes asociar un cliente a tu factura" }}
               render={({ field }) => (
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccione cliente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers?.map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id}>
-                        {customer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <AsyncSelect
+                  className="w-full"
+                  loadOptions={loadOptions}
+                  noOptionsMessage={noOptionsMessage}
+                  placeholder="Buscar cliente"
+                  onChange={(value) => {
+                    if (value !== null)
+                      setValue("customers", {
+                        name: value.name,
+                        rtn: value.rtn,
+                        email: value.email,
+                      });
+                    field.onChange(value?.id);
+                  }}
+                />
               )}
             />
             <Button
@@ -265,7 +299,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
               Cliente <PlusCircleIcon className="h-4 w-4 ml-2 text-[#00A1D4]" />
             </Button>
             {errors.customer_id && (
-              <p className="text-red-500 text-sm">{errors.customer_id.message}</p>
+              <p className="text-red-500 text-sm">
+                {errors.customer_id.message}
+              </p>
             )}
           </div>
           <Controller
@@ -322,7 +358,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 )}
               </div>
             </div>
-
           </div>
         </div>
         <Separator className="my-4" />
@@ -369,7 +404,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     <TableCell>
                       <DiscountInput index={index} control={control} />
                     </TableCell>
-
                   </TableRow>
                 ))}
               </TableBody>
@@ -391,7 +425,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 <UnitCostInput index={index} control={control} />
                 <DiscountInput index={index} control={control} />
                 <div className="mt-2">
-                  {`Total: Lps. ${calculateItemTotal(index, watchInvoiceItems)}`}
+                  {`Total: Lps. ${calculateItemTotal(
+                    index,
+                    watchInvoiceItems,
+                  )}`}
                 </div>
                 <Button
                   type="button"
@@ -410,7 +447,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
         <Button
           className="w-full"
           variant="secondary"
-
           type="button"
           onClick={() => {
             append({
@@ -426,7 +462,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
             });
           }}
         >
-          Agregar item <PlusCircleIcon className="h-4 w-4 ml-2 text-[#00A1D4]" />
+          Agregar item{" "}
+          <PlusCircleIcon className="h-4 w-4 ml-2 text-[#00A1D4]" />
         </Button>
         <div className="flex items-center justify-between gap-4 py-4">
           <Button
@@ -434,7 +471,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
             type="submit"
             disabled={isGenerateInvoiceButtonDisabled}
           >
-            {isEditing ? "Actualizar Factura" : "Generar Factura"} <CheckIcon className="ml-2" />
+            {isEditing ? "Actualizar Factura" : "Generar Factura"}{" "}
+            <CheckIcon className="ml-2" />
           </Button>
           <Button
             variant="outline"
@@ -467,9 +505,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
       </Dialog>
     </>
   );
-  if (areCustomersLoading) {
-    return <div>Cargando clientes...</div>;
-  }
+  // if (areCustomersLoading) {
+  //   return <div>Cargando clientes...</div>;
+  // }
   if (areProductsLoading) {
     return <div>Cargando productos...</div>;
   }
@@ -535,7 +573,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
         {renderEditableContent()}
       </CardContent>
       <CardFooter className="flex flex-row items-center justify-between border-t bg-muted/50 px-6 py-3 shrink-0">
-
         <div className="text-xs text-muted-foreground">
           {isEditing ? (
             <>
@@ -559,7 +596,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
           </Badge>
 
           {getStatusBadge(watch("status"))}
-
         </div>
       </CardFooter>
     </Card>
@@ -569,7 +605,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
 const calculateItemTotal = (index: number, items: InvoiceItem[]) => {
   const item = items[index];
   if (!item) return 0;
-  return (item.quantity * item.unit_cost - item.discount).toLocaleString('en');
+  return (item.quantity * item.unit_cost - item.discount).toLocaleString("en");
 };
 
 export default InvoiceForm;
