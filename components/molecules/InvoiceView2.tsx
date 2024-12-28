@@ -155,6 +155,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             rtn: invoice?.customers.rtn,
             company: invoice?.customers.name,
             proforma: invoice?.is_proforma,
+            proforma_number: invoice?.proforma_number,
             enabled: true,
             email: invoice?.customers.email,
             items: invoice?.invoice_items.map((item) => ({
@@ -179,9 +180,8 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             email: company?.email,
             logo_url: logoUrl,
           },
-          template_url: `https://factura-hn.nyc3.digitaloceanspaces.com/templates/${
-            company?.template_url ?? "default_template2.html"
-          }`,
+          template_url: `https://factura-hn.nyc3.digitaloceanspaces.com/templates/${company?.template_url ?? "default_template2.html"
+            }`,
         });
 
         s3Key = renderResult.s3_key;
@@ -795,14 +795,16 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     </>
   );
 
+
   return (
     <Card className="card-invoice overflow-hidden shadow-none rounded-sm px-0">
       <CardHeader className="flex flex-col md:flex-row items-start justify-between bg-muted/50">
         <div className="w-full grid gap-0.5">
           <CardTitle className="group flex items-center gap-2 text-lg">
-            {isEditable
-              ? "Crear Factura"
-              : `Número de Factura ${invoice?.invoice_number}`}
+            {invoice?.is_proforma ? `Recibo / Proforma ${invoice?.proforma_number}` :
+              (isEditable
+                ? "Crear Factura"
+                : `Número de Factura ${invoice?.invoice_number}`)}
           </CardTitle>
           <CardDescription>
             Fecha:{" "}
