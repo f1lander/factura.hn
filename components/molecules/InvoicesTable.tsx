@@ -407,7 +407,7 @@ const EnhancedInvoiceTable = ({
                   onCheckedChange={handleSelectAllChange}
                 />
               </TableHead>
-              <TableHead className="font-semibold">Número de Factura</TableHead>
+              <TableHead className="font-semibold"># Factura / Recibo</TableHead>
               <TableHead className="font-semibold">Fecha</TableHead>
               <TableHead className="font-semibold">Cliente</TableHead>
               <TableHead className="text-right font-semibold">Subtotal</TableHead>
@@ -431,7 +431,7 @@ const EnhancedInvoiceTable = ({
                     }
                   />
                 </TableCell>
-                <TableCell className="py-4">{invoice.invoice_number}</TableCell>
+                <TableCell className="py-4">{invoice?.proforma_number ? invoice?.proforma_number : invoice.invoice_number}</TableCell>
                 <TableCell className="py-4">
                   {new Date(invoice.date).toLocaleDateString()}
                 </TableCell>

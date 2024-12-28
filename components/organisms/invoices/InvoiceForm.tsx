@@ -202,7 +202,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
     invoiceService.generateInvoiceButtonShouldBeDisabled(
       watchInvoiceItems,
       watchClient,
+
     );
+
 
   useEffect(() => {
     const subtotal = watchInvoiceItems.reduce(
@@ -315,48 +317,65 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
             )}
           />
           <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="flex flex-col gap-2">
-                <Label className="whitespace-nowrap">
-                  {isEditing ? "Número actual" : "Última factura"}
-                </Label>
-                <Input value={lastInvoiceNumber} disabled />
-              </div>
-            </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+              {!isProforma ? (
+                <>
+                  <div className="flex-1">
+                    <div className="flex flex-col gap-2">
+                      <Label className="whitespace-nowrap">
+                        {isEditing ? "Número actual" : "Última factura"}
+                      </Label>
+                      <Input value={lastInvoiceNumber} disabled />
+                    </div>
+                  </div>
 
-            <div className="flex-1">
-              <div className="flex flex-col gap-2">
-                <Label className="whitespace-nowrap">
-                  {isEditing ? "Mantener número" : "Nueva factura"}
-                </Label>
-                <InputMask
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  mask="___-___-__-________"
-                  replacement={{ _: /\d/ }}
-                  {...register("invoice_number", {
-                    required: "Este campo es requerido",
-                    validate: (value) => {
-                      if (isEditing || isProforma) return true; // Skip validation when editing
-                      const previousInvoiceNumber = lastInvoiceNumber as string;
-                      const nextInvoiceNumber = value;
-                      const lastInvoiceRange = company!.range_invoice2!;
-                      return invoiceService.validateNextInvoiceNumber(
-                        previousInvoiceNumber,
-                        nextInvoiceNumber,
-                        lastInvoiceRange,
-                        lastInvoiceExists,
-                      );
-                    },
-                  })}
-                  placeholder="000-000-00-00000000"
-                  disabled={isEditing || isProforma}
-                />
-                {errors.invoice_number && (
-                  <p className="text-red-500 text-sm">
-                    {errors.invoice_number.message}
-                  </p>
-                )}
-              </div>
+                  <div className="flex-1">
+                    <div className="flex flex-col gap-2">
+                      <Label className="whitespace-nowrap">
+                        {isEditing ? "Mantener número" : "Nueva factura"}
+                      </Label>
+                      <InputMask
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        mask="___-___-__-________"
+                        replacement={{ _: /\d/ }}
+                        {...register("invoice_number", {
+                          required: "Este campo es requerido",
+                          validate: (value) => {
+                            if (isEditing || isProforma) return true; // Skip validation when editing
+                            const previousInvoiceNumber = lastInvoiceNumber as string;
+                            const nextInvoiceNumber = value;
+                            const lastInvoiceRange = company!.range_invoice2!;
+                            return invoiceService.validateNextInvoiceNumber(
+                              previousInvoiceNumber,
+                              nextInvoiceNumber,
+                              lastInvoiceRange,
+                              lastInvoiceExists,
+                            );
+                          },
+                        })}
+                        placeholder="000-000-00-00000000"
+                        disabled={isEditing || isProforma}
+                      />
+                      {errors.invoice_number && (
+                        <p className="text-red-500 text-sm">
+                          {errors.invoice_number.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1">
+                  <div className="flex flex-col gap-2">
+                    <Label className="whitespace-nowrap">
+                      Número de Recibo/Proforma
+                    </Label>
+                    <Input {...register('proforma_number', {
+                      required: "Este campo es requerido",
+                    })} />
+                  </div>
+                </div>)
+              }
             </div>
           </div>
         </div>
