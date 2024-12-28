@@ -361,54 +361,52 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
           </div>
         </div>
         <Separator className="my-4" />
-        <div className="items-table grid gap-4 overflow-y-auto">
-          <div className="hidden sm:block">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead></TableHead>
-                  <TableHead>Producto</TableHead>
-                  <TableHead>Cantidad</TableHead>
-                  <TableHead>Precio</TableHead>
-                  <TableHead className="w-2">Descuento</TableHead>
+        <div className="items-table hidden sm:block w-full h-full">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead></TableHead>
+                <TableHead>Producto</TableHead>
+                <TableHead>Cantidad</TableHead>
+                <TableHead>Precio</TableHead>
+                <TableHead className="w-2">Descuento</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {fields.map((item, index) => (
+                <TableRow key={item.id}>
+                  <TableCell>
+                    <Button
+                      className="bg-transparent"
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => remove(index)}
+                    >
+                      <Trash2 className="h-4 w-4 text-rose-700" />
+                    </Button>
+                  </TableCell>
+                  <TableCell className="min-w-[40vw]">
+                    <ProductSelect
+                      index={index}
+                      products={products!}
+                      control={control}
+                      setValue={setValue}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <QuantityInput index={index} control={control} />
+                  </TableCell>
+                  <TableCell>
+                    <UnitCostInput index={index} control={control} />
+                  </TableCell>
+                  <TableCell>
+                    <DiscountInput index={index} control={control} />
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {fields.map((item, index) => (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <Button
-                        className="bg-transparent"
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => remove(index)}
-                      >
-                        <Trash2 className="h-4 w-4 text-rose-700" />
-                      </Button>
-                    </TableCell>
-                    <TableCell className="sm:max-w-[40vw] xl:max-w-[17vw]">
-                      <ProductSelect
-                        index={index}
-                        products={products!}
-                        control={control}
-                        setValue={setValue}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <QuantityInput index={index} control={control} />
-                    </TableCell>
-                    <TableCell>
-                      <UnitCostInput index={index} control={control} />
-                    </TableCell>
-                    <TableCell>
-                      <DiscountInput index={index} control={control} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+              ))}
+            </TableBody>
+          </Table>
           <div className="sm:hidden">
             {fields.map((item, index) => (
               <div key={item.id} className="mb-4 p-4 border rounded">
