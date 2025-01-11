@@ -9,7 +9,6 @@ import { useCompanyStore } from "@/store/companyStore";
 export default function CreateInvoiceButton() {
   const { products } = useProductsStore();
   const { company } = useCompanyStore();
-  console.log("The data about the company is:", company);
   const ensureProductsExistenceAndCreateInvoice = () => {
     if (
       company?.range_invoice1 === null ||

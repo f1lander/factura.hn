@@ -70,6 +70,7 @@ import { CustomerForm } from "./CustomerForm";
 import { Customer, customerService } from "@/lib/supabase/services/customer";
 import { useInvoicesStore } from "@/store/invoicesStore";
 import { useRouter } from "next/navigation";
+import { format } from "date-fns";
 
 interface InvoiceViewProps {
   invoice?: Invoice;
@@ -145,7 +146,8 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
 
         console.log("Generating PDF for invoice:", invoice);
         console.log("logoUrl:", logoUrl);
-        const invoiceDate = formatDate(invoice?.date);
+        // const invoiceDate = formatDate(invoice?.date.split("T")[0]);
+        const invoiceDate = format(invoice?.date ?? new Date(), "dd/MM/yyyy");
         console.log("formatted:", invoiceDate);
         const renderResult = await renderPdf({
           data: {
