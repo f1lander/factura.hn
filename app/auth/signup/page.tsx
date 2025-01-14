@@ -49,47 +49,52 @@ const SignupPage: React.FC = () => {
       title: "(1 de 4) Verificando existencia de usuario...",
     });
 
-    const { success, message } = await checkUserExistence(data);
-    if (!success) {
+    try {
+      const { success, message } = await checkUserExistence(data);
+      if (!success) {
+        setIsLoading(false);
+        return toast({
+          title: "Registro fallido",
+          variant: "destructive",
+          description: message,
+        });
+      }
+      toast({
+        title: "(2 de 4) Creando usuario...",
+      });
+      const {
+        success: createUserSuccess,
+        message: userCreationMessage,
+        userId,
+      } = await createUser(data);
+      if (!createUserSuccess || userId === undefined) {
+        return toast({
+          title: "Registro fallido",
+          variant: "destructive",
+          description: userCreationMessage,
+        });
+      }
+      toast({
+        title: "(3 de 4) Añadiendo usuario y compañía...",
+      });
+      const { success: companySuccess, message: companyCreationMessage } =
+        await addUserAndCompany(data, userId);
+      if (!companySuccess) {
+        return toast({
+          title: "Registro fallido",
+          variant: "destructive",
+          description: companyCreationMessage,
+        });
+      }
+      toast({
+        title: "(4 de 4) Registro exitoso",
+        description:
+          "Te has registrado exitosamente. Lee las instrucciones que te mostramos a continuación",
+      });
+    } catch (error) {
       setIsLoading(false);
-      return toast({
-        title: "Registro fallido",
-        variant: "destructive",
-        description: message,
-      });
     }
-    toast({
-      title: "(2 de 4) Creando usuario...",
-    });
-    const {
-      success: createUserSuccess,
-      message: userCreationMessage,
-      userId,
-    } = await createUser(data);
-    if (!createUserSuccess || userId === undefined) {
-      return toast({
-        title: "Registro fallido",
-        variant: "destructive",
-        description: userCreationMessage,
-      });
-    }
-    toast({
-      title: "(3 de 4) Añadiendo usuario y compañía...",
-    });
-    const { success: companySuccess, message: companyCreationMessage } =
-      await addUserAndCompany(data, userId);
-    if (!companySuccess) {
-      return toast({
-        title: "Registro fallido",
-        variant: "destructive",
-        description: companyCreationMessage,
-      });
-    }
-    toast({
-      title: "(4 de 4) Registro exitoso",
-      description:
-        "Te has registrado exitosamente. Lee las instrucciones que te mostramos a continuación",
-    });
+
     return router.push(
       `/auth/confirm-email?name=${data.full_name}&email=${data.email}`,
     );
