@@ -312,7 +312,7 @@ export async function checkUserExistence(
     .from("users")
     .select("id")
     .eq("email", signupForm.email);
-  const userAlreadyExists: boolean = user.data!.length > 0;
+  const userAlreadyExists: boolean = Boolean(user.data?.length);
   // 1.1 If the user already exists, return the function
   if (userAlreadyExists) {
     return {
@@ -330,7 +330,7 @@ export async function checkUserExistence(
 export async function createUser(
   signupForm: SignupForm,
 ): Promise<{ success: boolean; message: string; userId?: string }> {
-  const supabase = createClientWithServiceRole();
+  const supabase = createClient();
   const signupCredentials: SignUpWithPasswordCredentials = {
     email: signupForm.email,
     password: signupForm.password,
@@ -340,6 +340,7 @@ export async function createUser(
       },
     },
   };
+
   const { data: registeredUserData, error: registrationError } =
     await supabase.auth.signUp(signupCredentials);
 
