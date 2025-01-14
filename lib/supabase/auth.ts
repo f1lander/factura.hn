@@ -307,7 +307,7 @@ export async function logout() {
 export async function checkUserExistence(
   signupForm: SignupForm,
 ): Promise<{ success: boolean; message: string }> {
-  const supabase = createClientWithServiceRole();
+  const supabase = createClient();
   const user = await supabase
     .from("users")
     .select("id")
@@ -365,7 +365,7 @@ export async function addUserAndCompany(
   signupForm: SignupForm,
   userId: string,
 ): Promise<{ success: boolean; message: string }> {
-  const supabase = createClientWithServiceRole();
+  const supabase = createClient();
   const insertedUser = await supabase
     .from("users")
     .insert({

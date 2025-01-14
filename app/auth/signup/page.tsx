@@ -91,13 +91,14 @@ const SignupPage: React.FC = () => {
         description:
           "Te has registrado exitosamente. Lee las instrucciones que te mostramos a continuación",
       });
+
+      return router.push(
+        `/auth/confirm-email?name=${data.full_name}&email=${data.email}`,
+      );
     } catch (error) {
       setIsLoading(false);
     }
 
-    return router.push(
-      `/auth/confirm-email?name=${data.full_name}&email=${data.email}`,
-    );
 
     // const { success, message } = await signupv2(data);
     // if (!success) {
