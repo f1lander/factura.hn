@@ -71,6 +71,7 @@ import { Customer, customerService } from "@/lib/supabase/services/customer";
 import { useInvoicesStore } from "@/store/invoicesStore";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import Image from "next/image";
 
 interface InvoiceViewProps {
   invoice?: Invoice;
@@ -103,6 +104,15 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   }, [setLastInvoiceExists, allInvoices]);
 
   const [expandedRows, setExpandedRows] = useState<any>({});
+  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (company?.logo_url) {
+      getSignedLogoUrl(company?.logo_url).then((base64image) => {
+        setCompanyLogo(base64image);
+      });
+    }
+  }, [company]);
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev: any) => ({
@@ -182,8 +192,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             email: company?.email,
             logo_url: logoUrl,
           },
-          template_url: `https://factura-hn.nyc3.digitaloceanspaces.com/templates/${company?.template_url ?? "default_template2.html"
-            }`,
+          template_url: company?.template_url ? `https://factura-hn.nyc3.digitaloceanspaces.com/templates/${company?.template_url}` : process.env.NEXT_PUBLIC_TEMPLATE_URL,
         });
 
         s3Key = renderResult.s3_key;
@@ -245,8 +254,6 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
       setIsDownloading(false);
     }
   };
-
-  // const { company } = useAccount();
 
   const {
     control,
@@ -799,68 +806,82 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
 
 
   return (
-    <Card className="card-invoice overflow-hidden shadow-none rounded-sm px-0">
-      <CardHeader className="flex flex-col md:flex-row items-start justify-between bg-muted/50">
-        <div className="w-full grid gap-0.5">
-          <CardTitle className="group flex items-center gap-2 text-lg">
-            {invoice?.is_proforma ? `Recibo / Proforma ${invoice?.proforma_number}` :
-              (isEditable
-                ? "Crear Factura"
-                : `Número de Factura ${invoice?.invoice_number}`)}
-          </CardTitle>
-          <CardDescription>
-            Fecha:{" "}
-            {isEditable
-              ? new Date().toLocaleDateString()
-              : new Date(invoice?.date || "").toLocaleDateString()}
-          </CardDescription>
-        </div>
-        <div className="flex gap-2 w-full justify-end">
-          {!isEditable && (
-            <>
-              {invoice?.status === "pending" && (
-                <Button
-                  className="bg-yellow-500"
-                  onClick={handleEditInvoice}
-                  variant="outline"
-                  size="sm"
-                >
-                  Editar <EditIcon className="h-4 w-4 ml-2" />
-                </Button>
-              )}
+    <>
+      <div className="flex gap-2 w-full justify-end">
+        {!isEditable && (
+          <div className="flex gap-2 mb-1">
+            {invoice?.status === "pending" && (
               <Button
-                className="bg-slate-800"
-                onClick={handleDownloadPdf}
-                disabled={isDownloading}
+                className="bg-yellow-500"
+                onClick={handleEditInvoice}
+                variant="outline"
                 size="sm"
               >
-                {isDownloading ? "Descargando..." : "PDF"}{" "}
-                <DownloadIcon className="h-4 w-4 ml-2" />
+                Editar <EditIcon className="h-4 w-4 ml-2" />
               </Button>
-            </>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="p-6 text-sm">
-        {isEditable ? renderEditableContent() : renderReadOnlyContent()}
-      </CardContent>
-      <CardFooter className="flex flex-row items-center justify-between border-t bg-muted/50 px-6 py-3">
-        <div className="text-xs text-muted-foreground">
-          Factura creada:{" "}
-          <time dateTime={watch("created_at")} suppressHydrationWarning>
-            {new Date(watch("created_at")).toLocaleString()}
-          </time>
-        </div>
-        <div>
-          <Badge variant={watch("is_proforma") ? "outline" : "secondary"}>
-            {watch("is_proforma") ? "Proforma" : "Factura"}
-          </Badge>
-          <Badge variant={watch("is_proforma") ? "outline" : "secondary"}>
-            {getStatusBadge(watch("status"))}
-          </Badge>
-        </div>
-      </CardFooter>
-    </Card>
+            )}
+            <Button
+              className="bg-slate-800"
+              onClick={handleDownloadPdf}
+              disabled={isDownloading}
+              size="sm"
+            >
+              {isDownloading ? "Descargando..." : "PDF"}{" "}
+              <DownloadIcon className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        )}
+      </div>
+      <Card className="card-invoice overflow-hidden shadow-none rounded-sm px-0">
+        <CardHeader className="flex flex-col md:flex-row items-start justify-between bg-muted/50">
+          <div className="flex flex-row items-stretch justify-between w-full">
+            <div className="flex-1 grid gap-0.5">
+              <CardTitle className="group flex items-center gap-2 text-lg">
+                {invoice?.is_proforma ? `Recibo / Proforma ${invoice?.proforma_number}` :
+                  (isEditable
+                    ? "Crear Factura"
+                    : `Número de Factura ${invoice?.invoice_number}`)}
+              </CardTitle>
+              <CardDescription>
+                Fecha:{" "}
+                {isEditable
+                  ? new Date().toLocaleDateString()
+                  : new Date(invoice?.date || "").toLocaleDateString()}
+              </CardDescription>
+            </div>
+            {companyLogo !== null && (
+              <div className="relative h-[100px] aspect-video z-0">
+                <Image
+                  src={companyLogo}
+                  alt="company-logo"
+                  fill
+                  style={{ objectFit: "contain" }}
+                />
+              </div>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="p-6 text-sm">
+          {isEditable ? renderEditableContent() : renderReadOnlyContent()}
+        </CardContent>
+        <CardFooter className="flex flex-row items-center justify-between border-t bg-muted/50 px-6 py-3">
+          <div className="text-xs text-muted-foreground">
+            Factura creada:{" "}
+            <time dateTime={watch("created_at")} suppressHydrationWarning>
+              {new Date(watch("created_at")).toLocaleString()}
+            </time>
+          </div>
+          <div>
+            <Badge variant={watch("is_proforma") ? "outline" : "secondary"}>
+              {watch("is_proforma") ? "Proforma" : "Factura"}
+            </Badge>
+            <Badge variant={watch("is_proforma") ? "outline" : "secondary"}>
+              {getStatusBadge(watch("status"))}
+            </Badge>
+          </div>
+        </CardFooter>
+      </Card>
+    </>
   );
 };
 
