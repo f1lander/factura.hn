@@ -182,8 +182,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             email: company?.email,
             logo_url: logoUrl,
           },
-          template_url: `https://factura-hn.nyc3.digitaloceanspaces.com/templates/${company?.template_url ?? process.env.NEXT_PUBLIC_TEMPLATE_URL
-            }`,
+          template_url: company?.template_url ? `https://factura-hn.nyc3.digitaloceanspaces.com/templates/${company?.template_url}` : process.env.NEXT_PUBLIC_TEMPLATE_URL,
         });
 
         s3Key = renderResult.s3_key;
