@@ -116,6 +116,10 @@ export class BaseService {
 
     const query = this.supabase.from(table).select("*");
 
+    if (table === "products") {
+      query.or("archived.eq.false,archived.is.null");
+    }
+
     if (table === "customers") {
       query.or(`company_id.eq.${companyId},is_universal.eq.true`);
     } else {

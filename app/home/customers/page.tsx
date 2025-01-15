@@ -29,10 +29,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { DialogClose } from "@radix-ui/react-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { PlusIcon, Trash2Icon, Users } from "lucide-react";
 import GenericEmptyState from "@/components/molecules/GenericEmptyState";
-import { DialogClose } from "@radix-ui/react-dialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DataGrid } from "@/components/molecules/DataGrid";
 import { customerColumns } from "@/utils/tableColumns";

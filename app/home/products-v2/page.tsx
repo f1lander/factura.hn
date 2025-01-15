@@ -19,7 +19,14 @@ import { DataGrid } from "@/components/molecules/DataGrid";
 import { Input } from "@/components/ui/input";
 import useUploadXls from "@/hooks/useUploadXls";
 import { Button } from "@/components/ui/button";
-import { DialogContent } from "@/components/ui/dialog";
+import {
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { DialogClose } from "@radix-ui/react-dialog";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { productColumns } from "@/utils/tableColumns";
@@ -541,6 +548,56 @@ export default function ProductsPage() {
           </table>
         </DialogContent>
       </Dialog>
+      <Dialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar productos</DialogTitle>
+            <DialogClose />
+          </DialogHeader>
+          <DialogDescription>
+            ¿Estás seguro que deseas eliminar los productos seleccionados?
+            {selectedProducts.length > 0 && (
+              <ul>
+                {selectedProducts.map((productId) => {
+                  const product = products?.find(p => p.id === productId);
+                  return (
+                    <li key={productId}>{product?.sku} - {product?.description}</li>
+                  );
+                })}
+              </ul>
+            )}
+          </DialogDescription>
+          <DialogFooter>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                const { success, message } = await productService.deleteMultipleProducts(
+                  selectedProducts
+                );
+                if (!success) {
+                  toast({
+                    title: "Error al eliminar productos",
+                    description: message,
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                toast({
+                  title: "Productos eliminados",
+                  description: message,
+                });
+                queryClient.invalidateQueries({ queryKey: ["products"] });
+                setIsDeleteDialogOpen(false);
+              }}
+            >
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+        </Dialog>
     </div>
   );
 }
