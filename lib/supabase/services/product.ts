@@ -67,6 +67,12 @@ class ProductService extends BaseService {
     return this.delete(this.tableName, id);
   }
 
+  // soft delete: mark as archived
+  async deleteMultipleProducts(id: string[]): Promise<{ success: boolean; message: string }> {
+    const updates = id.map((id) => ({ id, archived: true }));
+    return this.updateMultiple<Product>(this.tableName, updates);
+  }
+
   async searchProducts(query: string): Promise<Product[]> {
     return this.search<Product>(this.tableName, "description", query);
   }
@@ -80,6 +86,7 @@ class ProductService extends BaseService {
       .from(this.tableName)
       .select("*")
       .eq("company_id", companyId)
+      .or("archived.eq.false,archived.is.null")
       .or(`sku.ilike.%${searchString}%,description.ilike.%${searchString}%`);
     if (error || !data) return [];
     return data;
