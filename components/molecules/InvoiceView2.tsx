@@ -182,7 +182,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             email: company?.email,
             logo_url: logoUrl,
           },
-          template_url: `https://factura-hn.nyc3.digitaloceanspaces.com/templates/${company?.template_url ?? "default_template2.html"
+          template_url: `https://factura-hn.nyc3.digitaloceanspaces.com/templates/${company?.template_url ?? process.env.NEXT_PUBLIC_TEMPLATE_URL
             }`,
         });
 
