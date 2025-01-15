@@ -25,6 +25,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import Image from "next/image";
 import { useCompanyStore } from "@/store/companyStore";
 import supabase from "@/lib/supabase/client";
+import { getSignedLogoUrl } from "@/lib/utils";
 
 const InvoicePreview: React.FC = () => {
   const { company } = useCompanyStore();
@@ -35,14 +36,9 @@ const InvoicePreview: React.FC = () => {
 
   useEffect(() => {
     if (company?.logo_url) {
-      supabase()
-        .storage.from("company-logos")
-        .createSignedUrl(company.logo_url!, 600)
-        .then((value) => {
-          if (value.error || !value.data)
-            return console.log("There was an error fetching the image");
-          setCompanyLogo(value.data.signedUrl);
-        });
+      getSignedLogoUrl(company?.logo_url).then((base64image) => {
+        setCompanyLogo(base64image);
+      });
     }
   }, [company]);
 
