@@ -26,7 +26,7 @@ export const productColumns: ColDef<Product>[] = [
   {
     field: "quantity_in_stock",
     headerName: "Inventario",
-    editable: true,
+    editable: false,
     valueFormatter: (params) =>
       params.data?.is_service ? "N/A" : params.value,
   },
