@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import {
   Card,
@@ -22,11 +22,29 @@ import {
 import { Invoice } from "@/lib/supabase/services/invoice";
 import { getStatusBadge } from "@/components/molecules/InvoicesTable";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import Image from "next/image";
+import { useCompanyStore } from "@/store/companyStore";
+import supabase from "@/lib/supabase/client";
 
 const InvoicePreview: React.FC = () => {
+  const { company } = useCompanyStore();
   const { watch, control } = useFormContext<Invoice>();
   const values = useWatch({ control });
   const [expandedRows, setExpandedRows] = useState<any>({});
+  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (company?.logo_url) {
+      supabase()
+        .storage.from("company-logos")
+        .createSignedUrl(company.logo_url!, 600)
+        .then((value) => {
+          if (value.error || !value.data)
+            return console.log("There was an error fetching the image");
+          setCompanyLogo(value.data.signedUrl);
+        });
+    }
+  }, [company]);
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev: any) => ({
@@ -189,13 +207,25 @@ const InvoicePreview: React.FC = () => {
   return (
     <Card className="card-invoice overflow-hidden border-none shadow-none rounded-sm w-full">
       <CardHeader className="flex flex-row items-start justify-between bg-muted/50">
-        <div className="grid gap-0.5">
-          <CardTitle className="group flex items-center gap-2 text-lg">
-            {!watch("is_proforma") ? `Número de factura ${watch("invoice_number")}` : 'Factura Proforma'}
-          </CardTitle>
-          <CardDescription>
-            Fecha: {new Date().toLocaleString()}
-          </CardDescription>
+        <div className="flex flex-row items-stretch justify-between w-full">
+          <div className="flex-1 grid gap-0.5">
+            <CardTitle className="group flex items-center gap-2 text-lg">
+              {!watch("is_proforma") ? `Número de factura ${watch("invoice_number")}` : 'Factura Proforma'}
+            </CardTitle>
+            <CardDescription>
+              Fecha: {new Date().toLocaleString()}
+            </CardDescription>
+          </div>
+          {companyLogo !== null && (
+            <div className="relative h-[100px] aspect-video z-0">
+              <Image
+                src={companyLogo}
+                alt="company-logo"
+                fill
+                style={{ objectFit: "contain" }}
+              />
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent className="p-6 text-sm">
