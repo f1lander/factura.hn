@@ -155,6 +155,19 @@ export default function CustomersPage() {
     setSelectedCustomer(null);
   };
 
+  const handleOnUpdateRows = async (updatedRows: Customer[]) => {
+    const { success } = await customerService.updateMultipleCustomers(updatedRows);
+    if (!success)
+      toast({
+        title: "Actualización de clientes fallido",
+        description: "Revisa si algún dato que ingresaste fue inválido",
+      });
+    toast({
+      title: "Actualización de clientes exitosa",
+      description: "Tus clientes se han actualizado en la base de datos",
+    });
+  };
+
   const handleCheckboxChange = (customerId: string) => {
     setSelectedCustomers((prev) =>
       prev.includes(customerId)
@@ -261,6 +274,7 @@ export default function CustomersPage() {
                   columnDefs={customerColumns}
                   onCreateNew={handleCreateCustomer}
                   onDelete={() => setIsDeleteDialogOpen(true)}
+                  handleOnUpdateRows={handleOnUpdateRows}
                   pageSize={10}
                   pageSizeOptions={[5, 10, 20, 50]}
                   searchPlaceholder="Buscar clientes..."

@@ -84,6 +84,14 @@ class CustomerService extends BaseService {
     return this.update<Customer>(this.tableName, id, updates);
   }
 
+  async updateMultipleCustomers(
+    customers: Customer[]
+  ): Promise<{ success: boolean; message: string }> {
+    const filteredCustomers = customers.filter((customer) => !customer.is_universal);
+    const response = await this.updateMultiple<Customer>(this.tableName, filteredCustomers);
+    return response;
+  }
+
   // Delete a customer
   async deleteCustomer(id: string): Promise<boolean> {
     const companyId = await this.ensureCompanyIdForCustomer();
