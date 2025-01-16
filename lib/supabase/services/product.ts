@@ -57,7 +57,6 @@ class ProductService extends BaseService {
   }
 
   async updateMultipleProducts(
-    // id: string,
     updates: Product[],
   ): Promise<{ success: boolean; message: string }> {
     return this.updateMultiple<Product>(this.tableName, updates);

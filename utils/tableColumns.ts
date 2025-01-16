@@ -1,6 +1,6 @@
 import { Customer } from "@/lib/supabase/services/customer";
 import { Product } from "@/lib/supabase/services/product";
-import { ColDef } from "ag-grid-community";
+import { ColDef, EditableCallback } from "ag-grid-community";
 
 export const productColumns: ColDef<Product>[] = [
   {
@@ -32,21 +32,26 @@ export const productColumns: ColDef<Product>[] = [
   },
 ];
 
+const validateEditableCustomer: EditableCallback<Customer, any> = (params) => !params.data?.is_universal;
+
 export const customerColumns: ColDef<Customer>[] = [
   {
     field: "name",
     headerName: "Nombre",
     checkboxSelection: true,
     headerCheckboxSelection: true,
+    editable: validateEditableCustomer,
   },
-  { field: "rtn", headerName: "RTN" },
+  { field: "rtn", headerName: "RTN", editable: validateEditableCustomer, },
   {
     field: "email",
     headerName: "Email",
+    editable: validateEditableCustomer,
   },
   {
     field: "contacts",
     headerName: "Contactos",
+    editable: false,
     valueFormatter: (params) => (params.value ? params.value.length : 0),
   },
 ];
