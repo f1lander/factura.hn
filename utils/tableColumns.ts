@@ -26,8 +26,7 @@ export const productColumns: ColDef<Product>[] = [
   {
     field: "quantity_in_stock",
     headerName: "Inventario",
-    // TODO: https://github.com/f1lander/factura.hn/issues/56
-    // editable: false, // Uncomment this line to disable editing until we implement inventory management
+    editable: false,
     valueFormatter: (params) =>
       params.data?.is_service ? "N/A" : params.value,
   },

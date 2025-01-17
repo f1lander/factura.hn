@@ -54,6 +54,7 @@ interface DataGridProps<T> {
   idField?: keyof T;
   pageSize?: number;
   pageSizeOptions?: number[];
+  SearchBoxComponent?: React.ReactNode;
 }
 
 const defaultColDef: ColDef = {
@@ -80,6 +81,7 @@ export function DataGrid<T>({
   idField = "id" as keyof T,
   pageSize = 10,
   pageSizeOptions = [5, 10, 20],
+  SearchBoxComponent,
 }: DataGridProps<T>) {
   const gridRef = useRef<AgGridReact>(null);
   const gridStyle = useMemo(() => ({ height: "500px", width: "100%" }), []);
@@ -233,15 +235,19 @@ export function DataGrid<T>({
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="relative w-1/3">
-            <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-900" />
-            <input
-              type="text"
-              placeholder={searchPlaceholder ? searchPlaceholder : "Buscar..."}
-              onInput={onFilterTextBoxChanged}
-              className="h-9 w-full rounded-md border px-8 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
-            />
-          </div>
+          {
+            SearchBoxComponent || (
+              <div className="relative w-1/3">
+                <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-900" />
+                <input
+                  type="text"
+                  placeholder={searchPlaceholder ? searchPlaceholder : "Buscar..."}
+                  onInput={onFilterTextBoxChanged}
+                  className="h-9 w-full rounded-md border px-8 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
+                />
+              </div>
+            )
+          }
           {editedRows.length > 0 && (
             <div className="flex gap-2">
               <Button
