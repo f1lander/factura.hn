@@ -41,6 +41,7 @@ interface ProductKeyMappings {
 }
 
 export default function ProductsPage() {
+  const { push } = useRouter();
   const excelFileInputRef = useRef<HTMLInputElement | null>(null);
   const {
     handleXlsFileUpload,
@@ -210,8 +211,6 @@ export default function ProductsPage() {
       description: "Tus productos se han actualizado en la base de datos",
     });
   };
-
-  const { push } = useRouter();
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
