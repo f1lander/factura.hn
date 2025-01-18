@@ -486,7 +486,7 @@ export default function ProductsPage() {
                 }}
               />
             </div>
-            <div className="flex justify-between">
+            {/* <div className="flex justify-between">
               <span>Inventario</span>
               <Controller
                 control={control}
@@ -524,7 +524,7 @@ export default function ProductsPage() {
                   );
                 }}
               />
-            </div>
+            </div> */}
             {/* <Button type="submit" disabled={areProductsLoading}>Subir productos</Button> */}
             <Button type="submit" disabled={areProductsLoading}>
               {areProductsLoading ? "Subiendo productos..." : "Subir productos"}
