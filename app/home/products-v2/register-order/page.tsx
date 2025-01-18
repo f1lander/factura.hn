@@ -13,21 +13,7 @@ import { Card } from '@/components/ui/card';
 
 const RegisterProductPage: React.FC = () => {
   const [rowData, setRowData] = useState<ProductToOrder[]>([]);
-  const [columnDefs] = useState([
-    { headerName: 'Product Name', field: 'productName', editable: true },
-    { headerName: 'Category', field: 'category', editable: true },
-    { headerName: 'Price', field: 'price', editable: true },
-    { headerName: 'Quantity', field: 'quantity', editable: true },
-  ]);
-
-  // const onAddRow = () => {
-  //   setRowData([...rowData, { productName: '', category: '', price: '', quantity: '' }]);
-  // };
-
-  const onSave = () => {
-    // Handle save logic here
-    console.log('Saved data:', rowData);
-  };
+  const [actionType, setActionType] = useState<'ADD' | 'DELETE'>('ADD');
 
   const { data: products, isLoading: areProductsLoading } = useQuery(
     ["products"],
@@ -38,7 +24,6 @@ const RegisterProductPage: React.FC = () => {
       refetchOnWindowFocus: true,
     },
   );
-  console.log('products:', products);
 
   const [searchText, setSearchText] = useState<string>('');
 
@@ -55,7 +40,7 @@ const RegisterProductPage: React.FC = () => {
 
   const handleCreateProductRegisterOrder = async (rows: ProductToOrder[]) => {
     const order: ProductOrder = {
-      type: 'ADD',
+      type: actionType,
       update_products: rows.map((row) => ({
         product_id: row.product_id,
         quantity_delta: row.quantity_delta,
@@ -65,13 +50,10 @@ const RegisterProductPage: React.FC = () => {
     const response = await productService.generateProductRegisterOrder(order);
 
     if (response) {
-      console.log('response:', response);
-
       await productService.updateInventory(response!.id as string);
 
       setRowData([]);
     }
-    // console.log('response:', response);
   };
 
   return (
@@ -92,34 +74,58 @@ const RegisterProductPage: React.FC = () => {
               field: 'product.description',
               editable: false,
             }, {
-              headerName: 'Cantidad a agregar',
+              headerName: 'Cantidad Existente',
+              field: 'product.quantity_in_stock',
+              editable: false,
+            }, {
+              headerName: `Cantidad a ${actionType === 'ADD' ? 'Agregar' : 'Eliminar'}`,
               field: 'quantity_delta',
               editable: true,
+              type: 'numericColumn',
             }]}
             handleOnUpdateRows={handleCreateProductRegisterOrder}
             SearchBoxComponent={
-              <SearchBoxComponent searchText={searchText} onFilterTextBoxChanged={(event) => {
-                setSearchText(event.target.value);
-              }}>
-                {searchText && (
-                  <Popover modal open={!!searchText}>
-                    <Card className="absolute z-10 top-full left-0 right-0">
-                      {
-                      filteredProducts.map((product) => (
-                        <Card 
-                          key={product.id}
-                          className="flex flex-col p-1 m-1 border-0 shadow-none hover:shadow-md hover:cursor-pointer"
-                          onClick={() => handleAddProductToOrder(product)}
-                        >
-                          <div className='w-25'>SKU: {product.sku}</div>
-                          <div>{product.description}</div>
-                        </Card>
-                      ))
-                      }
-                    </Card>
-                  </Popover>
-                )}
-              </SearchBoxComponent>
+              <>
+                <SearchBoxComponent searchText={searchText} onFilterTextBoxChanged={(event) => {
+                  setSearchText(event.target.value);
+                }}>
+                  {searchText && (
+                    <Popover modal open={!!searchText}>
+                      <Card className="absolute z-10 top-full left-0 right-0">
+                        {
+                        filteredProducts.map((product) => (
+                          <Card
+                            key={product.id}
+                            className="flex flex-col p-1 m-1 border-0 shadow-none hover:shadow-md hover:cursor-pointer"
+                            onClick={() => handleAddProductToOrder(product)}
+                          >
+                            <div className='w-25'>SKU: {product.sku}</div>
+                            <div>{product.description}</div>
+                          </Card>
+                        ))
+                        }
+                      </Card>
+                    </Popover>
+                  )}
+                </SearchBoxComponent>
+                <div className="flex items-center">
+                  <label className="mr-2">Action:</label>
+                  <div className="flex items-center gap-2">
+                  <Card
+                    className={`py-1 px-2 cursor-pointer ${actionType === 'ADD' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
+                    onClick={() => setActionType('ADD')}
+                  >
+                    Add
+                  </Card>
+                  <Card
+                    className={`py-1 px-2 cursor-pointer ${actionType === 'DELETE' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}
+                    onClick={() => setActionType('DELETE')}
+                  >
+                    Delete
+                  </Card>
+                  </div>
+                </div>
+              </>
             }
 
             // onSelectionChange={setSelectedProducts}
