@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Package } from "lucide-react";
+import { BookOpenCheck, Package } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Product, productService } from "@/lib/supabase/services/product";
 import GenericEmptyState from "@/components/molecules/GenericEmptyState";
@@ -30,6 +30,7 @@ import { DialogClose } from "@radix-ui/react-dialog";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { productColumns } from "@/utils/tableColumns";
+import { useRouter } from "next/navigation";
 
 interface ProductKeyMappings {
   sku: string;
@@ -40,6 +41,7 @@ interface ProductKeyMappings {
 }
 
 export default function ProductsPage() {
+  const { push } = useRouter();
   const excelFileInputRef = useRef<HTMLInputElement | null>(null);
   const {
     handleXlsFileUpload,
@@ -219,6 +221,14 @@ export default function ProductsPage() {
               isFormVisible ? "xl:w-1/2" : "xl:w-full"
             } transition-all duration-300 ease-in-out`}
           >
+            <Button
+              onClick={() => push('/home/products-v2/register-order')}
+              variant="outline"
+              className="border-blue-600 text-blue-600 hover:bg-blue-50 hover:text-blue-700 flex items-center"
+            >
+              <BookOpenCheck className="h-4 w-4 mr-2" />
+              Actualizar inventario
+            </Button>
             {/* in case there are elements from a spreadsheet, take the columns and data, and display
             the table. */}
             {products!.length === 0 ? (
@@ -475,7 +485,7 @@ export default function ProductsPage() {
                 }}
               />
             </div>
-            <div className="flex justify-between">
+            {/* <div className="flex justify-between">
               <span>Inventario</span>
               <Controller
                 control={control}
@@ -513,7 +523,7 @@ export default function ProductsPage() {
                   );
                 }}
               />
-            </div>
+            </div> */}
             {/* <Button type="submit" disabled={areProductsLoading}>Subir productos</Button> */}
             <Button type="submit" disabled={areProductsLoading}>
               {areProductsLoading ? "Subiendo productos..." : "Subir productos"}

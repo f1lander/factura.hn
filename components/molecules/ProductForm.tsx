@@ -127,7 +127,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             <label htmlFor="is_service">Es un Servicio</label>
           </div>
 
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <label htmlFor="quantity_in_stock">
               Cantidad en Stock {!isService && "*"}
             </label>
@@ -156,7 +156,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 {errors.quantity_in_stock.message}
               </p>
             )}
-          </div>
+          </div> */}
         </form>
       </CardContent>
       <CardFooter className="flex justify-between">

@@ -17,19 +17,18 @@ export const productColumns: ColDef<Product>[] = [
     valueFormatter: (params) => `Lps. ${params.value.toLocaleString('en')}`,
     editable: true,
   },
-  {
-    field: "is_service",
-    headerName: "Inventario indefinido", 
+  // {
+  //   field: "is_service",
+  //   headerName: "Inventario indefinido", 
   
-    valueFormatter: (params) => (params.value ? "Servicio" : "Producto"),
-  },
+  //   valueFormatter: (params) => (params.value ? "Servicio" : "Producto"),
+  // },
   {
     field: "quantity_in_stock",
     headerName: "Inventario",
-    // TODO: https://github.com/f1lander/factura.hn/issues/56
-    // editable: false, // Uncomment this line to disable editing until we implement inventory management
+    editable: false,
     valueFormatter: (params) =>
-      params.data?.is_service ? "N/A" : params.value,
+      params.data?.is_service ? "N/A (Servicio)" : params.value,
   },
 ];
 

@@ -16,8 +16,20 @@ export interface Product {
   updated_at?: string;
 }
 
+export interface ProductToOrder {
+  product_id: string;
+  product?: Product;
+  quantity_delta: number;
+}
+export interface ProductOrder {
+  id?: string;
+  type: 'ADD' | 'DELETE';
+  update_products: ProductToOrder[];
+}
+
 class ProductService extends BaseService {
   private tableName: Table = "products";
+  private ordersTableName: Table = 'product_register_orders';
 
   async getProductsPaginated(
     page: number,
@@ -91,12 +103,24 @@ class ProductService extends BaseService {
     return data;
   }
 
-  async updateInventory(productId: string, quantity: number): Promise<boolean> {
+  async generateProductRegisterOrder(
+    order: ProductOrder,
+  ): Promise<ProductOrder | null> {
+    const newOrder = await this.create<ProductOrder | null>(this.ordersTableName, order);
+
+    if (!newOrder) {
+      console.error("Error generating product register order!");
+      return null;
+    }
+
+    return newOrder;
+  }
+
+  async updateInventory(orderId: string): Promise<boolean> {
     const { data, error } = await this.supabase.rpc(
-      "update_product_inventory",
+      "update_product_stock",
       {
-        product_id: productId,
-        quantity_change: quantity,
+        register_order_id: orderId,
       },
     );
 
@@ -107,6 +131,23 @@ class ProductService extends BaseService {
 
     return true;
   }
+
+  // async updateInventory(productId: string, quantity: number): Promise<boolean> {
+  //   const { data, error } = await this.supabase.rpc(
+  //     "update_product_inventory",
+  //     {
+  //       product_id: productId,
+  //       quantity_change: quantity,
+  //     },
+  //   );
+
+  //   if (error) {
+  //     console.error("Error updating inventory:", error);
+  //     return false;
+  //   }
+
+  //   return true;
+  // }
 }
 
 export const productService = new ProductService();

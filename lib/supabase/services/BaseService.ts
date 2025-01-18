@@ -7,7 +7,8 @@ export type Table =
   | "products"
   | "customers"
   | "invoices"
-  | "invoice_items";
+  | "invoice_items"
+  | "product_register_orders";
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -159,9 +160,12 @@ export class BaseService {
     const companyId = await this.ensureCompanyId();
     if (!companyId) return null;
 
+    const insertData = table === 'product_register_orders' ? item : { ...item, company_id: companyId };
+
     const { data, error } = await this.supabase
       .from(table)
-      .insert({ ...item, company_id: companyId })
+      .insert(insertData)
+      .select()
       .single();
 
     if (error) {
