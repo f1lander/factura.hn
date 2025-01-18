@@ -115,13 +115,13 @@ const RegisterProductPage: React.FC = () => {
                     className={`py-1 px-2 cursor-pointer ${actionType === 'ADD' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
                     onClick={() => setActionType('ADD')}
                   >
-                    Add
+                    Agregar
                   </Card>
                   <Card
                     className={`py-1 px-2 cursor-pointer ${actionType === 'DELETE' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}
                     onClick={() => setActionType('DELETE')}
                   >
-                    Delete
+                    Remover
                   </Card>
                   </div>
                 </div>
