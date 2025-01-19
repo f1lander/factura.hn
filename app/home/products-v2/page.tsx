@@ -607,7 +607,7 @@ export default function ProductsPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-        </Dialog>
+      </Dialog>
     </div>
   );
 }

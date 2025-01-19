@@ -10,10 +10,21 @@ import { Product, ProductOrder, productService, ProductToOrder } from '@/lib/sup
 import { useQuery } from '@tanstack/react-query';
 import { Popover } from '@/components/ui/popover';
 import { Card } from '@/components/ui/card';
+import { Dialog, DialogClose } from '@radix-ui/react-dialog';
+import {
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from '@/components/ui/button';
 
 const RegisterProductPage: React.FC = () => {
   const [rowData, setRowData] = useState<ProductToOrder[]>([]);
   const [actionType, setActionType] = useState<'ADD' | 'DELETE'>('ADD');
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const { data: products, isLoading: areProductsLoading } = useQuery(
     ["products"],
@@ -56,6 +67,10 @@ const RegisterProductPage: React.FC = () => {
     }
   };
 
+  const handleDropProductsFromOrder = async (productIds: string[]) => {
+    setRowData(rowData.filter((row) => !productIds.includes(row.product_id)));
+  };
+
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <div className="flex flex-col sm:gap-4 p-12">
@@ -68,6 +83,8 @@ const RegisterProductPage: React.FC = () => {
             columnDefs={[{
               headerName: 'SKU',
               field: 'product.sku',
+              checkboxSelection: true,
+              headerCheckboxSelection: true,
               editable: false,
             }, {
               headerName: 'Descripción',
@@ -109,7 +126,7 @@ const RegisterProductPage: React.FC = () => {
                   )}
                 </SearchBoxComponent>
                 <div className="flex items-center">
-                  <label className="mr-2">Action:</label>
+                  <label className="mr-2">Operación:</label>
                   <div className="flex items-center gap-2">
                   <Card
                     className={`py-1 px-2 cursor-pointer ${actionType === 'ADD' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
@@ -127,15 +144,66 @@ const RegisterProductPage: React.FC = () => {
                 </div>
               </>
             }
+            onSelectionChange={setSelectedProducts}
 
-            // onSelectionChange={setSelectedProducts}
             // onCreateNew={handleCreateProduct}
-            // onDelete={() => setIsDeleteDialogOpen(true)}
+            onDelete={() => setIsDeleteDialogOpen(true)}
             // pageSize={pageSize}
             pageSizeOptions={[5, 10, 20, 50]}
             // onAddExcelSpreadSheet={triggerFileInput}
             // handleOnUpdateRows={handleOnUpdateRows}
           />
+          <Dialog
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+            >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>No Actualizar Productos</DialogTitle>
+                <DialogClose />
+              </DialogHeader>
+              <DialogDescription>
+                ¿Estás seguro que no quiere actualizar los siguientes productos?
+                {selectedProducts.length > 0 && (
+                  <ul>
+                    {selectedProducts.map((productId) => {
+                      const product = products?.find(p => p.id === productId);
+                      return (
+                        <li key={productId}>{product?.sku} - {product?.description}</li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </DialogDescription>
+              <DialogFooter>
+                <Button
+                  variant="destructive"
+                  onClick={async () => {
+                    // const { success, message } = await productService.deleteMultipleProducts(
+                    //   selectedProducts
+                    // );
+                    // if (!success) {
+                    //   toast({
+                    //     title: "Error al eliminar productos",
+                    //     description: message,
+                    //     variant: "destructive",
+                    //   });
+                    //   return;
+                    // }
+                    // toast({
+                    //   title: "Productos eliminados",
+                    //   description: message,
+                    // });
+                    // queryClient.invalidateQueries({ queryKey: ["products"] });
+                    handleDropProductsFromOrder(selectedProducts);
+                    setIsDeleteDialogOpen(false);
+                  }}
+                >
+                  Eliminar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </main>
       </div>
     </div>
