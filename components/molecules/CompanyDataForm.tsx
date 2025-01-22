@@ -24,6 +24,9 @@ import { useRouter } from "next/navigation";
 import { InputMask } from "@react-input/mask";
 import { invoiceService } from "@/lib/supabase/services/invoice";
 import { useCompanyStore } from "@/store/companyStore";
+import { endOfDay, format, transpose } from "date-fns";
+import { tz } from '@date-fns/tz';
+import { UTCDate } from '@date-fns/utc';
 /** The fact that initialCompany can be null is extremely important:
  *
  * If the initialCompany is null, then it means that we have a new user and it'll
@@ -64,7 +67,10 @@ export default function CompanyDataForm({
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<Omit<Company, "id">>({
-    defaultValues: initialCompany || undefined,
+    defaultValues: initialCompany ? {
+      ...initialCompany,
+      limit_date: initialCompany.limit_date && format(new Date(initialCompany.limit_date), 'yyyy-MM-dd'),
+    } : undefined,
   });
 
   const handleLogoUpload = async (
@@ -111,7 +117,9 @@ export default function CompanyDataForm({
           title: "Actualizando datos de compañía...",
         });
 
-        const updates: Partial<Company> = { ...data };
+        const updates: Partial<Company> = { ...data, 
+          limit_date: data.limit_date && transpose(endOfDay(new UTCDate(data.limit_date)), tz(Intl.DateTimeFormat().resolvedOptions().timeZone)).toISOString()
+        };
 
         // Handle logo update if photo changed
         if (photo) {

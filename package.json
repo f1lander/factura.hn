@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@ag-grid-community/locale": "^32.3.3",
+    "@date-fns/tz": "^1.2.0",
+    "@date-fns/utc": "^2.1.0",
     "@kinde-oss/kinde-auth-nextjs": "^2.3.5",
     "@radix-ui/react-alert-dialog": "^1.1.2",
     "@radix-ui/react-avatar": "^1.1.0",
