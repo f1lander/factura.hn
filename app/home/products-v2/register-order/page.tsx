@@ -134,7 +134,7 @@ const RegisterProductPage: React.FC = () => {
               }]}
               handleOnUpdateRows={handleCreateProductRegisterOrder}
               ControlsComponents={
-                <div className="flex items-center">
+                <div className="flex flex-col md:flex-row items-center">
                   <label className="mr-2">Operación:</label>
                   <div className="flex items-center gap-2">
                   <Card

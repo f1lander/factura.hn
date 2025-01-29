@@ -196,14 +196,14 @@ export function DataGrid<T>({
   return (
     <div className="w-full bg-white p-4">
       <div className="space-y-4 mb-4">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row justify-between items-center">
           <div>
             {title && <h2 className="text-lg font-semibold">{title}</h2>}
             {description && (
               <p className="text-sm text-gray-500">{description}</p>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-col md:flex-row">
             {onAddExcelSpreadSheet && (
               <Button
                 onClick={onAddExcelSpreadSheet}
@@ -236,10 +236,10 @@ export function DataGrid<T>({
             )}
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col md:flex-row items-center gap-4">
           {
             SearchBoxComponent || (
-              <div className="relative w-1/3">
+              <div className="relative w-full md:w-1/3">
                 <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-900" />
                 <input
                   type="text"
