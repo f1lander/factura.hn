@@ -55,6 +55,7 @@ interface DataGridProps<T> {
   pageSize?: number;
   pageSizeOptions?: number[];
   SearchBoxComponent?: React.ReactNode;
+  ControlsComponents?: React.ReactNode;
 }
 
 const defaultColDef: ColDef = {
@@ -82,6 +83,7 @@ export function DataGrid<T>({
   pageSize = 10,
   pageSizeOptions = [5, 10, 20],
   SearchBoxComponent,
+  ControlsComponents,
 }: DataGridProps<T>) {
   const gridRef = useRef<AgGridReact>(null);
   const gridStyle = useMemo(() => ({ height: "500px", width: "100%" }), []);
@@ -248,6 +250,7 @@ export function DataGrid<T>({
               </div>
             )
           }
+          {ControlsComponents}
           {editedRows.length > 0 && (
             <div className="flex gap-2">
               <Button

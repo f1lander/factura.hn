@@ -5,6 +5,7 @@ interface Props {
   searchPlaceholder?: string;
   onFilterTextBoxChanged: (event: React.ChangeEvent<HTMLInputElement>) => void;
   children?: React.ReactNode;
+  className?: string;
 }
 
 export const SearchBoxComponent: React.FC<Props> = ({
@@ -12,9 +13,10 @@ export const SearchBoxComponent: React.FC<Props> = ({
   searchPlaceholder,
   onFilterTextBoxChanged,
   children,
+  className,
 }) => {
   return (
-    <div className="relative w-1/3">
+    <div className={className || "relative w-1/3"}>
       <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-900" />
       <input
         type="text"
