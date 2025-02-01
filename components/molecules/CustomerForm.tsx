@@ -1,5 +1,5 @@
 // components/CustomerForm.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import {
   Card,
@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/table";
 import { Customer, Contact } from '@/lib/supabase/services/customer';
 
+const defaultCustomer: Partial<Customer> = { contacts: [] };
+
 interface CustomerFormProps {
   customer?: Customer;
   onSubmit: (data: Partial<Customer>) => void;
@@ -30,12 +32,12 @@ interface CustomerFormProps {
 
 export const CustomerForm: React.FC<CustomerFormProps> = ({ customer, onSubmit, onCancel }) => {
   const { register, control, handleSubmit, formState: { errors } } = useForm<Customer>({
-    defaultValues: customer || { contacts: [] }
+    defaultValues: customer || defaultCustomer,
   });
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "contacts"
+    name: "contacts",
   });
 
   const [isAddingContact, setIsAddingContact] = useState(false);

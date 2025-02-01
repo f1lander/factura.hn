@@ -56,6 +56,7 @@ interface DataGridProps<T> {
   pageSizeOptions?: number[];
   SearchBoxComponent?: React.ReactNode;
   ControlsComponents?: React.ReactNode;
+  context?: any;
 }
 
 const defaultColDef: ColDef = {
@@ -84,6 +85,7 @@ export function DataGrid<T>({
   pageSizeOptions = [5, 10, 20],
   SearchBoxComponent,
   ControlsComponents,
+  context,
 }: DataGridProps<T>) {
   const gridRef = useRef<AgGridReact>(null);
   const gridStyle = useMemo(() => ({ height: "500px", width: "100%" }), []);
@@ -305,6 +307,7 @@ export function DataGrid<T>({
           paginationPageSizeSelector={pageSizeOptions}
           onCellValueChanged={onCellValueChanged}
           onRowValueChanged={onRowValueChanged}
+          context={context}
         />
       </div>
 

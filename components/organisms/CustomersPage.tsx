@@ -22,31 +22,12 @@ import { CustomerForm } from "@/components/molecules/CustomerForm";
 import { useCustomersStore } from "@/store/customersStore";
 
 const CustomersPage = () => {
-  // const [customers, setCustomers] = useState<Customer[]>([]);
   const { customers, syncCustomers } = useCustomersStore();
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null,
   );
-  // const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
-
-  // useEffect(() => {
-  //   fetchCustomers();
-  // }, []);
-
-  // const fetchCustomers = async () => {
-  //   try {
-  //     setIsLoading(true);
-  //     const fetchedCustomers = await customerService.getCustomersByCompany();
-  //     setCustomers(fetchedCustomers);
-  //   } catch (err) {
-  //     console.error("Error fetching customers:", err);
-  //     setError("Failed to fetch customers. Please try again.");
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
 
   const handleCustomerSelect = (customer: Customer) => {
     setSelectedCustomer(customer);
@@ -115,16 +96,30 @@ const CustomersPage = () => {
               </TableHeader>
               <TableBody>
                 {customers.map((customer) => (
-                  <TableRow
-                    key={customer.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleCustomerSelect(customer)}
-                  >
-                    <TableCell>{customer.name}</TableCell>
-                    <TableCell>{customer.rtn}</TableCell>
-                    <TableCell>{customer.email}</TableCell>
-                    <TableCell>{customer.contacts?.length || 0}</TableCell>
-                  </TableRow>
+                  <>
+                    <TableRow
+                      key={customer.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleCustomerSelect(customer)}
+                    >
+                      <TableCell>{customer.name}</TableCell>
+                      <TableCell>{customer.rtn}</TableCell>
+                      <TableCell>{customer.email}</TableCell>
+                      <TableCell>{customer.contacts?.length || 0}</TableCell>
+                    </TableRow>
+                    {true && (
+                      <TableRow
+                        key={`${customer.id}-contacts`}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleCustomerSelect(customer)}
+                      >
+                        <TableCell>{customer.name}</TableCell>
+                        <TableCell>{customer.rtn}</TableCell>
+                        <TableCell>{customer.email}</TableCell>
+                        <TableCell>{customer.contacts?.length || 0}</TableCell>
+                      </TableRow>
+                    )}
+                  </>
                 ))}
               </TableBody>
             </Table>
