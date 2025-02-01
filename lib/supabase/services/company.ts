@@ -43,6 +43,7 @@ class CompanyService extends BaseService {
   }
   private async ensureCompanyIdForCompany(): Promise<string | null> {
     const companyId = await this.ensureCompanyId();
+
     if (!companyId) {
       console.error("No company ID available for this operation");
     }
@@ -79,12 +80,6 @@ class CompanyService extends BaseService {
     if (error) {
       console.error("Error fetching company:", error);
       return null;
-    }
-    if (data.limit_date !== null) {
-      console.log("The value of data.limit_date is: ", data.limit_date);
-      const date = convertDateFormat(data.limit_date);
-
-      data.limit_date = date;
     }
     return data;
   }
