@@ -11,7 +11,6 @@ import {
   Controller,
   useFormContext,
   useWatch,
-  UseFormReturn,
 } from "react-hook-form";
 import {
   Card,
@@ -312,10 +311,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
             defaultValue={new Date().toISOString()}
             render={({ field }) => (
               <DatePicker
-                // onChange={(date) => field.onChange(date?.toISOString())}
-                onChange={(date) => {
-                  setValue("date", date!.toISOString());
-                }}
+                onChange={(date) => field.onChange(date?.toISOString())}
                 value={new Date(field.value)}
               />
             )}
