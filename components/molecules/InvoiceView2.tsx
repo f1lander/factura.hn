@@ -156,9 +156,8 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
 
         console.log("Generating PDF for invoice:", invoice);
         console.log("logoUrl:", logoUrl);
-        // const invoiceDate = formatDate(invoice?.date.split("T")[0]);
         const invoiceDate = format(invoice?.date ?? new Date(), "dd/MM/yyyy");
-        console.log("formatted:", invoiceDate);
+        const limitDate = format(company?.limit_date ?? new Date(), "dd/MM/yyyy");
         const renderResult = await renderPdf({
           data: {
             date: invoiceDate,
@@ -186,7 +185,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             address2: company?.address2,
             phone: company?.phone,
             cai: company?.cai,
-            limitDate: company?.limit_date,
+            limitDate,
             rangeInvoice1: company?.range_invoice1,
             rangeInvoice2: company?.range_invoice2,
             email: company?.email,

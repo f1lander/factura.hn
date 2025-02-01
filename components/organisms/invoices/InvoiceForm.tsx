@@ -11,6 +11,7 @@ import {
   Controller,
   useFormContext,
   useWatch,
+  UseFormReturn,
 } from "react-hook-form";
 import {
   Card,
@@ -205,7 +206,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
     );
 
-
   useEffect(() => {
     const subtotal = watchInvoiceItems.reduce(
       (sum, item) => sum + (item.quantity * item.unit_cost - item.discount),
@@ -309,10 +309,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
           <Controller
             name="date"
             control={control}
+            defaultValue={new Date().toISOString()}
             render={({ field }) => (
               <DatePicker
-                onChange={(date) => field.onChange(date?.toISOString())}
-              // value={field.value ? new Date(field.value) : undefined}
+                // onChange={(date) => field.onChange(date?.toISOString())}
+                onChange={(date) => {
+                  setValue("date", date!.toISOString());
+                }}
+                value={new Date(field.value)}
               />
             )}
           />
@@ -541,7 +545,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
           <CardDescription>
             {isEditing
               ? `Editando factura: ${invoice?.invoice_number}`
-              : `Fecha: ${new Date().toLocaleDateString()}`}
+              : `Fecha: ${new Date(watch("date")).toLocaleDateString()}`}
           </CardDescription>
         </div>
         <div className="grid gap-4">

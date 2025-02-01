@@ -209,7 +209,7 @@ const InvoicePreview: React.FC = () => {
               {!watch("is_proforma") ? `Número de factura ${watch("invoice_number")}` : 'Factura Proforma'}
             </CardTitle>
             <CardDescription>
-              Fecha: {new Date().toLocaleString()}
+              Fecha: {new Date(watch("date")).toLocaleString()}
             </CardDescription>
           </div>
           {companyLogo !== null && (

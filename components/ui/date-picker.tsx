@@ -16,10 +16,11 @@ import { es } from 'date-fns/locale';
 interface DatePickerProps {
   onChange?: (date: Date | undefined) => void,
   className?: string
+  value?: Date
 }
 
-export function DatePicker({ onChange, className }: DatePickerProps) {
-  const [date, setDate] = React.useState<Date>(new Date())
+export function DatePicker({ onChange, className, value }: DatePickerProps) {
+  const [date, setDate] = React.useState<Date>(value || new Date())
 
   const handleDateChange = (newDate: Date | undefined) => {
     setDate(newDate || new Date())
