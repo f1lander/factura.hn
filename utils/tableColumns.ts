@@ -49,10 +49,6 @@ export class CustomButtonComponent {
         props.context.onEditContact(props.data);
       };
       eButton.addEventListener('click', this.eventListener);
-      const params = {value: props.data[props.colDef.field]};
-      this.eGui.appendChild(
-        document.createTextNode(`${props.colDef.valueFormatter(params)} `)
-      );
 
       if(validateEditableCustomer(props)) {
         this.eGui.appendChild(eButton);
@@ -93,6 +89,10 @@ export const customerColumns: ColDef<Customer>[] = [
     headerName: "Contactos",
     editable: false,
     valueFormatter: (params) => (params.value ? params.value.length : 0),
+  },
+  {
+    headerName: "Acciones",
+    editable: false,
     cellRenderer: CustomButtonComponent,
   },
 ];
