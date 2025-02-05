@@ -100,6 +100,7 @@ export default function CustomersPage() {
   const [error, setError] = useState<string | null>(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+  const [editContacts, setEditContacts] = useState<Customer | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState<number>(0);
   const { toast } = useToast();
@@ -125,17 +126,18 @@ export default function CustomersPage() {
     setIsFormVisible(true);
   };
 
-  const handleFormSubmit = async (data: Partial<Customer>) => {
+  const handleFormSubmit = async (data: Partial<Customer>, _selectedCustomer?: Customer) => {
+    const customer = _selectedCustomer || selectedCustomer;
     try {
-      if (selectedCustomer) {
-        await customerService.updateCustomer(selectedCustomer.id!, data);
+      if (customer) {
+        await customerService.updateCustomer(customer.id!, data);
       } else {
         await customerService.createCustomer(data as Customer);
       }
       queryClient.invalidateQueries(["customers"]);
       setIsFormVisible(false);
       toast({
-        title: selectedCustomer ? "Cliente Actualizado" : "Cliente Creado",
+        title: customer ? "Cliente Actualizado" : "Cliente Creado",
         description: "El cliente se ha guardado exitosamente.",
       });
     } catch (err) {
@@ -153,6 +155,7 @@ export default function CustomersPage() {
   const handleFormCancel = () => {
     setIsFormVisible(false);
     setSelectedCustomer(null);
+    setEditContacts(null);
   };
 
   const handleOnUpdateRows = async (updatedRows: Customer[]) => {
@@ -279,10 +282,25 @@ export default function CustomersPage() {
                   pageSizeOptions={[5, 10, 20, 50]}
                   searchPlaceholder="Buscar clientes..."
                   onAddExcelSpreadSheet={triggerFileInput}
+                  context={{
+                    onEditContact: (data: Customer) => {
+                      setEditContacts(data);
+                    }
+                  }}
                 />
               </>
             )}
           </div>
+          {editContacts &&
+            <div className="w-full xl:w-1/2 transition-all duration-300 ease-in-out">
+              <CustomerForm
+                key={editContacts.id}
+                customer={editContacts}
+                onSubmit={data => handleFormSubmit(data, editContacts)}
+                onCancel={handleFormCancel}
+              />
+            </div>
+          }
           {isFormVisible &&
             (windowWidth >= 1280 ? (
               <div className="w-full xl:w-1/2 transition-all duration-300 ease-in-out">

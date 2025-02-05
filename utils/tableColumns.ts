@@ -34,6 +34,42 @@ export const productColumns: ColDef<Product>[] = [
 
 const validateEditableCustomer: EditableCallback<Customer, any> = (params) => !params.data?.is_universal;
 
+export class CustomButtonComponent {
+  eGui!: HTMLDivElement;
+  eButton: any;
+  eventListener!: () => void;
+
+  init(props: any) {
+      console.log(props);
+      this.eGui = document.createElement('div');
+      const eButton = document.createElement('button');
+      eButton.className = 'btn-simple';
+      eButton.textContent = 'Editar';
+      this.eventListener = () => {
+        props.context.onEditContact(props.data);
+      };
+      eButton.addEventListener('click', this.eventListener);
+
+      if(validateEditableCustomer(props)) {
+        this.eGui.appendChild(eButton);
+      }
+  }
+
+  getGui() {
+      return this.eGui;
+  }
+
+  refresh() {
+      return true;
+  }
+
+  destroy() {
+      if (this.eButton) {
+          this.eButton.removeEventListener('click', this.eventListener);
+      }
+  }
+}
+
 export const customerColumns: ColDef<Customer>[] = [
   {
     field: "name",
@@ -53,5 +89,10 @@ export const customerColumns: ColDef<Customer>[] = [
     headerName: "Contactos",
     editable: false,
     valueFormatter: (params) => (params.value ? params.value.length : 0),
+  },
+  {
+    headerName: "Acciones",
+    editable: false,
+    cellRenderer: CustomButtonComponent,
   },
 ];
