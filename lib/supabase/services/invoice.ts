@@ -94,6 +94,7 @@ class InvoiceService extends BaseService {
    * @returns {boolean} `true` if the button should be disabled, otherwise `false`.
    */
   generateInvoiceButtonShouldBeDisabled(
+    isProforma: boolean,
     invoiceItems: InvoiceItem[],
     customer: CustomerInfo
   ): boolean {
@@ -101,13 +102,14 @@ class InvoiceService extends BaseService {
       (invoiceItem) => invoiceItem.description.length < 1
     );
     const thereAreNoProductEntries: boolean = invoiceItems.length < 1;
-    const noCustomerDefined: boolean = Object.values(customer).some(
-      (value) => value.length < 1
-    );
+    const noCustomerDefined: boolean = 'name' in customer && customer.name.length < 1 ;
+    const mustBeHaveRtn: boolean = !isProforma && 'rtn' in customer && customer.rtn.length < 1;
+
     if (
       anInvoiceItemHasNotSpecifiedProduct ||
       thereAreNoProductEntries ||
-      noCustomerDefined
+      noCustomerDefined ||
+      mustBeHaveRtn
     ) {
       return true;
     }
