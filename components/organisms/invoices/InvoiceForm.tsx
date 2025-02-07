@@ -200,9 +200,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
   const isGenerateInvoiceButtonDisabled =
     invoiceService.generateInvoiceButtonShouldBeDisabled(
+      isProforma,
       watchInvoiceItems,
-      watchClient,
-
+      watchClient
     );
 
   useEffect(() => {
