@@ -48,7 +48,7 @@ interface DataGridProps<T> {
   onCreateNew?: () => void;
   onDelete?: () => void;
   onAddExcelSpreadSheet?: () => void;
-  handleOnUpdateRows?: (rows: T[]) => void;
+  handleOnUpdateRows?: (rows: T[]) => Promise<void>;
   searchPlaceholder?: string;
   height?: string;
   idField?: keyof T;
@@ -133,10 +133,14 @@ export function DataGrid<T>({
     [idField]
   );
 
-  const handleSaveChanges = useCallback(() => {
+  const handleSaveChanges = useCallback(async () => {
     if (handleOnUpdateRows) {
-      handleOnUpdateRows(editedRows);
-      setEditedRows([]);
+      try {
+        await handleOnUpdateRows(editedRows);
+        setEditedRows([]);
+      } catch (error) {
+        console.error("Error saving changes", error);
+      }
     }
     setShowSaveDialog(false);
   }, [editedRows, handleOnUpdateRows]);
@@ -192,9 +196,6 @@ export function DataGrid<T>({
     gridApi?.redoCellEditing();
   };
 
-  useEffect(() => {
-    console.log("editedRows", editedRows);
-  }, [editedRows]);
   return (
     <div className="w-full bg-white p-4">
       <div className="space-y-4 mb-4">
@@ -254,7 +255,7 @@ export function DataGrid<T>({
           }
           {ControlsComponents}
           {editedRows.length > 0 && (
-            <div className="flex gap-2">
+            <div className="flex flex-col md:flex-row gap-2">
               <Button
                 onClick={() => setShowSaveDialog(true)}
                 variant="outline"

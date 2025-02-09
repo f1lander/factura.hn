@@ -25,6 +25,7 @@ export interface ProductOrder {
   id?: string;
   type: 'ADD' | 'DELETE';
   update_products: ProductToOrder[];
+  reason_description: string;
 }
 
 class ProductService extends BaseService {
