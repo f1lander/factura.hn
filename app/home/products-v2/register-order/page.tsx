@@ -19,12 +19,38 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
+import { useFieldArray, useForm, useFormState } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import { Input } from '@/components/ui/input';
+
+const RegisterProductOrderSchema = yup.object().shape({
+  type: yup.string().oneOf(['ADD', 'DELETE']).required(),
+  update_products: yup.array<ProductToOrder>().required(),
+  reason_description: yup.string().required(),
+});
 
 const RegisterProductPage: React.FC = () => {
-  const [rowData, setRowData] = useState<ProductToOrder[]>([]);
-  const [actionType, setActionType] = useState<'ADD' | 'DELETE'>('ADD');
+  const [searchText, setSearchText] = useState<string>('');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const { watch, getFieldState, formState: { errors }, control, register, setValue, handleSubmit, reset, setError, setFocus } = useForm<ProductOrder>({
+    defaultValues: {
+      type: 'ADD',
+      update_products: [],
+      reason_description: '',
+    },
+    resolver: yupResolver(RegisterProductOrderSchema),
+  })
+
+  const { fields: rowData, append, remove, insert} = useFieldArray({
+      control,
+      name: "update_products",
+      rules: {
+        required: 'Debe seleccionar al menos un producto',
+      }
+    });
 
   const { data: products, isLoading: areProductsLoading, refetch } = useQuery(
     ["products"],
@@ -36,7 +62,7 @@ const RegisterProductPage: React.FC = () => {
     },
   );
 
-  const [searchText, setSearchText] = useState<string>('');
+  const values = watch();
 
   const filteredProducts = products?.filter((product) =>
       product.sku.toLocaleLowerCase().includes(searchText.toLocaleLowerCase()) ||
@@ -44,32 +70,48 @@ const RegisterProductPage: React.FC = () => {
 
   const handleAddProductToOrder = (product: Product) => {
     if(!rowData.find((row) => row.product_id === product.id)) {
-      setRowData([...rowData, { product_id: product.id, product, quantity_delta: 0 }]);
+      setValue('update_products', [...rowData, { product_id: product.id, product, quantity_delta: 0 }]);
+      // setRowData([...rowData, { product_id: product.id, product, quantity_delta: 0 }]);
+      // append({ product_id: product.id, product, quantity_delta: 0 });
     }
     setSearchText('');
   }
 
   const handleCreateProductRegisterOrder = async (rows: ProductToOrder[]) => {
     const order: ProductOrder = {
-      type: actionType,
+      ...values,
       update_products: rows.map((row) => ({
         product_id: row.product_id,
         quantity_delta: row.quantity_delta,
       })),
     };
 
-    const response = await productService.generateProductRegisterOrder(order);
+    return handleSubmit(async (values) => {
+      const response = await productService.generateProductRegisterOrder(order);
 
-    if (response) {
-      await productService.updateInventory(response!.id as string);
+      if (response) {
+        await productService.updateInventory(response!.id as string);
 
-      setRowData([]);
-      refetch();
-    }
+        reset();
+        refetch();
+      }
+    }, (error) => {
+      if(error.reason_description) {
+        setError('reason_description', {
+          type: 'manual',
+          message: 'Razón de la operación es requerida',
+        });
+
+        setFocus('reason_description');
+      }
+
+      throw error;
+    })();
   };
 
   const handleDropProductsFromOrder = async (productIds: string[]) => {
-    setRowData(rowData.filter((row) => !productIds.includes(row.product_id)));
+    const rowIndexes = productIds.map((productId) => rowData.findIndex((row) => row.product_id === productId));
+    remove(rowIndexes);
   };
 
   return (
@@ -127,28 +169,36 @@ const RegisterProductPage: React.FC = () => {
                 field: 'product.quantity_in_stock',
                 editable: false,
               }, {
-                headerName: `Cantidad a ${actionType === 'ADD' ? 'Agregar' : 'Eliminar'}`,
+                headerName: `Cantidad a ${values.type === 'ADD' ? 'Agregar' : 'Eliminar'}`,
                 field: 'quantity_delta',
                 editable: true,
                 type: 'numericColumn',
               }]}
               handleOnUpdateRows={handleCreateProductRegisterOrder}
               ControlsComponents={
-                <div className="flex flex-col md:flex-row items-center">
+                <div className="flex flex-col md:flex-row items-center gap-4">
                   <label className="mr-2">Operación:</label>
                   <div className="flex items-center gap-2">
-                  <Card
-                    className={`py-1 px-2 cursor-pointer ${actionType === 'ADD' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
-                    onClick={() => setActionType('ADD')}
-                  >
-                    Agregar
-                  </Card>
-                  <Card
-                    className={`py-1 px-2 cursor-pointer ${actionType === 'DELETE' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}
-                    onClick={() => setActionType('DELETE')}
-                  >
-                    Remover
-                  </Card>
+                    <Card
+                      className={`py-1 px-2 cursor-pointer ${values.type === 'ADD' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
+                      onClick={() => setValue('type', 'ADD')}
+                    >
+                      Agregar
+                    </Card>
+                    <Card
+                      className={`py-1 px-2 cursor-pointer ${values.type === 'DELETE' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}
+                      onClick={() => setValue('type', 'DELETE')}
+                    >
+                      Remover
+                    </Card>
+                  </div>
+                  <div>
+                    <Input
+                      {...register('reason_description')}
+                      placeholder="Razón de la operación"
+                      className="w-96"
+                      error={errors.reason_description?.message ? 'Razón de la operación es requerida' : ''}
+                    />
                   </div>
                 </div>
               }
