@@ -287,6 +287,26 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className='grid gap-4'>
+          <div className='flex items-center justify-between gap-4 py-4'>
+            <Button
+              className='bg-[#00A1D4] text-white'
+              type='submit'
+              disabled={isGenerateInvoiceButtonDisabled}
+            >
+              {isEditing ? 'Actualizar Factura' : 'Generar Factura'}{' '}
+              <CheckIcon className='ml-2' />
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              className='bg-slate-600 text-white'
+              onClick={() => {
+                reset();
+              }}
+            >
+              Limpiar
+            </Button>
+          </div>
           <div className='flex gap-4'>
             <Controller
               name='customer_id'
@@ -519,26 +539,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
               )}
             </Card>
           ))}
-        </div>
-        <div className='flex items-center justify-between gap-4 py-4'>
-          <Button
-            className='bg-[#00A1D4] text-white'
-            type='submit'
-            disabled={isGenerateInvoiceButtonDisabled}
-          >
-            {isEditing ? 'Actualizar Factura' : 'Generar Factura'}{' '}
-            <CheckIcon className='ml-2' />
-          </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            className='bg-slate-600 text-white'
-            onClick={() => {
-              reset();
-            }}
-          >
-            Limpiar
-          </Button>
         </div>
       </form>
       <Dialog
