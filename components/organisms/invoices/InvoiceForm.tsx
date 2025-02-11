@@ -302,6 +302,12 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
               className='bg-slate-600 text-white'
               onClick={() => {
                 reset();
+                if (lastInvoiceNumber) {
+                  setValue(
+                    'invoice_number',
+                    invoiceService.generateNextInvoiceNumber(lastInvoiceNumber)
+                  );
+                }
               }}
             >
               Limpiar
@@ -396,6 +402,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                         placeholder='000-000-00-00000000'
                         disabled={isEditing || isProforma}
                       />
+
                       {errors.invoice_number && (
                         <p className='text-red-500 text-sm'>
                           {errors.invoice_number.message}
