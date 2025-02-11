@@ -86,6 +86,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
 }) => {
   const queryClient = useQueryClient();
 
+  const [expandedCardIndex, setExpandedCardIndex] = useState<number | null>(
+    null
+  );
+
   /** Here we retrieve the list of customers */
   const loadOptions = async (inputValue: string) => {
     if (!inputValue) return [];
@@ -264,6 +268,21 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
     onSave(data);
   };
 
+  const handleAddProduct = () => {
+    append({
+      id: '',
+      invoice_id: '',
+      product_id: '',
+      description: '',
+      quantity: 1,
+      unit_cost: 0,
+      discount: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    setExpandedCardIndex(fields.length); // Set the new card as expanded
+  };
+
   const renderEditableContent = () => (
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -383,99 +402,124 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
           </div>
         </div>
         <Separator className='my-4' />
-        <div className='w-full space-y-4'>
+        <Button
+          className='w-full mb-4'
+          variant='secondary'
+          type='button'
+          onClick={handleAddProduct}
+        >
+          Agregar item{' '}
+          <PlusCircleIcon className='h-4 w-4 ml-2 text-[#00A1D4]' />
+        </Button>
+        <div className='w-full gap-1.5 flex flex-col-reverse'>
           {fields.map((item, index) => (
             <Card
-              key={item.id}
+              key={`${item.id || index}`}
               className='shadow-sm hover:shadow-md transition-shadow'
             >
-              <CardHeader className='p-4 flex flex-row items-center justify-between space-y-0'>
-                <CardTitle className='text-sm font-medium'>
-                  Producto #{index + 1}
-                </CardTitle>
+              <CardHeader
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpandedCardIndex(
+                    expandedCardIndex === index ? null : index
+                  );
+                }}
+                className='p-4 flex flex-row items-center justify-between space-y-0 cursor-pointer'
+              >
+                <div className='flex items-center gap-2'>
+                  <CardTitle className='text-sm font-medium'>
+                    Producto #{index + 1}
+                  </CardTitle>
+                  {expandedCardIndex !== index && (
+                    <div className='flex items-center gap-2 flex-wrap'>
+                      <Badge
+                        variant='outline'
+                        className='text-slate-700 truncate max-w-[200px]'
+                      >
+                        {watchInvoiceItems[index].description ||
+                          'Sin descripción'}
+                      </Badge>
+                      <Badge variant='secondary' className='text-slate-600'>
+                        Cantidad: {watchInvoiceItems[index].quantity}
+                      </Badge>
+                      <Badge
+                        variant='default'
+                        className='bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                      >
+                        L. {calculateItemTotal(index, watchInvoiceItems)}
+                      </Badge>
+                    </div>
+                  )}
+                </div>
                 <Button
                   type='button'
                   variant='ghost'
                   size='sm'
-                  onClick={() => remove(index)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    remove(index);
+                  }}
                   className='text-rose-700 hover:text-rose-800 hover:bg-rose-50'
                 >
                   <Trash2 className='h-4 w-4' />
                 </Button>
               </CardHeader>
-              <CardContent className='p-4 pt-0 grid gap-4'>
-                <div className='space-y-2'>
-                  <Label>Producto</Label>
-                  <ProductSelect
-                    index={index}
-                    products={products!}
-                    control={control}
-                    setValue={setValue}
-                  />
-                </div>
-
-                <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                  <div className='space-y-2'>
-                    <Label>Cantidad</Label>
-                    <QuantityInput index={index} control={control} />
-                  </div>
-
-                  <div className='space-y-2'>
-                    <Label>Precio Unitario</Label>
-                    <Badge
-                      variant='outline'
-                      className='w-full py-2 px-3 flex items-center justify-between'
-                    >
-                      <span>L.</span>
-                      <Controller
-                        name={`invoice_items.${index}.unit_cost`}
+              {expandedCardIndex === index && (
+                <>
+                  <CardContent className='p-4 pt-0 grid gap-4'>
+                    <div className='space-y-2'>
+                      <Label>Producto</Label>
+                      <ProductSelect
+                        index={index}
+                        products={products!}
+                        placeholder={fields[index]?.description}
                         control={control}
-                        defaultValue={0}
-                        render={({ field }) => (
-                          <div className='w-24 text-right'>
-                            {field.value.toFixed(2)}
-                          </div>
-                        )}
+                        setValue={setValue}
                       />
-                    </Badge>
-                  </div>
+                    </div>
 
-                  <div className='space-y-2'>
-                    <Label>Descuento</Label>
-                    <DiscountInput index={index} control={control} />
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className='p-4 bg-muted/50'>
-                <div className='text-sm font-medium'>
-                  Total: Lps. {calculateItemTotal(index, watchInvoiceItems)}
-                </div>
-              </CardFooter>
+                    <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                      <div className='space-y-2'>
+                        <Label>Cantidad</Label>
+                        <QuantityInput index={index} control={control} />
+                      </div>
+
+                      <div className='space-y-2'>
+                        <Label>Precio Unitario</Label>
+                        <Badge
+                          variant='outline'
+                          className='w-full py-2 px-3 flex items-center justify-between'
+                        >
+                          <span>L.</span>
+                          <Controller
+                            name={`invoice_items.${index}.unit_cost`}
+                            control={control}
+                            defaultValue={0}
+                            render={({ field }) => (
+                              <div className='w-24 text-right'>
+                                {field.value.toFixed(2)}
+                              </div>
+                            )}
+                          />
+                        </Badge>
+                      </div>
+
+                      <div className='space-y-2'>
+                        <Label>Descuento</Label>
+                        <DiscountInput index={index} control={control} />
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter className='p-4 bg-muted/50'>
+                    <div className='text-sm font-medium'>
+                      Total: Lps. {calculateItemTotal(index, watchInvoiceItems)}
+                    </div>
+                  </CardFooter>
+                </>
+              )}
             </Card>
           ))}
         </div>
-        <Separator className='my-4' />
-        <Button
-          className='w-full'
-          variant='secondary'
-          type='button'
-          onClick={() => {
-            append({
-              id: '',
-              invoice_id: '',
-              product_id: '',
-              description: '',
-              quantity: 1,
-              unit_cost: 0,
-              discount: 0,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            });
-          }}
-        >
-          Agregar item{' '}
-          <PlusCircleIcon className='h-4 w-4 ml-2 text-[#00A1D4]' />
-        </Button>
         <div className='flex items-center justify-between gap-4 py-4'>
           <Button
             className='bg-[#00A1D4] text-white'
