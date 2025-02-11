@@ -209,29 +209,6 @@ const RegisterProductPage: React.FC = () => {
                       </div>
                     </div>
                   )}
-                  <div className='space-y-2 pr-4'>
-                    {filteredProducts.map((product) => (
-                      <Card
-                        key={product.id}
-                        className='transition-all hover:bg-accent hover:shadow-lg cursor-pointer'
-                        onClick={() => handleAddProductToOrder(product)}
-                      >
-                        <CardContent className='p-3'>
-                          <div className='flex flex-col sm:flex-row justify-between gap-2'>
-                            <div className='font-medium truncate'>
-                              {product.sku}
-                            </div>
-                            <Badge variant='secondary' className='shrink-0'>
-                              Stock: {product.quantity_in_stock}
-                            </Badge>
-                          </div>
-                          <p className='text-sm text-muted-foreground mt-1 line-clamp-2'>
-                            {product.description}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
                 </ScrollArea>
               </CardContent>
             </Card>
