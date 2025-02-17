@@ -2,7 +2,7 @@ import {
   BaseService,
   Table,
   PaginatedResponse,
-} from "@/lib/supabase/services/BaseService";
+} from '@/lib/supabase/services/BaseService';
 
 export interface Product {
   id: string;
@@ -29,27 +29,27 @@ export interface ProductOrder {
 }
 
 class ProductService extends BaseService {
-  private tableName: Table = "products";
+  private tableName: Table = 'products';
   private ordersTableName: Table = 'product_register_orders';
 
   async getProductsPaginated(
     page: number,
-    pageSize: number,
+    pageSize: number
   ): Promise<PaginatedResponse<Product>> {
     return this.getAllPaginated<Product>(this.tableName, { page, pageSize });
   }
   async createProduct(
-    product: Omit<Product, "id" | "company_id" | "created_at" | "updated_at">,
+    product: Omit<Product, 'id' | 'company_id' | 'created_at' | 'updated_at'>
   ): Promise<Product | null> {
     return this.create<Product>(this.tableName, product);
   }
 
   async createMultipleProducts(
-    products: Record<string, any>[],
+    products: Record<string, any>[]
   ): Promise<{ success: boolean; message: string }> {
     const response = await this.createMultiple<Product>(
       this.tableName,
-      products,
+      products
     );
     return response;
   }
@@ -64,13 +64,13 @@ class ProductService extends BaseService {
 
   async updateProduct(
     id: string,
-    updates: Partial<Product>,
+    updates: Partial<Product>
   ): Promise<Product | null> {
     return this.update<Product>(this.tableName, id, updates);
   }
 
   async updateMultipleProducts(
-    updates: Product[],
+    updates: Product[]
   ): Promise<{ success: boolean; message: string }> {
     return this.updateMultiple<Product>(this.tableName, updates);
   }
@@ -80,37 +80,44 @@ class ProductService extends BaseService {
   }
 
   // soft delete: mark as archived
-  async deleteMultipleProducts(id: string[]): Promise<{ success: boolean; message: string }> {
+  async deleteMultipleProducts(
+    id: string[]
+  ): Promise<{ success: boolean; message: string }> {
     const updates = id.map((id) => ({ id, archived: true }));
     return this.updateMultiple<Product>(this.tableName, updates);
   }
 
   async searchProducts(query: string): Promise<Product[]> {
-    return this.search<Product>(this.tableName, "description", query);
+    return this.search<Product>(this.tableName, 'description', query);
   }
 
   async searchProductsByCompany(
-    searchString: string,
-  ): Promise<Pick<Product, "id" | "unit_cost" | "description">[]> {
+    searchString: string
+  ): Promise<
+    Pick<Product, 'id' | 'unit_cost' | 'description' | 'is_service'>[]
+  > {
     const companyId = await this.ensureCompanyId();
     if (!companyId) return [];
     const { data, error } = await this.supabase
       .from(this.tableName)
-      .select("*")
-      .eq("company_id", companyId)
-      .or("archived.eq.false,archived.is.null")
+      .select('*')
+      .eq('company_id', companyId)
+      .or('archived.eq.false,archived.is.null')
       .or(`sku.ilike.%${searchString}%,description.ilike.%${searchString}%`);
     if (error || !data) return [];
     return data;
   }
 
   async generateProductRegisterOrder(
-    order: ProductOrder,
+    order: ProductOrder
   ): Promise<ProductOrder | null> {
-    const newOrder = await this.create<ProductOrder | null>(this.ordersTableName, order);
+    const newOrder = await this.create<ProductOrder | null>(
+      this.ordersTableName,
+      order
+    );
 
     if (!newOrder) {
-      console.error("Error generating product register order!");
+      console.error('Error generating product register order!');
       return null;
     }
 
@@ -118,15 +125,12 @@ class ProductService extends BaseService {
   }
 
   async updateInventory(orderId: string): Promise<boolean> {
-    const { data, error } = await this.supabase.rpc(
-      "update_product_stock",
-      {
-        register_order_id: orderId,
-      },
-    );
+    const { data, error } = await this.supabase.rpc('update_product_stock', {
+      register_order_id: orderId,
+    });
 
     if (error) {
-      console.error("Error updating inventory:", error);
+      console.error('Error updating inventory:', error);
       return false;
     }
 

@@ -1,14 +1,14 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import { InputMask } from "@react-input/mask";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+'use client';
+import React, { useState, useEffect } from 'react';
+import { InputMask } from '@react-input/mask';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import {
   useForm,
   useFieldArray,
   Controller,
   Control,
   UseFormSetValue,
-} from "react-hook-form";
+} from 'react-hook-form';
 import {
   Card,
   CardContent,
@@ -16,10 +16,10 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -27,16 +27,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
+} from '@/components/ui/select';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   ChevronDown,
   ChevronUp,
@@ -49,29 +49,29 @@ import {
   Percent,
   ShoppingCart,
   Trash2,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   Invoice,
   InvoiceItem,
   invoiceService,
-} from "@/lib/supabase/services/invoice";
+} from '@/lib/supabase/services/invoice';
 // import { Customer, customerService } from "@/lib/supabase/services/customer";
-import { Product } from "@/lib/supabase/services/product";
+import { Product } from '@/lib/supabase/services/product';
 // import { Company, companyService } from "@/lib/supabase/services/company";
-import { formatDate, getSignedLogoUrl, numberToWords } from "@/lib/utils";
-import { getStatusBadge } from "./InvoicesTable";
-import { renderPdf, getSignedPdfUrl } from "@/app/do-functions";
-import { toast } from "@/components/ui/use-toast";
-import { Label } from "../ui/label";
-import { useCustomersStore } from "@/store/customersStore";
-import { useProductsStore } from "@/store/productsStore";
-import { useCompanyStore } from "@/store/companyStore";
-import { CustomerForm } from "./CustomerForm";
-import { Customer, customerService } from "@/lib/supabase/services/customer";
-import { useInvoicesStore } from "@/store/invoicesStore";
-import { useRouter } from "next/navigation";
-import { format } from "date-fns";
-import Image from "next/image";
+import { formatDate, getSignedLogoUrl, numberToWords } from '@/lib/utils';
+import { getStatusBadge } from './InvoicesTable';
+import { renderPdf, getSignedPdfUrl } from '@/app/do-functions';
+import { toast } from '@/components/ui/use-toast';
+import { Label } from '../ui/label';
+import { useCustomersStore } from '@/store/customersStore';
+import { useProductsStore } from '@/store/productsStore';
+import { useCompanyStore } from '@/store/companyStore';
+import { CustomerForm } from './CustomerForm';
+import { Customer, customerService } from '@/lib/supabase/services/customer';
+import { useInvoicesStore } from '@/store/invoicesStore';
+import { useRouter } from 'next/navigation';
+import { format } from 'date-fns';
+import Image from 'next/image';
 
 interface InvoiceViewProps {
   invoice?: Invoice;
@@ -127,17 +127,17 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
       syncCustomers();
       setIsAddClientDialogOpen(false);
       toast({
-        title: "Cliente creado",
-        description: "El cliente se ha guardado exitosamente.",
+        title: 'Cliente creado',
+        description: 'El cliente se ha guardado exitosamente.',
       });
     } catch (err) {
-      console.error("Error al guardar el cliente:", err);
+      console.error('Error al guardar el cliente:', err);
       // setError("No se pudo guardar el cliente. Por favor, intente de nuevo.");
       toast({
-        title: "Error",
+        title: 'Error',
         description:
-          "No se pudo guardar el cliente. Por favor, intente de nuevo.",
-        variant: "destructive",
+          'No se pudo guardar el cliente. Por favor, intente de nuevo.',
+        variant: 'destructive',
       });
     }
   };
@@ -149,15 +149,18 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
       let s3Key = invoice?.s3_key;
       if (!s3Key && !s3Url) {
         if (!company) {
-          throw new Error("No se pudo obtener la información de la empresa");
+          throw new Error('No se pudo obtener la información de la empresa');
         }
 
         const logoUrl = await getSignedLogoUrl(company?.logo_url);
 
-        console.log("Generating PDF for invoice:", invoice);
-        console.log("logoUrl:", logoUrl);
-        const invoiceDate = format(invoice?.date ?? new Date(), "dd/MM/yyyy");
-        const limitDate = format(company?.limit_date ?? new Date(), "dd/MM/yyyy");
+        console.log('Generating PDF for invoice:', invoice);
+        console.log('logoUrl:', logoUrl);
+        const invoiceDate = format(invoice?.date ?? new Date(), 'dd/MM/yyyy');
+        const limitDate = format(
+          company?.limit_date ?? new Date(),
+          'dd/MM/yyyy'
+        );
         const renderResult = await renderPdf({
           data: {
             date: invoiceDate,
@@ -191,7 +194,9 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             email: company?.email,
             logo_url: logoUrl,
           },
-          template_url: company?.template_url ? `https://factura-hn.nyc3.digitaloceanspaces.com/templates/${company?.template_url}` : process.env.NEXT_PUBLIC_TEMPLATE_URL,
+          template_url: company?.template_url
+            ? `https://factura-hn.nyc3.digitaloceanspaces.com/templates/${company?.template_url}`
+            : process.env.NEXT_PUBLIC_TEMPLATE_URL,
         });
 
         s3Key = renderResult.s3_key;
@@ -207,9 +212,9 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             }
           );
 
-          console.log("Updated invoice:", updatedInvoice);
+          console.log('Updated invoice:', updatedInvoice);
         } else {
-          throw new Error("El ID de la factura no es válido");
+          throw new Error('El ID de la factura no es válido');
         }
       }
 
@@ -222,7 +227,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
 
         const { presigned_url } = JSON.parse(presignedUrlData);
         // Create a temporary anchor element
-        const link = document.createElement("a");
+        const link = document.createElement('a');
         link.href = presigned_url;
         link.download = `${invoice?.invoice_number}-${s3Key}.pdf`; // Set a default filename
         document.body.appendChild(link);
@@ -234,20 +239,20 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
         document.body.removeChild(link);
 
         toast({
-          title: "Success",
-          description: "Tu factura se descargó correctamente.",
+          title: 'Success',
+          description: 'Tu factura se descargó correctamente.',
           duration: 3000,
         });
       } else {
-        throw new Error("Ocurrio un error al obtener la URL de la factura");
+        throw new Error('Ocurrio un error al obtener la URL de la factura');
       }
     } catch (error) {
-      console.error("Error descargando la factura PDF:", error);
+      console.error('Error descargando la factura PDF:', error);
       // You might want to show an error message to the user here
       toast({
-        title: "Error",
-        description: "Error descargando la factura PDF.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Error descargando la factura PDF.',
+        variant: 'destructive',
       });
     } finally {
       setIsDownloading(false);
@@ -265,9 +270,9 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     setError,
   } = useForm<Invoice>({
     defaultValues: invoice || {
-      company_id: "",
-      customer_id: "",
-      invoice_number: "",
+      company_id: '',
+      customer_id: '',
+      invoice_number: '',
       date: new Date().toISOString(),
       subtotal: 0,
       tax_exonerado: 0,
@@ -277,24 +282,24 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
       tax: 0,
       tax_18: 0,
       total: 0,
-      numbers_to_letters: "",
+      numbers_to_letters: '',
       proforma_number: null,
       is_proforma: false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      customers: { name: "", rtn: "", email: "" },
+      customers: { name: '', rtn: '', email: '' },
       invoice_items: [],
-      status: "pending",
+      status: 'pending',
     },
   });
   const router = useRouter();
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "invoice_items",
+    name: 'invoice_items',
   });
-  const noProductsAdded: boolean = getValues("invoice_items").length === 0;
+  const noProductsAdded: boolean = getValues('invoice_items').length === 0;
 
-  const watchInvoiceItems = watch("invoice_items");
+  const watchInvoiceItems = watch('invoice_items');
 
   // this is what's consuming so much bandwidth
   useEffect(() => {
@@ -317,9 +322,9 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     if (lastInvoiceNumber && !invoice) {
       if (lastInvoiceExists) {
         const nextInvoiceNumber = generateNextInvoiceNumber(lastInvoiceNumber);
-        setValue("invoice_number", nextInvoiceNumber);
+        setValue('invoice_number', nextInvoiceNumber);
       } else if (company !== null && company.range_invoice1 !== undefined) {
-        setValue("invoice_number", company.range_invoice1);
+        setValue('invoice_number', company.range_invoice1);
       }
     }
   }, [lastInvoiceNumber, invoice, setValue, company, lastInvoiceExists]);
@@ -332,32 +337,32 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     const tax = invoice?.exento ? 0 : subtotal * 0.15; // Assuming 15% tax rate if not exento
     const total = subtotal + tax;
 
-    setValue("subtotal", subtotal);
-    setValue("tax", tax);
-    setValue("total", total);
-    setValue("numbers_to_letters", numberToWords(total));
+    setValue('subtotal', subtotal);
+    setValue('tax', tax);
+    setValue('total', total);
+    setValue('numbers_to_letters', numberToWords(total));
   }, [watchInvoiceItems, setValue]);
 
   useEffect(() => {
-    const customerId = watch("customer_id");
+    const customerId = watch('customer_id');
     if (customerId) {
       const selectedCustomer = customers.find((c) => c.id === customerId);
       if (selectedCustomer) {
-        setValue("customers", {
+        setValue('customers', {
           name: selectedCustomer.name,
           rtn: selectedCustomer.rtn,
           email: selectedCustomer.email,
         });
       }
     }
-  }, [watch("customer_id"), customers, setValue]);
+  }, [watch('customer_id'), customers, setValue]);
 
   const generateNextInvoiceNumber = (lastNumber: string) => {
-    const parts = lastNumber.split("-");
+    const parts = lastNumber.split('-');
     const lastPart = parts[parts.length - 1];
-    const nextNumber = (parseInt(lastPart, 10) + 1).toString().padStart(8, "0");
+    const nextNumber = (parseInt(lastPart, 10) + 1).toString().padStart(8, '0');
     parts[parts.length - 1] = nextNumber;
-    return parts.join("-");
+    return parts.join('-');
   };
 
   const onSubmit = (data: Invoice) => {
@@ -369,9 +374,9 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     data.total = total;
     data.tax = tax;
     if (data.invoice_items.length < 1)
-      setError("invoice_items", {
-        type: "required",
-        message: "At least one invoice",
+      setError('invoice_items', {
+        type: 'required',
+        message: 'At least one invoice',
       });
     onSave(data);
   };
@@ -381,27 +386,27 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     const nextInvoiceNumber = value;
     const regex = /^\d{3}-\d{3}-\d{2}-\d{8}$/;
     if (!regex.test(value)) {
-      return "El número de factura debe tener el formato 000-000-00-00000000";
+      return 'El número de factura debe tener el formato 000-000-00-00000000';
     }
     if (!invoiceService.isInvoiceNumberValid(value, company!.range_invoice2!))
-      return "El número de factura está fuera del rango de facturación actual";
+      return 'El número de factura está fuera del rango de facturación actual';
     const nextAndPreviousComparison = invoiceService.compareInvoiceNumbers(
       nextInvoiceNumber,
       previousInvoiceNumber
     );
     if (!lastInvoiceExists) {
       const nextGreaterOrEqualThanPrevious =
-        nextAndPreviousComparison === "first greater than second" ||
-        nextAndPreviousComparison === "equal";
+        nextAndPreviousComparison === 'first greater than second' ||
+        nextAndPreviousComparison === 'equal';
       if (!nextGreaterOrEqualThanPrevious) {
-        return "El siguiente número de factura no puede ser menor que el anterior";
+        return 'El siguiente número de factura no puede ser menor que el anterior';
       }
     }
     if (lastInvoiceExists) {
       const nextGreaterThanPrevious =
-        nextAndPreviousComparison === "first greater than second";
+        nextAndPreviousComparison === 'first greater than second';
       if (!nextGreaterThanPrevious)
-        return "El siguiente número de factura debe ser mayor que el anterior";
+        return 'El siguiente número de factura debe ser mayor que el anterior';
     }
     return true;
   };
@@ -409,15 +414,15 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   const renderEditableContent = () => (
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid gap-4">
+        <div className='grid gap-4'>
           <Controller
-            name="customer_id"
+            name='customer_id'
             control={control}
-            rules={{ required: "Debes asociar un cliente a tu factura" }}
+            rules={{ required: 'Debes asociar un cliente a tu factura' }}
             render={({ field }) => (
               <Select onValueChange={field.onChange} value={field.value}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccione cliente" />
+                  <SelectValue placeholder='Seleccione cliente' />
                 </SelectTrigger>
                 <SelectContent>
                   {customers.map((customer) => (
@@ -430,17 +435,17 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             )}
           />
           <Button
-            type="button"
-            className="md:w-1/2"
+            type='button'
+            className='md:w-1/2'
             onClick={() => setIsAddClientDialogOpen(true)}
           >
             Añadir cliente
           </Button>
           {errors.customer_id && (
-            <p className="text-red-500 text-sm">{errors.customer_id.message}</p>
+            <p className='text-red-500 text-sm'>{errors.customer_id.message}</p>
           )}
           <Controller
-            name="date"
+            name='date'
             control={control}
             render={({ field }) => (
               <DatePicker
@@ -448,16 +453,16 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
               />
             )}
           />
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="flex flex-col gap-2">
-                <Label className="whitespace-nowrap">Última factura</Label>
+          <div className='flex flex-col sm:flex-row gap-4'>
+            <div className='flex-1'>
+              <div className='flex flex-col gap-2'>
+                <Label className='whitespace-nowrap'>Última factura</Label>
                 <Input value={lastInvoiceNumber} disabled />
               </div>
             </div>
-            <div className="flex-1">
-              <div className="flex flex-col gap-2">
-                <Label className="whitespace-nowrap">Nueva factura</Label>
+            <div className='flex-1'>
+              <div className='flex flex-col gap-2'>
+                <Label className='whitespace-nowrap'>Nueva factura</Label>
                 {/* <Input */}
                 {/*   id="name" */}
                 {/*   {...register("invoice_number", { */}
@@ -466,17 +471,17 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
                 {/*   })} */}
                 {/* /> */}
                 <InputMask
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  mask="___-___-__-________"
+                  className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+                  mask='___-___-__-________'
                   replacement={{ _: /\d/ }}
-                  {...register("invoice_number", {
-                    required: "Este campo es requerido",
+                  {...register('invoice_number', {
+                    required: 'Este campo es requerido',
                     validate: validateInvoiceNumber,
                   })}
-                  placeholder="000-000-00-00000000"
+                  placeholder='000-000-00-00000000'
                 />
                 {errors.invoice_number && (
-                  <p className="text-red-500 text-sm">
+                  <p className='text-red-500 text-sm'>
                     {errors.invoice_number.message}
                   </p>
                 )}
@@ -484,9 +489,9 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             </div>
           </div>
         </div>
-        <Separator className="my-4" />
-        <div className="grid gap-4">
-          <div className="hidden sm:block">
+        <Separator className='my-4' />
+        <div className='grid gap-4'>
+          <div className='hidden sm:block'>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -528,12 +533,12 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
                       </TableCell>
                       <TableCell>
                         <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
+                          type='button'
+                          variant='destructive'
+                          size='icon'
                           onClick={() => remove(index)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className='h-4 w-4' />
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -542,9 +547,9 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
               </TableBody>
             </Table>
           </div>
-          <div className="sm:hidden">
+          <div className='sm:hidden'>
             {fields.map((item, index) => (
-              <div key={item.id} className="mb-4 p-4 border rounded">
+              <div key={item.id} className='mb-4 p-4 border rounded'>
                 <ProductSelect
                   index={index}
                   products={products}
@@ -555,18 +560,18 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
                 <QuantityInput index={index} control={control} />
                 <UnitCostInput index={index} control={control} />
                 <DiscountInput index={index} control={control} />
-                <div className="mt-2">
+                <div className='mt-2'>
                   {`Total: Lps. ${calculateItemTotal(
                     index,
                     watchInvoiceItems
                   )}`}
                 </div>
                 <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
+                  type='button'
+                  variant='destructive'
+                  size='sm'
                   onClick={() => remove(index)}
-                  className="mt-2"
+                  className='mt-2'
                 >
                   Quitar
                 </Button>
@@ -574,13 +579,13 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             ))}
           </div>
           <Button
-            type="button"
+            type='button'
             onClick={() =>
               append({
-                id: "",
-                invoice_id: "",
-                product_id: "",
-                description: "",
+                id: '',
+                invoice_id: '',
+                product_id: '',
+                description: '',
                 quantity: 1,
                 unit_cost: 0,
                 discount: 0,
@@ -594,8 +599,8 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
         </div>
         {/* Inhabilita el botón si el formulario no se ha tocado y todas las entradas aún son inválidas */}
         <Button
-          type="submit"
-          className="mt-4"
+          type='submit'
+          className='mt-4'
           // disabled={noProductsAdded && (!isDirty || !isValid)}
           disabled={noProductsAdded}
         >
@@ -607,8 +612,8 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
         onOpenChange={setIsAddClientDialogOpen}
       >
         <DialogTrigger asChild></DialogTrigger>
-        <DialogContent className="w-[90%]" id="contenido del dialogo papa">
-          <div className="transition-all duration-300 ease-in-out">
+        <DialogContent className='w-[90%]' id='contenido del dialogo papa'>
+          <div className='transition-all duration-300 ease-in-out'>
             <CustomerForm
               customer={undefined}
               onSubmit={handleFormSubmit}
@@ -628,55 +633,55 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
 
   const renderReadOnlyContent = () => (
     <>
-      <div className="grid gap-3">
-        <div className="font-semibold">Informacion del Cliente</div>
-        <dl className="grid gap-1">
-          <div className="flex items-center gap-4">
-            <dt className="text-muted-foreground">Cliente:</dt>
-            <dd>{watch("customers.name")}</dd>
+      <div className='grid gap-3'>
+        <div className='font-semibold'>Informacion del Cliente</div>
+        <dl className='grid gap-1'>
+          <div className='flex items-center gap-4'>
+            <dt className='text-muted-foreground'>Cliente:</dt>
+            <dd>{watch('customers.name')}</dd>
           </div>
-          <div className="flex items-center gap-4">
-            <dt className="text-muted-foreground">RTN:</dt>
-            <dd>{watch("customers.rtn")}</dd>
+          <div className='flex items-center gap-4'>
+            <dt className='text-muted-foreground'>RTN:</dt>
+            <dd>{watch('customers.rtn')}</dd>
           </div>
-          <div className="flex items-center gap-4">
-            <dt className="text-muted-foreground">Correo:</dt>
-            <dd>{watch("customers.email")}</dd>
+          <div className='flex items-center gap-4'>
+            <dt className='text-muted-foreground'>Correo:</dt>
+            <dd>{watch('customers.email')}</dd>
           </div>
         </dl>
       </div>
-      <Separator className="my-4" />
-      <div className="grid gap-3">
-        <div className="font-semibold">Detalles de la factura</div>
+      <Separator className='my-4' />
+      <div className='grid gap-3'>
+        <div className='font-semibold'>Detalles de la factura</div>
 
         {/* Desktop/Tablet View */}
-        <div className="hidden sm:block">
+        <div className='hidden sm:block'>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Descripción</TableHead>
-                <TableHead className="text-right">Cantidad</TableHead>
-                <TableHead className="text-right">Precio</TableHead>
-                <TableHead className="text-right">Descuento</TableHead>
-                <TableHead className="text-right">Total</TableHead>
+                <TableHead className='text-right'>Cantidad</TableHead>
+                <TableHead className='text-right'>Precio</TableHead>
+                <TableHead className='text-right'>Descuento</TableHead>
+                <TableHead className='text-right'>Total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {watch("invoice_items").map((item) => (
+              {watch('invoice_items').map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>{item.description}</TableCell>
-                  <TableCell className="text-right">{item.quantity}</TableCell>
-                  <TableCell className="text-right">
-                    {`Lps. ${item.unit_cost.toLocaleString("en")}`}
+                  <TableCell className='text-right'>{item.quantity}</TableCell>
+                  <TableCell className='text-right'>
+                    {`Lps. ${item.unit_cost.toLocaleString('en')}`}
                   </TableCell>
-                  <TableCell className="text-right">
-                    {`Lps. ${item.discount.toLocaleString("en")}`}
+                  <TableCell className='text-right'>
+                    {`Lps. ${item.discount.toLocaleString('en')}`}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className='text-right'>
                     {`Lps. ${(
                       item.quantity * item.unit_cost -
                       item.discount
-                    ).toLocaleString("en")}`}
+                    ).toLocaleString('en')}`}
                   </TableCell>
                 </TableRow>
               ))}
@@ -685,64 +690,64 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
         </div>
 
         {/* Mobile View with Collapsible Rows */}
-        <div className="sm:hidden divide-y divide-gray-200">
-          {watch("invoice_items").map((item) => (
-            <div key={item.id} className="bg-white">
+        <div className='sm:hidden divide-y divide-gray-200'>
+          {watch('invoice_items').map((item) => (
+            <div key={item.id} className='bg-white'>
               <div
-                className="py-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+                className='py-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200'
                 onClick={() => toggleRow(item.id)}
               >
                 {/* Description with icon */}
-                <div className="flex items-start gap-3 mb-3">
-                  <Package className="w-5 h-5 text-blue-500 mt-1 flex-shrink-0" />
-                  <div className="text-sm text-gray-900 font-medium leading-snug">
+                <div className='flex items-start gap-3 mb-3'>
+                  <Package className='w-5 h-5 text-blue-500 mt-1 flex-shrink-0' />
+                  <div className='text-sm text-gray-900 font-medium leading-snug'>
                     {item.description}
                   </div>
                 </div>
 
                 {/* Quantity x Price and Total */}
-                <div className="flex justify-between items-center mb-2 pl-8">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <ShoppingCart className="w-4 h-4" />
+                <div className='flex justify-between items-center mb-2 pl-8'>
+                  <div className='flex items-center gap-2 text-sm text-gray-600'>
+                    <ShoppingCart className='w-4 h-4' />
                     <span>
-                      {item.quantity} x{" "}
-                      {`Lps. ${item.unit_cost.toLocaleString("en")}`}
+                      {item.quantity} x{' '}
+                      {`Lps. ${item.unit_cost.toLocaleString('en')}`}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center text-green-600">
-                      <DollarSign className="w-4 h-4" />
-                      <span className="font-medium">
+                  <div className='flex items-center gap-2'>
+                    <div className='flex items-center text-green-600'>
+                      <DollarSign className='w-4 h-4' />
+                      <span className='font-medium'>
                         {`${(
                           item.quantity * item.unit_cost -
                           item.discount
-                        ).toLocaleString("en")}`}
+                        ).toLocaleString('en')}`}
                       </span>
                     </div>
                     {expandedRows[item.id] ? (
-                      <ChevronUp className="w-5 h-5 text-gray-400 ml-2" />
+                      <ChevronUp className='w-5 h-5 text-gray-400 ml-2' />
                     ) : (
-                      <ChevronDown className="w-5 h-5 text-gray-400 ml-2" />
+                      <ChevronDown className='w-5 h-5 text-gray-400 ml-2' />
                     )}
                   </div>
                 </div>
 
                 {/* Expanded Details */}
                 {expandedRows[item.id] && (
-                  <div className="mt-3 pt-3 border-t border-gray-200 text-sm pl-8">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Hash className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-500">ID:</span>
-                        <span className="font-medium text-gray-700">
+                  <div className='mt-3 pt-3 border-t border-gray-200 text-sm pl-8'>
+                    <div className='space-y-3'>
+                      <div className='flex items-center gap-2'>
+                        <Hash className='w-4 h-4 text-gray-400' />
+                        <span className='text-gray-500'>ID:</span>
+                        <span className='font-medium text-gray-700'>
                           {item.product_id}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Percent className="w-4 h-4 text-orange-500" />
-                        <span className="text-gray-500">Descuento:</span>
-                        <span className="font-medium text-orange-600">
-                          {`Lps. ${item.discount.toLocaleString("en")}`}
+                      <div className='flex items-center gap-2'>
+                        <Percent className='w-4 h-4 text-orange-500' />
+                        <span className='text-gray-500'>Descuento:</span>
+                        <span className='font-medium text-orange-600'>
+                          {`Lps. ${item.discount.toLocaleString('en')}`}
                         </span>
                       </div>
                     </div>
@@ -753,129 +758,129 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
           ))}
         </div>
       </div>
-      <Separator className="my-4" />
-      <div className="grid gap-4">
-        <div className="grid gap-3">
-          <div className="font-semibold">Resumen de la Factura</div>
-          <dl className="grid gap-1">
-            <div className="flex items-center justify-between">
-              <dt className="text-muted-foreground">Subtotal:</dt>
-              <dd>{`Lps. ${watch("subtotal").toLocaleString("en")}`}</dd>
+      <Separator className='my-4' />
+      <div className='grid gap-4'>
+        <div className='grid gap-3'>
+          <div className='font-semibold'>Resumen de la Factura</div>
+          <dl className='grid gap-1'>
+            <div className='flex items-center justify-between'>
+              <dt className='text-muted-foreground'>Subtotal:</dt>
+              <dd>{`Lps. ${watch('subtotal').toLocaleString('en')}`}</dd>
             </div>
-            <div className="flex items-center justify-between">
-              <dt className="text-muted-foreground">Exonerado:</dt>
-              <dd>{`Lps. ${watch("tax_exonerado").toLocaleString("en")}`}</dd>
+            <div className='flex items-center justify-between'>
+              <dt className='text-muted-foreground'>Exonerado:</dt>
+              <dd>{`Lps. ${watch('tax_exonerado').toLocaleString('en')}`}</dd>
             </div>
-            <div className="flex items-center justify-between">
-              <dt className="text-muted-foreground">Exento:</dt>
-              <dd>{`Lps. ${watch("tax_exento").toLocaleString("en")}`}</dd>
+            <div className='flex items-center justify-between'>
+              <dt className='text-muted-foreground'>Exento:</dt>
+              <dd>{`Lps. ${watch('tax_exento').toLocaleString('en')}`}</dd>
             </div>
-            <div className="flex items-center justify-between">
-              <dt className="text-muted-foreground">Gravado 15%:</dt>
-              <dd>{`Lps. ${watch("tax_gravado_15").toLocaleString("en")}`}</dd>
+            <div className='flex items-center justify-between'>
+              <dt className='text-muted-foreground'>Gravado 15%:</dt>
+              <dd>{`Lps. ${watch('tax_gravado_15').toLocaleString('en')}`}</dd>
             </div>
-            <div className="flex items-center justify-between">
-              <dt className="text-muted-foreground">Gravado 18%:</dt>
-              <dd>{`Lps. ${watch("tax_gravado_18").toLocaleString("en")}`}</dd>
+            <div className='flex items-center justify-between'>
+              <dt className='text-muted-foreground'>Gravado 18%:</dt>
+              <dd>{`Lps. ${watch('tax_gravado_18').toLocaleString('en')}`}</dd>
             </div>
-            <div className="flex items-center justify-between">
-              <dt className="text-muted-foreground">ISV 15%:</dt>
-              <dd>{`Lps. ${watch("tax").toLocaleString("en")}`}</dd>
+            <div className='flex items-center justify-between'>
+              <dt className='text-muted-foreground'>ISV 15%:</dt>
+              <dd>{`Lps. ${watch('tax').toLocaleString('en')}`}</dd>
             </div>
-            <div className="flex items-center justify-between">
-              <dt className="text-muted-foreground">ISV 18%:</dt>
-              <dd>{`Lps. ${watch("tax_18").toLocaleString("en")}`}</dd>
+            <div className='flex items-center justify-between'>
+              <dt className='text-muted-foreground'>ISV 18%:</dt>
+              <dd>{`Lps. ${watch('tax_18').toLocaleString('en')}`}</dd>
             </div>
-            <div className="flex items-center justify-between font-semibold">
+            <div className='flex items-center justify-between font-semibold'>
               <dt>Total:</dt>
-              <dd>{`Lps. ${watch("total").toLocaleString("en")}`}</dd>
+              <dd>{`Lps. ${watch('total').toLocaleString('en')}`}</dd>
             </div>
           </dl>
         </div>
       </div>
-      <Separator className="my-4" />
+      <Separator className='my-4' />
       <div>
-        <div className="font-semibold">Notas</div>
-        <p className="mt-2 text-muted-foreground">
-          {watch("numbers_to_letters")}
+        <div className='font-semibold'>Notas</div>
+        <p className='mt-2 text-muted-foreground'>
+          {watch('numbers_to_letters')}
         </p>
       </div>
     </>
   );
 
-
   return (
     <>
-      <div className="flex gap-2 w-full justify-end">
+      <div className='flex gap-2 w-full justify-end'>
         {!isEditable && (
-          <div className="flex gap-2 mb-1">
-            {invoice?.status === "pending" && (
+          <div className='flex gap-2 mb-1'>
+            {invoice?.status === 'pending' && !invoice?.delivered_date && (
               <Button
-                className="bg-yellow-500"
+                className='bg-yellow-500'
                 onClick={handleEditInvoice}
-                variant="outline"
-                size="sm"
+                variant='outline'
+                size='sm'
               >
-                Editar <EditIcon className="h-4 w-4 ml-2" />
+                Editar <EditIcon className='h-4 w-4 ml-2' />
               </Button>
             )}
             <Button
-              className="bg-slate-800"
+              className='bg-slate-800'
               onClick={handleDownloadPdf}
               disabled={isDownloading}
-              size="sm"
+              size='sm'
             >
-              {isDownloading ? "Descargando..." : "PDF"}{" "}
-              <DownloadIcon className="h-4 w-4 ml-2" />
+              {isDownloading ? 'Descargando...' : 'PDF'}{' '}
+              <DownloadIcon className='h-4 w-4 ml-2' />
             </Button>
           </div>
         )}
       </div>
-      <Card className="card-invoice overflow-hidden shadow-none rounded-sm px-0">
-        <CardHeader className="flex flex-col md:flex-row items-start justify-between bg-muted/50">
-          <div className="flex flex-row items-stretch justify-between w-full">
-            <div className="flex-1 grid gap-0.5">
-              <CardTitle className="group flex items-center gap-2 text-lg">
-                {invoice?.is_proforma ? `Recibo / Proforma ${invoice?.proforma_number}` :
-                  (isEditable
-                    ? "Crear Factura"
-                    : `Número de Factura ${invoice?.invoice_number}`)}
+      <Card className='card-invoice overflow-hidden shadow-none rounded-sm px-0'>
+        <CardHeader className='flex flex-col md:flex-row items-start justify-between bg-muted/50'>
+          <div className='flex flex-row items-stretch justify-between w-full'>
+            <div className='flex-1 grid gap-0.5'>
+              <CardTitle className='group flex items-center gap-2 text-lg'>
+                {invoice?.is_proforma
+                  ? `Recibo / Proforma ${invoice?.proforma_number}`
+                  : isEditable
+                  ? 'Crear Factura'
+                  : `Número de Factura ${invoice?.invoice_number}`}
               </CardTitle>
               <CardDescription>
-                Fecha:{" "}
+                Fecha:{' '}
                 {isEditable
                   ? new Date().toLocaleDateString()
-                  : new Date(invoice?.date || "").toLocaleDateString()}
+                  : new Date(invoice?.date || '').toLocaleDateString()}
               </CardDescription>
             </div>
             {companyLogo !== null && (
-              <div className="relative h-[100px] aspect-video z-0">
+              <div className='relative h-[100px] aspect-video z-0'>
                 <Image
                   src={companyLogo}
-                  alt="company-logo"
+                  alt='company-logo'
                   fill
-                  style={{ objectFit: "contain" }}
+                  style={{ objectFit: 'contain' }}
                 />
               </div>
             )}
           </div>
         </CardHeader>
-        <CardContent className="p-6 text-sm">
+        <CardContent className='p-6 text-sm'>
           {isEditable ? renderEditableContent() : renderReadOnlyContent()}
         </CardContent>
-        <CardFooter className="flex flex-row items-center justify-between border-t bg-muted/50 px-6 py-3">
-          <div className="text-xs text-muted-foreground">
-            Factura creada:{" "}
-            <time dateTime={watch("created_at")} suppressHydrationWarning>
-              {new Date(watch("created_at")).toLocaleString()}
+        <CardFooter className='flex flex-row items-center justify-between border-t bg-muted/50 px-6 py-3'>
+          <div className='text-xs text-muted-foreground'>
+            Factura creada:{' '}
+            <time dateTime={watch('created_at')} suppressHydrationWarning>
+              {new Date(watch('created_at')).toLocaleString()}
             </time>
           </div>
           <div>
-            <Badge variant={watch("is_proforma") ? "outline" : "secondary"}>
-              {watch("is_proforma") ? "Proforma" : "Factura"}
+            <Badge variant={watch('is_proforma') ? 'outline' : 'secondary'}>
+              {watch('is_proforma') ? 'Proforma' : 'Factura'}
             </Badge>
-            <Badge variant={watch("is_proforma") ? "outline" : "secondary"}>
-              {getStatusBadge(watch("status"))}
+            <Badge variant={watch('is_proforma') ? 'outline' : 'secondary'}>
+              {getStatusBadge(watch('status'), !!watch('delivered_date'))}
             </Badge>
           </div>
         </CardFooter>
@@ -899,7 +904,7 @@ const ProductSelect = ({
   <Controller
     name={`invoice_items.${index}.product_id`}
     control={control}
-    rules={{ required: "Debes agregar un producto" }}
+    rules={{ required: 'Debes agregar un producto' }}
     render={({ field }) => (
       <Select
         onValueChange={(value) => {
@@ -919,7 +924,7 @@ const ProductSelect = ({
         value={field.value}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Seleccione producto" />
+          <SelectValue placeholder='Seleccione producto' />
         </SelectTrigger>
         <SelectContent>
           {products.map((product) => (
@@ -938,7 +943,7 @@ const DescriptionInput = ({ index, control }: InputProps) => (
     name={`invoice_items.${index}.description`}
     control={control}
     render={({ field }) => (
-      <Input {...field} placeholder="Descripción" className="mt-2" />
+      <Input {...field} placeholder='Descripción' className='mt-2' />
     )}
   />
 );
@@ -955,11 +960,11 @@ const QuantityInput = ({ index, control }: InputProps) => (
     rules={{ min: 1 }}
     render={({ field }) => (
       <Input
-        type="number"
+        type='number'
         {...field}
         onChange={(e) => field.onChange(Number(e.target.value))}
-        placeholder="Quantity"
-        className="mt-2"
+        placeholder='Quantity'
+        className='mt-2'
       />
     )}
   />
@@ -971,11 +976,11 @@ const UnitCostInput = ({ index, control }: InputProps) => (
     control={control}
     render={({ field }) => (
       <Input
-        type="number"
+        type='number'
         {...field}
         onChange={(e) => field.onChange(Number(e.target.value))}
-        placeholder="Unit Cost"
-        className="mt-2"
+        placeholder='Unit Cost'
+        className='mt-2'
       />
     )}
   />
@@ -987,11 +992,11 @@ const DiscountInput = ({ index, control }: InputProps) => (
     control={control}
     render={({ field }) => (
       <Input
-        type="number"
+        type='number'
         {...field}
         onChange={(e) => field.onChange(Number(e.target.value))}
-        placeholder="Discount"
-        className="mt-2"
+        placeholder='Discount'
+        className='mt-2'
       />
     )}
   />
@@ -999,7 +1004,7 @@ const DiscountInput = ({ index, control }: InputProps) => (
 
 const calculateItemTotal = (index: number, items: InvoiceItem[]) => {
   const item = items[index];
-  return (item.quantity * item.unit_cost - item.discount).toLocaleString("en");
+  return (item.quantity * item.unit_cost - item.discount).toLocaleString('en');
 };
 
 export default InvoiceView2;

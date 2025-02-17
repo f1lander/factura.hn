@@ -1,5 +1,5 @@
-import { BaseService, Table } from "./BaseService";
-import { PostgrestError } from "@supabase/supabase-js";
+import { BaseService, Table } from './BaseService';
+import { PostgrestError } from '@supabase/supabase-js';
 
 export interface Invoice {
   id: string;
@@ -27,11 +27,13 @@ export interface Invoice {
     rtn: string;
   };
   invoice_items: InvoiceItem[];
-  status: "pending" | "paid" | "cancelled";
+  status: 'pending' | 'paid' | 'cancelled';
   generated_invoice_id?: string | null;
   s3_key?: string | null;
   s3_url?: string | null;
   notes?: string | null;
+  delivered_date?: string | null;
+  reg_order_id?: string | null;
 }
 
 export interface InvoiceItem {
@@ -44,6 +46,7 @@ export interface InvoiceItem {
   discount: number;
   updated_at: string;
   created_at: string;
+  is_service?: boolean;
 }
 
 interface CustomerInfo {
@@ -53,7 +56,7 @@ interface CustomerInfo {
 }
 
 class InvoiceService extends BaseService {
-  private tableName: Table = "invoices";
+  private tableName: Table = 'invoices';
 
   /**
    * Ensures that a valid company ID is available for generating an invoice.
@@ -76,7 +79,7 @@ class InvoiceService extends BaseService {
   private async ensureCompanyIdForInvoice(): Promise<string | null> {
     const companyId = await this.ensureCompanyId();
     if (!companyId) {
-      console.error("No company ID available for this operation");
+      console.error('No company ID available for this operation');
     }
     return companyId;
   }
@@ -102,8 +105,10 @@ class InvoiceService extends BaseService {
       (invoiceItem) => invoiceItem.description.length < 1
     );
     const thereAreNoProductEntries: boolean = invoiceItems.length < 1;
-    const noCustomerDefined: boolean = 'name' in customer && customer.name.length < 1 ;
-    const mustBeHaveRtn: boolean = !isProforma && 'rtn' in customer && customer.rtn.length < 1;
+    const noCustomerDefined: boolean =
+      'name' in customer && customer.name.length < 1;
+    const mustBeHaveRtn: boolean =
+      !isProforma && 'rtn' in customer && customer.rtn.length < 1;
 
     if (
       anInvoiceItemHasNotSpecifiedProduct ||
@@ -129,13 +134,13 @@ class InvoiceService extends BaseService {
    * @memberof InvoiceService
    */
   generateNextInvoiceNumber(previousInvoiceNumber: string) {
-    const parts = previousInvoiceNumber.split("-");
+    const parts = previousInvoiceNumber.split('-');
     const lastPart = parts[parts.length - 1];
     const nextInvoiceNumber = (parseInt(lastPart, 10) + 1)
       .toString()
-      .padStart(8, "0");
+      .padStart(8, '0');
     parts[parts.length - 1] = nextInvoiceNumber;
-    return parts.join("-");
+    return parts.join('-');
   }
 
   /**
@@ -281,16 +286,16 @@ class InvoiceService extends BaseService {
     invoiceNumber1: string,
     invoiceNumber2: string
   ):
-    | "first less than second"
-    | "first greater than second"
-    | "equal"
-    | "invalid" {
+    | 'first less than second'
+    | 'first greater than second'
+    | 'equal'
+    | 'invalid' {
     const invoiceNumberStructure: RegExp = /^(\d{3})-(\d{3})-(\d{2})-(\d{8})$/;
     const invoiceNumberHasCorrectFormat: boolean =
       invoiceNumberStructure.test(invoiceNumber1) &&
       invoiceNumberStructure.test(invoiceNumber2);
-    if (!invoiceNumberHasCorrectFormat) return "invalid";
-    if (invoiceNumber1 === invoiceNumber2) return "equal";
+    if (!invoiceNumberHasCorrectFormat) return 'invalid';
+    if (invoiceNumber1 === invoiceNumber2) return 'equal';
     const invoice1Numbers = invoiceNumber1
       .match(invoiceNumberStructure)!
       .slice(1)
@@ -301,11 +306,11 @@ class InvoiceService extends BaseService {
       .map(Number);
     for (let i = 0; i < invoice1Numbers.length; i++) {
       if (invoice1Numbers[i] > invoice2Numbers[i])
-        return "first greater than second";
+        return 'first greater than second';
       if (invoice1Numbers[i] < invoice2Numbers[i])
-        return "first less than second";
+        return 'first less than second';
     }
-    return "equal";
+    return 'equal';
   }
 
   /**
@@ -337,33 +342,33 @@ class InvoiceService extends BaseService {
   ): string | true {
     const invoiceNumberPattern = /^\d{3}-\d{3}-\d{2}-\d{8}$/;
     if (!invoiceNumberPattern.test(previousInvoiceNumber)) {
-      return "El número de factura anterior debe tener el formato 000-000-00-00000000";
+      return 'El número de factura anterior debe tener el formato 000-000-00-00000000';
     }
     if (!invoiceNumberPattern.test(nextInvoiceNumber)) {
-      return "El número de factura siguiente debe tener el formato 000-000-00-00000000";
+      return 'El número de factura siguiente debe tener el formato 000-000-00-00000000';
     }
     if (!invoiceNumberPattern.test(lastInvoiceRange)) {
-      return "El número de factura del último rango válido debe tener el formato 000-000-00-00000000";
+      return 'El número de factura del último rango válido debe tener el formato 000-000-00-00000000';
     }
     if (!this.isInvoiceNumberValid(nextInvoiceNumber, lastInvoiceRange))
-      return "El siguiente número de factura está fuera del rango de facturación actual";
+      return 'El siguiente número de factura está fuera del rango de facturación actual';
     const nextAndPreviousComparison = this.compareInvoiceNumbers(
       nextInvoiceNumber,
       previousInvoiceNumber
     );
     if (!lastInvoiceExists) {
       const nextGreaterOrEqualThanPrevious =
-        nextAndPreviousComparison === "first greater than second" ||
-        nextAndPreviousComparison === "equal";
+        nextAndPreviousComparison === 'first greater than second' ||
+        nextAndPreviousComparison === 'equal';
       if (!nextGreaterOrEqualThanPrevious) {
-        return "El siguiente número de factura no puede ser menor que el anterior";
+        return 'El siguiente número de factura no puede ser menor que el anterior';
       }
     }
     if (lastInvoiceExists) {
       const nextGreaterThanPrevious =
-        nextAndPreviousComparison === "first greater than second";
+        nextAndPreviousComparison === 'first greater than second';
       if (!nextGreaterThanPrevious)
-        return "El siguiente número de factura debe ser mayor que el anterior";
+        return 'El siguiente número de factura debe ser mayor que el anterior';
     }
 
     return true;
@@ -387,26 +392,26 @@ class InvoiceService extends BaseService {
         invoice_items (*)
       `
       )
-      .eq("company_id", companyId)
+      .eq('company_id', companyId)
       .or(
         `invoice_number.ilike.%${searchTerm}%,customers.name.ilike.%${searchTerm}%,invoice_items.description.ilike.%${searchTerm}%`
       )
-      .order("date", { ascending: false });
+      .order('date', { ascending: false });
 
     if (startDate && endDate) {
       query = query
-        .gte("date", startDate.toISOString())
-        .lte("date", endDate.toISOString());
+        .gte('date', startDate.toISOString())
+        .lte('date', endDate.toISOString());
     }
 
     if (statuses && statuses.length > 0) {
-      query = query.in("status", statuses);
+      query = query.in('status', statuses);
     }
 
     const { data, error } = await query;
 
     if (error) {
-      console.error("Error searching invoices:", error);
+      console.error('Error searching invoices:', error);
       return [];
     }
 
@@ -431,11 +436,11 @@ class InvoiceService extends BaseService {
     const { error } = await this.supabase
       .from(this.tableName)
       .update({ status: newStatus })
-      .in("id", invoiceIds)
-      .eq("company_id", companyId);
+      .in('id', invoiceIds)
+      .eq('company_id', companyId);
 
     if (error) {
-      console.error("Error updating invoice statuses:", error);
+      console.error('Error updating invoice statuses:', error);
       return error;
     }
   }
@@ -462,11 +467,11 @@ class InvoiceService extends BaseService {
         )
       `
       )
-      .eq("company_id", companyId)
-      .order("date", { ascending: false });
+      .eq('company_id', companyId)
+      .order('date', { ascending: false });
 
     if (error) {
-      console.error("Error fetching invoices:", error);
+      console.error('Error fetching invoices:', error);
       return [];
     }
 
@@ -486,12 +491,12 @@ class InvoiceService extends BaseService {
         invoice_items (*)
       `
       )
-      .eq("id", id)
-      .eq("company_id", companyId)
+      .eq('id', id)
+      .eq('company_id', companyId)
       .single();
 
     if (error) {
-      console.error("Error fetching invoice:", error);
+      console.error('Error fetching invoice:', error);
       return null;
     }
 
@@ -506,14 +511,14 @@ class InvoiceService extends BaseService {
     };
   }
 
-  async getTotalRevenue(period: "week" | "month"): Promise<number> {
+  async getTotalRevenue(period: 'week' | 'month'): Promise<number> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return 0;
 
     const now = new Date();
     let startDate: Date;
 
-    if (period === "week") {
+    if (period === 'week') {
       startDate = new Date(
         now.getFullYear(),
         now.getMonth(),
@@ -529,14 +534,14 @@ class InvoiceService extends BaseService {
 
     const { data, error } = await this.supabase
       .from(this.tableName)
-      .select("total")
-      .eq("company_id", companyId)
-      .neq("status", "cancelled")
-      .gte("date", startDate.toISOString())
-      .lte("date", now.toISOString());
+      .select('total')
+      .eq('company_id', companyId)
+      .neq('status', 'cancelled')
+      .gte('date', startDate.toISOString())
+      .lte('date', now.toISOString());
 
     if (error) {
-      console.error("Error fetching total revenue:", error);
+      console.error('Error fetching total revenue:', error);
       return 0;
     }
 
@@ -547,7 +552,7 @@ class InvoiceService extends BaseService {
   }
 
   async createInvoiceWithItems(
-    invoice: Omit<Invoice, "id" | "created_at" | "updated_at">
+    invoice: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>
   ): Promise<Invoice | null> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
@@ -560,7 +565,7 @@ class InvoiceService extends BaseService {
       .single();
 
     if (error) {
-      console.error("Error creating invoice:", error);
+      console.error('Error creating invoice:', error);
       return null;
     }
 
@@ -571,11 +576,11 @@ class InvoiceService extends BaseService {
       }));
 
       const { error: itemsError } = await this.supabase
-        .from("invoice_items")
+        .from('invoice_items')
         .insert(itemsToInsert);
 
       if (itemsError) {
-        console.error("Error creating invoice items:", itemsError);
+        console.error('Error creating invoice items:', itemsError);
         // You might want to delete the invoice here if items fail to insert
         return null;
       }
@@ -596,22 +601,22 @@ class InvoiceService extends BaseService {
     const { error } = await this.supabase
       .from(this.tableName)
       .update(invoiceUpdates)
-      .eq("id", id)
-      .eq("company_id", companyId);
+      .eq('id', id)
+      .eq('company_id', companyId);
 
     if (error) {
-      console.error("Error updating invoice:", error);
+      console.error('Error updating invoice:', error);
       return null;
     }
 
     if (invoice_items && invoice_items.length > 0) {
       const { error: deleteError } = await this.supabase
-        .from("invoice_items")
+        .from('invoice_items')
         .delete()
-        .eq("invoice_id", id);
+        .eq('invoice_id', id);
 
       if (deleteError) {
-        console.error("Error deleting old invoice items:", deleteError);
+        console.error('Error deleting old invoice items:', deleteError);
         return null;
       }
 
@@ -621,11 +626,11 @@ class InvoiceService extends BaseService {
       }));
 
       const { error: insertError } = await this.supabase
-        .from("invoice_items")
+        .from('invoice_items')
         .insert(itemsToInsert);
 
       if (insertError) {
-        console.error("Error inserting new invoice items:", insertError);
+        console.error('Error inserting new invoice items:', insertError);
         return null;
       }
     }
@@ -634,7 +639,7 @@ class InvoiceService extends BaseService {
   }
 
   async createInvoice(
-    invoiceData: Omit<Invoice, "id" | "created_at" | "updated_at">
+    invoiceData: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>
   ): Promise<Invoice | null> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
@@ -656,12 +661,12 @@ class InvoiceService extends BaseService {
   }
 
   async createInvoiceItem(
-    invoiceItemData: Omit<InvoiceItem, "id" | "created_at" | "updated_at">
+    invoiceItemData: Omit<InvoiceItem, 'id' | 'created_at' | 'updated_at'>
   ): Promise<InvoiceItem | null> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
 
-    return this.create<InvoiceItem>("invoice_items", invoiceItemData);
+    return this.create<InvoiceItem>('invoice_items', invoiceItemData);
   }
 
   async updateInvoiceItem(
@@ -671,7 +676,7 @@ class InvoiceService extends BaseService {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
 
-    return this.update("invoice_items", id, updates);
+    return this.update('invoice_items', id, updates);
   }
 
   async getLastInvoice(): Promise<string | null> {
@@ -680,14 +685,14 @@ class InvoiceService extends BaseService {
 
     const { data, error } = await this.supabase
       .from(this.tableName)
-      .select("invoice_number")
-      .eq("company_id", companyId)
-      .order("created_at", { ascending: false })
+      .select('invoice_number')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
       .limit(1)
       .single();
 
     if (error) {
-      console.error("Error fetching last invoice:", error);
+      console.error('Error fetching last invoice:', error);
       return null;
     }
 
