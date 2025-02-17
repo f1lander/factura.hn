@@ -49,6 +49,7 @@ const ProductSelect = ({
           if (value !== null) {
             setValue(`invoice_items.${index}.unit_cost`, value.unit_cost);
             setValue(`invoice_items.${index}.description`, value.description);
+            setValue(`invoice_items.${index}.is_service`, value.is_service);
           }
           field.onChange(value?.id);
         }}

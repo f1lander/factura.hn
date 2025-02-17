@@ -1,11 +1,11 @@
-import { createServerClient } from "@supabase/ssr";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import {
   blockedRoutesForGuests,
   blockedRoutesForUsers,
   routesThatRequireCompanyData,
-} from "./routeRestrictionsLists";
+} from './routeRestrictionsLists';
 
 /**
  * Even though the name of the function is updateSession, it also performs
@@ -21,19 +21,19 @@ export async function updateSession(request: NextRequest) {
   const isRouteBlockedForGuests: boolean = blockedRoutesForGuests.some(
     (route) => {
       return route.test(request.nextUrl.pathname);
-    },
+    }
   );
 
   const routeNeedsACompany: boolean = routesThatRequireCompanyData.some(
     (route) => {
       return route.test(request.nextUrl.pathname);
-    },
+    }
   );
 
   const isRouteBlockedForUsers: boolean = blockedRoutesForUsers.some(
     (route) => {
       return route.test(request.nextUrl.pathname);
-    },
+    }
   );
 
   let supabaseResponse = NextResponse.next({
@@ -51,17 +51,17 @@ export async function updateSession(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value),
+            request.cookies.set(name, value)
           );
           supabaseResponse = NextResponse.next({
             request,
           });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
+            supabaseResponse.cookies.set(name, value, options)
           );
         },
       },
-    },
+    }
   );
 
   // IMPORTANT: Avoid writing any logic between createServerClient and
@@ -78,7 +78,7 @@ export async function updateSession(request: NextRequest) {
   /** Redirect to login page in case someone hasn't an active session */
   if (isGuest && isRouteBlockedForGuests) {
     const urlToLoginPage = request.nextUrl.clone();
-    urlToLoginPage.pathname = "/auth/login";
+    urlToLoginPage.pathname = '/auth/login';
     return NextResponse.redirect(urlToLoginPage);
   }
 
@@ -86,18 +86,18 @@ export async function updateSession(request: NextRequest) {
   if (!isGuest) {
     // TODO: Write a separate function that checks if the company exists so that it becomes more readable
     const { data: company } = await supabase
-      .from("companies")
-      .select("*")
-      .eq("user_id", user!.id)
+      .from('companies')
+      .select('*')
+      .eq('user_id', user!.id)
       .single();
     const companyExists: boolean = company !== undefined && company !== null;
     if (!companyExists && routeNeedsACompany) {
-      const urlToSettingsPage = new URL("/home/settings", request.url);
-      urlToSettingsPage.searchParams.set("showToast", "companySetupRequired");
+      const urlToSettingsPage = new URL('/home/settings', request.url);
+      urlToSettingsPage.searchParams.set('showToast', 'companySetupRequired');
       return NextResponse.redirect(urlToSettingsPage);
     }
     if (isRouteBlockedForUsers) {
-      const urlToInvoicesPage = new URL("/home/invoices", request.url);
+      const urlToInvoicesPage = new URL('/home/invoices', request.url);
       return NextResponse.redirect(urlToInvoicesPage);
     }
   }
