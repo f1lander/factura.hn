@@ -89,6 +89,7 @@ export function DataGrid<T>({
   SearchBoxComponent,
   ControlsComponents,
   context,
+  onRowUpdate,
   onRowDelete,
   autoUpdate,
 }: DataGridProps<T>) {
@@ -144,9 +145,11 @@ export function DataGrid<T>({
     async (event: RowValueChangedEvent) => {
       const newData = event.data;
       const rowId = newData[idField as keyof typeof newData] as string;
+      const rowIndex = event.node.rowIndex as number;
 
       try {
-        gridApi?.applyTransaction({ update: [newData] });
+        // gridApi?.applyTransaction({ update: [newData] });
+        onRowUpdate?.(rowIndex, newData);
       } catch (error) {
         console.error('Error updating row:', error);
         // Revert changes if update fails

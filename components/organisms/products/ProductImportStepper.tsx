@@ -16,6 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useMediaQuery } from '@/lib/hooks';
 import { Switch } from '@/components/ui/switch';
 import { Product } from '@/lib/supabase/services/product';
+import { useQuery } from '@tanstack/react-query';
+import { productService } from '@/lib/supabase/services/product';
 
 interface ProductImportStepperProps {
   onCancel: () => void;
@@ -34,6 +36,15 @@ export function ProductImportStepper({
   tableFieldnames,
   handleXlsFileUpload,
 }: ProductImportStepperProps) {
+  const { data: existingProducts } = useQuery(
+    ['products'],
+    () => productService.getProductsByCompany(),
+    {
+      staleTime: 300000,
+      cacheTime: 600000,
+      refetchOnWindowFocus: true,
+    }
+  );
   const [currentStep, setCurrentStep] = useState(1);
   const [mappedData, setMappedData] = useState<any[]>([]);
   const { control, handleSubmit } = useForm({
@@ -54,6 +65,28 @@ export function ProductImportStepper({
     { id: 2, name: 'Mapear Campos' },
     { id: 3, name: 'Revisar Datos' },
   ];
+
+  const getDuplicatedSkus = (data: any[]) => {
+    const skuMap = new Map();
+    const duplicates = new Set<string>();
+
+    // Check duplicates within mappedData
+    data.forEach((item) => {
+      if (skuMap.has(item.sku)) {
+        duplicates.add(item.sku);
+      }
+      skuMap.set(item.sku, true);
+    });
+
+    // Check duplicates with existing products
+    existingProducts?.forEach((product) => {
+      if (skuMap.has(product.sku)) {
+        duplicates.add(product.sku);
+      }
+    });
+
+    return duplicates;
+  };
 
   const handleFieldMapping = (data: any) => {
     if (!xlsFile) return;
@@ -193,17 +226,48 @@ export function ProductImportStepper({
           </div>
         );
 
-      case 3:
+      case 3: {
+        const duplicatedSkus = getDuplicatedSkus(mappedData);
+        const hasErrors = duplicatedSkus.size > 0;
+
         return (
           <div className='flex flex-col gap-6 p-4 md:p-8'>
             <h2 className='text-xl md:text-2xl font-semibold'>Revisar Datos</h2>
+            {hasErrors && (
+              <div className='rounded-md bg-destructive/15 p-3'>
+                <div className='flex'>
+                  <div className='ml-3'>
+                    <h3 className='text-sm font-medium text-destructive'>
+                      Se encontraron SKUs duplicados
+                    </h3>
+                    <div className='mt-2 text-sm text-destructive/90'>
+                      <ul className='list-disc space-y-1 pl-5'>
+                        {Array.from(duplicatedSkus).map((sku) => (
+                          <li key={sku}>{sku}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             {isMobile ? (
               <div className='space-y-4'>
                 {mappedData.map((item, index) => (
-                  <Card key={index}>
+                  <Card
+                    key={index}
+                    className={
+                      duplicatedSkus.has(item.sku) ? 'border-destructive' : ''
+                    }
+                  >
                     <CardHeader>
-                      <CardTitle className='text-sm'>
-                        Item #{index + 1}
+                      <CardTitle className='text-sm flex justify-between items-center'>
+                        <span>Item #{index + 1}</span>
+                        {duplicatedSkus.has(item.sku) && (
+                          <span className='text-xs text-destructive'>
+                            SKU duplicado
+                          </span>
+                        )}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className='space-y-4'>
@@ -268,7 +332,19 @@ export function ProductImportStepper({
                 description='Revisa y edita antes de importar'
                 data={mappedData}
                 columnDefs={[
-                  { field: 'sku', headerName: 'SKU', editable: true },
+                  {
+                    field: 'sku',
+                    headerName: 'SKU',
+                    editable: true,
+                    cellStyle: (params) => ({
+                      backgroundColor: duplicatedSkus.has(params.value)
+                        ? 'rgba(239, 68, 68, 0.1)'
+                        : '',
+                      color: duplicatedSkus.has(params.value)
+                        ? 'rgb(239, 68, 68)'
+                        : '',
+                    }),
+                  },
                   {
                     field: 'description',
                     headerName: 'Descripción',
@@ -285,6 +361,7 @@ export function ProductImportStepper({
                     editable: true,
                   },
                 ]}
+                onRowUpdate={handleRowUpdate}
                 onRowDelete={handleRowDelete}
                 autoUpdate
               />
@@ -293,12 +370,16 @@ export function ProductImportStepper({
               <Button variant='outline' onClick={() => setCurrentStep(2)}>
                 Atrás
               </Button>
-              <Button onClick={() => onComplete(mappedData)}>
+              <Button
+                onClick={() => onComplete(mappedData)}
+                disabled={hasErrors}
+              >
                 Importar Productos
               </Button>
             </div>
           </div>
         );
+      }
     }
   };
 
