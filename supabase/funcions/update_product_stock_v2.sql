@@ -39,7 +39,7 @@ BEGIN
         IF operation_type = 'ADD' THEN
             -- Add quantity to the stock
             UPDATE products
-            SET quantity_in_stock = quantity_in_stock + quantity_delta
+            SET quantity_in_stock = COALESCE(quantity_in_stock, 0) + quantity_delta
             WHERE id = product_id;
         ELSIF operation_type = 'DELETE' THEN
             -- Ensure quantity to delete does not exceed existing stock

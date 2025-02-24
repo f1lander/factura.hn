@@ -5,22 +5,22 @@ import React, {
   useMemo,
   useRef,
   useEffect,
-} from "react";
-import { FileSpreadsheet, Redo2Icon, Undo2Icon } from "lucide-react";
-import { AgGridReact } from "ag-grid-react";
+} from 'react';
+import { FileSpreadsheet, Redo2Icon, Undo2Icon } from 'lucide-react';
+import { AgGridReact } from 'ag-grid-react';
 import {
   ColDef,
   GridReadyEvent,
   GridApi,
   CellValueChangedEvent,
   RowValueChangedEvent,
-} from "ag-grid-community";
-import "ag-grid-community/styles/ag-grid.css";
-import "ag-grid-community/styles/ag-theme-quartz.css";
+} from 'ag-grid-community';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-quartz.css';
 
-import { Button } from "@/components/ui/button";
-import { PlusIcon, Trash2Icon, SearchIcon } from "lucide-react";
-import { AG_GRID_LOCALE_ES } from "@ag-grid-community/locale";
+import { Button } from '@/components/ui/button';
+import { PlusIcon, Trash2Icon, SearchIcon } from 'lucide-react';
+import { AG_GRID_LOCALE_ES } from '@ag-grid-community/locale';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +30,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 
 // New interface to track both edited and original data
 interface EditedRowData<T> {
@@ -57,6 +57,9 @@ interface DataGridProps<T> {
   SearchBoxComponent?: React.ReactNode;
   ControlsComponents?: React.ReactNode;
   context?: any;
+  onRowUpdate?: (index: number, newData: T) => Promise<void>;
+  onRowDelete?: (index: number, data: T) => Promise<void>;
+  autoUpdate?: boolean;
 }
 
 const defaultColDef: ColDef = {
@@ -79,16 +82,19 @@ export function DataGrid<T>({
   onAddExcelSpreadSheet,
   handleOnUpdateRows,
   searchPlaceholder,
-  height = "500px",
-  idField = "id" as keyof T,
+  height = '500px',
+  idField = 'id' as keyof T,
   pageSize = 10,
   pageSizeOptions = [5, 10, 20],
   SearchBoxComponent,
   ControlsComponents,
   context,
+  onRowUpdate,
+  onRowDelete,
+  autoUpdate,
 }: DataGridProps<T>) {
   const gridRef = useRef<AgGridReact>(null);
-  const gridStyle = useMemo(() => ({ height: "500px", width: "100%" }), []);
+  const gridStyle = useMemo(() => ({ height: '500px', width: '100%' }), []);
   const [originalData, setOriginalData] = useState<T[]>(
     data ? data.map((row) => ({ ...row })) : []
   );
@@ -99,11 +105,83 @@ export function DataGrid<T>({
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
+  const deleteActionsColumnDef: ColDef[] = onRowDelete
+    ? [
+        {
+          headerName: 'Actions',
+          field: 'actions',
+          width: 50,
+          sortable: false,
+          filter: false,
+          editable: false,
+          cellRenderer: (params: any) => {
+            const handleDelete = async () => {
+              try {
+                onRowDelete(params.node.rowIndex, params.data);
+              } catch (error) {
+                console.error('Error deleting row:', error);
+              }
+            };
+
+            return (
+              <Button
+                variant='ghost'
+                size='sm'
+                className='h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete();
+                }}
+              >
+                <Trash2Icon className='h-4 w-4' />
+              </Button>
+            );
+          },
+        },
+      ]
+    : [];
+
+  const onRowValueChangedAuto = useCallback(
+    async (event: RowValueChangedEvent) => {
+      const newData = event.data;
+      const rowId = newData[idField as keyof typeof newData] as string;
+      const rowIndex = event.rowIndex as number;
+
+      // Call onRowUpdate if provided
+      // if (onRowUpdate) {
+      try {
+        // await onRowUpdate(rowIndex, newData);
+        gridApi?.applyTransaction({ update: [newData] });
+      } catch (error) {
+        console.error('Error updating row:', error);
+        // Revert changes if update fails
+        if (gridApi) {
+          const originalRow = originalData.find(
+            (row) => row[idField as keyof T] === rowId
+          );
+          if (originalRow) {
+            gridApi.applyTransaction({ update: [originalRow] });
+          }
+        }
+        return;
+      }
+      // }
+
+      // setEditedRows((prev) => {
+      //   const filtered = prev.filter(
+      //     (row) => row[idField as keyof T] !== rowId
+      //   );
+      //   return [...filtered, newData];
+      // });
+    },
+    [idField, onRowUpdate, originalData, gridApi]
+  );
+
   const onCellValueChanged = useCallback(
     (event: CellValueChangedEvent) => {
       const { data, source } = event;
 
-      if (source === "redo") {
+      if (source === 'redo') {
         setEditedRows((prev) => {
           const filtered = prev.filter(
             (row) => row[idField as keyof T] !== data[idField]
@@ -117,6 +195,11 @@ export function DataGrid<T>({
 
   const onRowValueChanged = useCallback(
     (event: RowValueChangedEvent) => {
+      if (autoUpdate) {
+        onRowValueChangedAuto(event);
+        return;
+      }
+
       const newData = event.data;
       // I can't do this because I need the id to locate the product I'm gonna update
       // if (newData.id !== undefined) delete newData.id;
@@ -130,7 +213,7 @@ export function DataGrid<T>({
         return [...filtered, newData];
       });
     },
-    [idField]
+    [idField, autoUpdate]
   );
 
   const handleSaveChanges = useCallback(async () => {
@@ -139,7 +222,7 @@ export function DataGrid<T>({
         await handleOnUpdateRows(editedRows);
         setEditedRows([]);
       } catch (error) {
-        console.error("Error saving changes", error);
+        console.error('Error saving changes', error);
       }
     }
     setShowSaveDialog(false);
@@ -147,7 +230,7 @@ export function DataGrid<T>({
 
   const handleDiscardChanges = useCallback(() => {
     if (gridApi) {
-      gridApi.setGridOption("rowData", [...originalData]);
+      gridApi.setGridOption('rowData', [...originalData]);
       setEditedRows([]);
     }
     setShowDiscardDialog(false);
@@ -197,97 +280,97 @@ export function DataGrid<T>({
   };
 
   return (
-    <div className="w-full bg-white p-4">
-      <div className="space-y-4 mb-4">
-        <div className="flex flex-col md:flex-row justify-between items-center">
+    <div className='w-full bg-white p-4'>
+      <div className='space-y-4 mb-4'>
+        <div className='flex flex-col md:flex-row justify-between items-center'>
           <div>
-            {title && <h2 className="text-lg font-semibold">{title}</h2>}
+            {title && <h2 className='text-lg font-semibold'>{title}</h2>}
             {description && (
-              <p className="text-sm text-gray-500">{description}</p>
+              <p className='text-sm text-gray-500'>{description}</p>
             )}
           </div>
-          <div className="flex gap-2 flex-col md:flex-row">
+          <div className='flex gap-2 flex-col md:flex-row'>
             {onAddExcelSpreadSheet && (
               <Button
                 onClick={onAddExcelSpreadSheet}
-                variant="outline"
-                className="flex gap-2 items-center border-green-600 text-gray-900 hover:bg-green-50 hover:text-green-700"
+                variant='outline'
+                className='flex gap-2 items-center border-green-600 text-gray-900 hover:bg-green-50 hover:text-green-700'
               >
-                <FileSpreadsheet className="h-4 w-4" />
+                <FileSpreadsheet className='h-4 w-4' />
                 <span>Añadir desde archivo de Excel</span>
               </Button>
             )}
             {onDelete && selectedRows.length > 0 && (
               <Button
                 onClick={onDelete}
-                variant="outline"
-                className="border-red-600 text-gray-900 hover:bg-red-50 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                variant='outline'
+                className='border-red-600 text-gray-900 hover:bg-red-50 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center'
               >
-                <Trash2Icon className="h-4 w-4 mr-2" />
+                <Trash2Icon className='h-4 w-4 mr-2' />
                 Eliminar
               </Button>
             )}
             {onCreateNew && (
               <Button
                 onClick={onCreateNew}
-                variant="outline"
-                className="border-blue-600 text-blue-600 hover:bg-blue-50 hover:text-blue-700 flex items-center"
+                variant='outline'
+                className='border-blue-600 text-blue-600 hover:bg-blue-50 hover:text-blue-700 flex items-center'
               >
-                <PlusIcon className="h-4 w-4 mr-2" />
+                <PlusIcon className='h-4 w-4 mr-2' />
                 Nuevo
               </Button>
             )}
           </div>
         </div>
-        <div className="flex flex-col md:flex-row items-center gap-4">
-          {
-            SearchBoxComponent || (
-              <div className="relative w-full md:w-1/3">
-                <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-900" />
-                <input
-                  type="text"
-                  placeholder={searchPlaceholder ? searchPlaceholder : "Buscar..."}
-                  onInput={onFilterTextBoxChanged}
-                  className="h-9 w-full rounded-md border px-8 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
-                />
-              </div>
-            )
-          }
+        <div className='flex flex-col md:flex-row items-center gap-4'>
+          {SearchBoxComponent || (
+            <div className='relative w-full md:w-1/3'>
+              <SearchIcon className='absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-900' />
+              <input
+                type='text'
+                placeholder={
+                  searchPlaceholder ? searchPlaceholder : 'Buscar...'
+                }
+                onInput={onFilterTextBoxChanged}
+                className='h-9 w-full rounded-md border px-8 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50'
+              />
+            </div>
+          )}
           {ControlsComponents}
           {editedRows.length > 0 && (
-            <div className="flex flex-col md:flex-row gap-2">
+            <div className='flex flex-col md:flex-row gap-2'>
               <Button
                 onClick={() => setShowSaveDialog(true)}
-                variant="outline"
-                className="border-green-600 text-gray-900 hover:bg-green-50 hover:text-green-700"
+                variant='outline'
+                className='border-green-600 text-gray-900 hover:bg-green-50 hover:text-green-700'
               >
                 Guardar Cambios ({editedRows.length})
               </Button>
               <Button
                 onClick={() => setShowDiscardDialog(true)}
-                variant="outline"
-                className="border-red-600 text-gray-900 hover:bg-red-50 hover:text-red-700"
+                variant='outline'
+                className='border-red-600 text-gray-900 hover:bg-red-50 hover:text-red-700'
               >
                 Descartar Cambios
               </Button>
               <Button
                 onClick={() => handleOnUndo()}
-                className="border-gray-600 bg-transparent text-gray-900 hover:bg-gray-200 hover:text-gray-700"
+                className='border-gray-600 bg-transparent text-gray-900 hover:bg-gray-200 hover:text-gray-700'
               >
-                <Undo2Icon className="h-4 w-4" />
+                <Undo2Icon className='h-4 w-4' />
               </Button>
               <Button
                 onClick={() => handleOnRedo()}
-                className="border-gray-600 bg-transparent text-gray-900 hover:bg-gray-200 hover:text-gray-700"
+                className='border-gray-600 bg-transparent text-gray-900 hover:bg-gray-200 hover:text-gray-700'
               >
-                <Redo2Icon className="h-4 w-4" />
+                <Redo2Icon className='h-4 w-4' />
               </Button>
             </div>
           )}
         </div>
       </div>
 
-      <div className="ag-theme-quartz w-full" style={gridStyle}>
+      <div className='ag-theme-quartz w-full' style={gridStyle}>
         <AgGridReact
           ref={gridRef}
           gridOptions={{
@@ -295,13 +378,13 @@ export function DataGrid<T>({
             undoRedoCellEditing: true,
           }}
           rowData={data}
-          columnDefs={columnDefs}
+          columnDefs={[...columnDefs, ...deleteActionsColumnDef]}
           defaultColDef={defaultColDef}
           onGridReady={onGridReady}
           onSelectionChanged={handleSelectionChange}
           onRowClicked={handleRowClick}
-          rowSelection="multiple"
-          editType="fullRow"
+          rowSelection='multiple'
+          editType='fullRow'
           quickFilterText={quickFilterText}
           pagination={true}
           paginationPageSize={pageSize}
@@ -317,7 +400,7 @@ export function DataGrid<T>({
           <AlertDialogHeader>
             <AlertDialogTitle>¿Guardar cambios?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción guardará los cambios realizados en {editedRows.length}{" "}
+              Esta acción guardará los cambios realizados en {editedRows.length}{' '}
               fila(s).
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -343,7 +426,7 @@ export function DataGrid<T>({
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDiscardChanges}
-              className="bg-red-600 hover:bg-red-700"
+              className='bg-red-600 hover:bg-red-700'
             >
               Descartar
             </AlertDialogAction>
