@@ -285,9 +285,7 @@ export function ProductImportStepper({
                     editable: true,
                   },
                 ]}
-                // onRowUpdate={handleRowUpdate}
                 onRowDelete={handleRowDelete}
-                // handleOnUpdateRows={async (rows) => setMappedData(rows)}
                 autoUpdate
               />
             )}

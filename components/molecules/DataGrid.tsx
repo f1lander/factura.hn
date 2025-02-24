@@ -89,7 +89,6 @@ export function DataGrid<T>({
   SearchBoxComponent,
   ControlsComponents,
   context,
-  onRowUpdate,
   onRowDelete,
   autoUpdate,
 }: DataGridProps<T>) {
@@ -145,12 +144,8 @@ export function DataGrid<T>({
     async (event: RowValueChangedEvent) => {
       const newData = event.data;
       const rowId = newData[idField as keyof typeof newData] as string;
-      const rowIndex = event.rowIndex as number;
 
-      // Call onRowUpdate if provided
-      // if (onRowUpdate) {
       try {
-        // await onRowUpdate(rowIndex, newData);
         gridApi?.applyTransaction({ update: [newData] });
       } catch (error) {
         console.error('Error updating row:', error);
@@ -165,16 +160,8 @@ export function DataGrid<T>({
         }
         return;
       }
-      // }
-
-      // setEditedRows((prev) => {
-      //   const filtered = prev.filter(
-      //     (row) => row[idField as keyof T] !== rowId
-      //   );
-      //   return [...filtered, newData];
-      // });
     },
-    [idField, onRowUpdate, originalData, gridApi]
+    [idField, originalData, gridApi]
   );
 
   const onCellValueChanged = useCallback(

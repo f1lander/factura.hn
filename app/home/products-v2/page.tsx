@@ -1,13 +1,4 @@
 'use client';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BookOpenCheck, Package } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
@@ -27,7 +18,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { DialogClose } from '@radix-ui/react-dialog';
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { productColumns } from '@/utils/tableColumns';
 import { useRouter } from 'next/navigation';
@@ -50,24 +40,12 @@ export default function ProductsPage() {
     handleXlsFileUpload,
     xlsFile,
     fileName,
-    isAddProductsWithSpreadsheetDialogOpen,
-    setIsAddProductsWithSpreadsheetDialogOpen,
-    isTablePreviewDialogOpen,
-    setIsTablePreviewDialogOpen,
     tableFieldnames,
-    areProductsLoading,
+
     setAreProductsLoading,
     setXlsFile,
   } = useUploadXls();
-  const { control, handleSubmit } = useForm<ProductKeyMappings>({
-    defaultValues: {
-      sku: '',
-      description: '',
-      unit_cost: '',
-      is_service: '',
-      quantity_in_stock: '',
-    },
-  });
+
   const queryClient = useQueryClient();
   const { data: products, isLoading: areProductsFromDBLoading } = useQuery(
     ['products'],
@@ -100,8 +78,6 @@ export default function ProductsPage() {
   };
 
   const handleImportComplete = async (mappedData: any[]) => {
-    console.log('mappedData', mappedData);
-    setAreProductsLoading(true);
     const { success, message } = await productService.createMultipleProducts(
       mappedData
     );
@@ -122,52 +98,6 @@ export default function ProductsPage() {
     setAreProductsLoading(false);
     setIsImporting(false);
     setXlsFile(null);
-  };
-
-  const onSubmit: SubmitHandler<ProductKeyMappings> = async (data) => {
-    setAreProductsLoading(true);
-
-    if (!xlsFile) {
-      setAreProductsLoading(false);
-      return alert('No se ha subido ningún archivo de Excel');
-    }
-
-    const transformedRows = xlsFile.map((row) => {
-      const newRow: Record<string, any> = {
-        // Initialize with default values
-        sku: '',
-        description: '',
-        unit_cost: '',
-        is_service: false,
-        quantity_in_stock: '',
-      };
-
-      // Override defaults with mapped values if they exist
-      for (const [newKey, oldKey] of Object.entries(data)) {
-        if (oldKey) {
-          // Only map if a key was provided
-          newRow[newKey] = row[oldKey];
-        }
-      }
-
-      return newRow;
-    });
-    const { success, message } = await productService.createMultipleProducts(
-      transformedRows
-    );
-    if (!success) {
-      toast({
-        title: 'No se pudieron subir los productos',
-        description: message,
-      });
-      return setAreProductsLoading(false);
-    }
-
-    toast({ title: 'Carga de productos exitosa', description: message });
-    setIsAddProductsWithSpreadsheetDialogOpen(false);
-    setXlsFile(null);
-    setAreProductsLoading(false);
-    queryClient.invalidateQueries({ queryKey: ['products'] });
   };
 
   const loadProducts = useCallback(
@@ -283,30 +213,14 @@ export default function ProductsPage() {
             {/* in case there are elements from a spreadsheet, take the columns and data, and display
             the table. */}
             {products!.length === 0 ? (
-              <>
-                {/* {tableFieldnames.length > 0 ? (
-                  <DataGrid
-                    title='Previsualización'
-                    description='previsualiza tus productos'
-                    data={xlsFile!}
-                    columnDefs={tableFieldnames.map((fieldName) => {
-                      return {
-                        field: fieldName,
-                        headerName: fieldName,
-                      };
-                    })}
-                  />
-                ) : ( */}
-                <GenericEmptyState
-                  icon={Package}
-                  title='No tienes productos aún'
-                  description='Agrega tus productos o servicios para incluirlos en tus facturas'
-                  buttonText='Agregar Producto'
-                  onAction={handleCreateProduct}
-                  onAddExcelSpreadSheet={triggerFileInput}
-                />
-                {/* )} */}
-              </>
+              <GenericEmptyState
+                icon={Package}
+                title='No tienes productos aún'
+                description='Agrega tus productos o servicios para incluirlos en tus facturas'
+                buttonText='Agregar Producto'
+                onAction={handleCreateProduct}
+                onAddExcelSpreadSheet={triggerFileInput}
+              />
             ) : (
               <DataGrid
                 title='Productos y Servicios'
@@ -348,278 +262,6 @@ export default function ProductsPage() {
           ref={excelFileInputRef}
         />
       </section>
-      {/* <section className='px-16 flex flex-col gap-5 pb-16'>
-        <Input
-          id='xls'
-          name='xls'
-          type='file'
-          accept='.xlsx,.xls,.csv'
-          className='hidden'
-          onChange={handleFileUpload}
-          ref={excelFileInputRef}
-        />
-        {xlsFile && (
-          <div className='flex gap-3 mt-2 w-[60%] mx-auto border-2 border-gray-300 rounded p-5 justify-around items-center'>
-            <div className='flex flex-col gap-3'>
-              <h2 className='text-lg font-medium'>Nombre de archivo subido:</h2>
-              <span>{fileName}</span>
-              <label
-                htmlFor='xls'
-                className='bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 w-fit cursor-pointer rounded'
-              >
-                cambiar archivo
-              </label>
-              <Input
-                id='xls'
-                name='xls'
-                type='file'
-                accept='.xlsx,.xls,.csv'
-                className='hidden'
-                onChange={handleFileUpload}
-              />
-            </div>
-            <div className='flex flex-col gap-4'>
-              <Button onClick={() => setIsTablePreviewDialogOpen(true)}>
-                Previsualizar tabla
-              </Button>
-              <Button
-                onClick={() => setIsAddProductsWithSpreadsheetDialogOpen(true)}
-              >
-                Subir tabla de productos
-              </Button>
-            </div>
-          </div>
-        )}
-      </section> */}
-      {/* <Dialog
-        open={isAddProductsWithSpreadsheetDialogOpen}
-        onOpenChange={setIsAddProductsWithSpreadsheetDialogOpen}
-      >
-        <DialogContent className='w-3/5 flex flex-col gap-5'>
-          <h1 className='text-2xl font-medium'>Mapeo de columnas</h1>
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className='flex flex-col gap-3'
-          >
-            <div className='flex justify-between'>
-              <span>SKU</span>
-              <Controller
-                control={control}
-                name='sku'
-                render={({ field }) => {
-                  if (tableFieldnames.includes('SKU') && field.value === '') {
-                    field.onChange('SKU'); // Update the form state
-                  }
-                  return (
-                    <Select
-                      defaultValue={
-                        tableFieldnames.includes('SKU') ? 'SKU' : field.value
-                      }
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger className='w-fit'>
-                        <SelectValue placeholder='Selecciona una columna' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Columnas</SelectLabel>
-                          {tableFieldnames.map((fieldName, index) => (
-                            <SelectItem key={index} value={fieldName}>
-                              {fieldName}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  );
-                }}
-              />
-            </div>
-            <div className='flex justify-between'>
-              <span>Descripción</span>
-              <Controller
-                control={control}
-                name='description'
-                render={({ field }) => {
-                  if (
-                    tableFieldnames.includes('Descripción') &&
-                    field.value === ''
-                  ) {
-                    field.onChange('Descripción'); // Update the form state
-                  }
-                  return (
-                    <Select
-                      defaultValue={
-                        tableFieldnames.includes('Descripción')
-                          ? 'Descripción'
-                          : field.value
-                      }
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger className='w-fit'>
-                        <SelectValue placeholder='Selecciona una columna' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Columnas</SelectLabel>
-                          {tableFieldnames.map((fieldName, index) => (
-                            <SelectItem key={index} value={fieldName}>
-                              {fieldName}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  );
-                }}
-              />
-            </div>
-            <div className='flex justify-between'>
-              <span>Precio unitario</span>
-              <Controller
-                control={control}
-                name='unit_cost'
-                render={({ field }) => {
-                  if (
-                    tableFieldnames.includes('Precio Unitario') &&
-                    field.value === ''
-                  ) {
-                    field.onChange('Precio Unitario'); // Update the form state
-                  }
-                  return (
-                    <Select
-                      defaultValue={
-                        tableFieldnames.includes('Precio Unitario')
-                          ? 'Precio Unitario'
-                          : field.value
-                      }
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger className='w-fit'>
-                        <SelectValue placeholder='Selecciona una columna' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Columnas</SelectLabel>
-                          {tableFieldnames.map((fieldName, index) => (
-                            <SelectItem key={index} value={fieldName}>
-                              {fieldName}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  );
-                }}
-              />
-            </div>
-            <div className='flex justify-between'>
-              <span>Tipo</span>
-              <Controller
-                control={control}
-                name='is_service'
-                render={({ field }) => {
-                  if (tableFieldnames.includes('Tipo') && field.value === '') {
-                    field.onChange('Tipo'); // Update the form state
-                  }
-                  return (
-                    <Select
-                      defaultValue={
-                        tableFieldnames.includes('Tipo') ? 'Tipo' : field.value
-                      }
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger className='w-fit'>
-                        <SelectValue placeholder='Selecciona una columna' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Columnas</SelectLabel>
-                          {tableFieldnames.map((fieldName, index) => (
-                            <SelectItem key={index} value={fieldName}>
-                              {fieldName}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  );
-                }}
-              />
-            </div> */}
-      {/* <div className="flex justify-between">
-              <span>Inventario</span>
-              <Controller
-                control={control}
-                name="quantity_in_stock"
-                render={({ field }) => {
-                  if (
-                    tableFieldnames.includes("Inventario") &&
-                    field.value === ""
-                  ) {
-                    field.onChange("Inventario"); // Update the form state
-                  }
-                  return (
-                    <Select
-                      defaultValue={
-                        tableFieldnames.includes("Inventario")
-                          ? "Inventario"
-                          : field.value
-                      }
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger className="w-fit">
-                        <SelectValue placeholder="Selecciona una columna" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Columnas</SelectLabel>
-                          {tableFieldnames.map((fieldName, index) => (
-                            <SelectItem key={index} value={fieldName}>
-                              {fieldName}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  );
-                }}
-              />
-            </div> */}
-      {/* <Button type="submit" disabled={areProductsLoading}>Subir productos</Button> */}
-      {/* <Button type='submit' disabled={areProductsLoading}>
-              {areProductsLoading ? 'Subiendo productos...' : 'Subir productos'}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog> */}
-      {/* <Dialog
-        open={isTablePreviewDialogOpen}
-        onOpenChange={setIsTablePreviewDialogOpen}
-      >
-        <DialogContent className='overflow-y-auto'>
-          <table className='table'>
-            <thead>
-              <tr>
-                {xlsFile &&
-                  Object.keys(xlsFile[0]).map((key) => (
-                    <th key={key}>{key}</th>
-                  ))}
-              </tr>
-            </thead>
-            <tbody>
-              {xlsFile &&
-                xlsFile.map((row, index) => (
-                  <tr key={index}>
-                    {Object.values(row).map((value, index) => (
-                      <td key={index}>{value.toString()}</td>
-                    ))}
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </DialogContent>
-      </Dialog> */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
