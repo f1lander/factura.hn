@@ -1,12 +1,12 @@
-import { ChangeEvent, useEffect, useState } from "react";
-import * as XLSX from "xlsx";
+import { ChangeEvent, useEffect, useState } from 'react';
+import * as XLSX from 'xlsx';
 
 type DataRow = Record<string, any>;
 
 export default function useUploadXls() {
   const [areProductsLoading, setAreProductsLoading] = useState<boolean>(false);
   const [xlsFile, setXlsFile] = useState<DataRow[] | null>(null);
-  const [fileName, setFileName] = useState<string>("");
+  const [fileName, setFileName] = useState<string>('');
   const [tableFieldnames, setTableFieldnames] = useState<string[]>([]);
   const [
     isAddProductsWithSpreadsheetDialogOpen,
@@ -22,20 +22,24 @@ export default function useUploadXls() {
     }
     setFileName(file.name);
     const reader = new FileReader();
-    reader.readAsBinaryString(file);
+    reader.readAsArrayBuffer(file);
 
     reader.onload = (event: ProgressEvent<FileReader>) => {
       const binaryStr = event.target?.result;
-      if (typeof binaryStr !== "string") {
+      if (!binaryStr) {
         return;
       }
-      const workbook = XLSX.read(binaryStr, { type: "binary" });
+      const workbook = XLSX.read(binaryStr, { type: 'buffer' });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
       const sheetData: DataRow[] = XLSX.utils.sheet_to_json(sheet);
 
       setXlsFile(sheetData);
-      setTableFieldnames(Object.keys(sheetData[0]));
+      const allFields = new Set<string>();
+      sheetData.forEach((row) => {
+        Object.keys(row).forEach((key) => allFields.add(key));
+      });
+      setTableFieldnames(Array.from(allFields));
     };
     setIsAddProductsWithSpreadsheetDialogOpen(true); // when you upload a file, always open the dialog for uploading xls
   };
