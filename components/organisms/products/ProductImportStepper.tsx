@@ -33,6 +33,7 @@ const steps = [
 
 const stepIconMap = [
   <svg
+    key={STEPS.UPLOAD_FILE}
     xmlns='http://www.w3.org/2000/svg'
     width='16'
     height='16'
@@ -48,6 +49,7 @@ const stepIconMap = [
     <line x1='12' y1='3' x2='12' y2='15' />
   </svg>,
   <svg
+    key={STEPS.MAP_FIELDS}
     xmlns='http://www.w3.org/2000/svg'
     width='16'
     height='16'
@@ -63,6 +65,7 @@ const stepIconMap = [
     <path d='M9 21V9' />
   </svg>,
   <svg
+    key={STEPS.REVIEW_DATA}
     xmlns='http://www.w3.org/2000/svg'
     width='16'
     height='16'
