@@ -250,7 +250,6 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
   };
 
   const handleStatusChange = (status: string) => {
-    console.log('selectedStatuses', selectedStatuses);
     const dbStatus = statusMap[status] || status.toLowerCase();
     const updatedStatuses = selectedStatuses.includes(dbStatus)
       ? selectedStatuses.filter((s) => s !== dbStatus)
@@ -339,21 +338,21 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
           <CardTitle className='w-full'>Facturas recientes</CardTitle>
           <div className='flex flex-row items-start gap-2  md:items-center md:justify-between'>
             <Toggle
-              pressed={selectedStatuses.includes('paid')}
+              pressed={!selectedStatuses.includes('paid')}
               onPressedChange={() => handleStatusChange('paid')}
               className='h-8 px-3 py-1 transition-colors duration-200 bg-green-500 text-white hover:bg-green-500/90'
             >
               Pagadas
             </Toggle>
             <Toggle
-              pressed={selectedStatuses.includes('pending')}
+              pressed={!selectedStatuses.includes('pending')}
               onPressedChange={() => handleStatusChange('pending')}
               className='h-8 px-3 py-1 transition-colors duration-200 bg-yellow-500 text-white hover:bg-yellow-500/90'
             >
               Pendientes
             </Toggle>
             <Toggle
-              pressed={selectedStatuses.includes('cancelled')}
+              pressed={!selectedStatuses.includes('cancelled')}
               onPressedChange={() => handleStatusChange('cancelled')}
               className='h-8 px-3 py-1 transition-colors duration-200 bg-red-500 text-white hover:bg-red-500/90'
             >

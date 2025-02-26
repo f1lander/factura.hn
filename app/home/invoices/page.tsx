@@ -45,11 +45,7 @@ export default function Invoices() {
     start: Date | undefined;
     end: Date | undefined;
   }>({ start: undefined, end: undefined });
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([
-    'pending',
-    'paid',
-    'cancelled',
-  ]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const { company } = useCompanyStore();
   const [isInvoiceContentReady, setIsInvoiceContentReady] = useState(false);
 
