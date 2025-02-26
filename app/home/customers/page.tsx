@@ -48,6 +48,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useMediaQuery } from '@/lib/hooks';
 
 interface CustomerKeyMappings {
   name: string;
@@ -84,6 +85,7 @@ export default function CustomersPage() {
     setAreProductsLoading,
     setXlsFile,
   } = useUploadXls();
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const queryClient = useQueryClient();
   const { data: customers, isLoading: areCustomersLoading } = useQuery(
     ['customers'], // unique query key
@@ -124,6 +126,7 @@ export default function CustomersPage() {
   const handleCreateCustomer = () => {
     setSelectedCustomer(null);
     setIsFormVisible(true);
+    setEditContacts(null);
   };
 
   const handleFormSubmit = async (
@@ -261,7 +264,7 @@ export default function CustomersPage() {
   return (
     <div className='flex min-h-screen w-full flex-col bg-muted/40'>
       <div className='flex flex-col sm:gap-4 p-2 sm:p-4'>
-        <main className='flex flex-col xl:flex-row items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8'>
+        <main className='flex flex-col-reverse xl:flex-row items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8'>
           <div
             className={`w-full xl:w-full transition-all duration-300 ease-in-out`}
           >
@@ -296,43 +299,16 @@ export default function CustomersPage() {
               </>
             )}
           </div>
-          {editContacts && (
+          {(isFormVisible || editContacts) && (
             <div className='w-full xl:w-1/2 transition-all duration-300 ease-in-out'>
               <CustomerForm
-                key={editContacts.id}
-                customer={editContacts}
-                onSubmit={(data) => handleFormSubmit(data, editContacts)}
+                key={selectedCustomer?.id || editContacts?.id || ''}
+                customer={selectedCustomer || editContacts || undefined}
+                onSubmit={(data) => handleFormSubmit(data)}
                 onCancel={handleFormCancel}
               />
             </div>
           )}
-          {isFormVisible &&
-            (windowWidth >= 1280 ? (
-              <div className='w-full xl:w-1/2 transition-all duration-300 ease-in-out'>
-                <CustomerForm
-                  customer={selectedCustomer || undefined}
-                  onSubmit={(data) => handleFormSubmit(data)}
-                  onCancel={handleFormCancel}
-                />
-              </div>
-            ) : (
-              <Dialog open={isFormVisible} onOpenChange={setIsFormVisible}>
-                <DialogTrigger asChild></DialogTrigger>
-                <DialogContent
-                  className='w-[90%]'
-                  id='contenido del dialogo papa'
-                >
-                  <div className='transition-all duration-300 ease-in-out'>
-                    <CustomerForm
-                      customer={selectedCustomer || undefined}
-                      onSubmit={(data) => handleFormSubmit(data)}
-                      onCancel={handleFormCancel}
-                    />
-                  </div>
-                </DialogContent>
-                <DialogClose asChild></DialogClose>
-              </Dialog>
-            ))}
         </main>
         <Input
           id='xls'
