@@ -48,7 +48,7 @@ export default function RootLayout({
   return (
     <ReactQueryProvider>
       <html lang='es'>
-        <Script src='../lib/scripts/clarity.js' />
+        <Script src='/clarity.js' strategy='afterInteractive' />
         <body
           suppressHydrationWarning={true}
           className={cn(
