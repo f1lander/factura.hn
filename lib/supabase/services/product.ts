@@ -62,6 +62,20 @@ class ProductService extends BaseService {
     return this.getAll<Product>(this.tableName);
   }
 
+  async getActiveProductsCount(): Promise<number> {
+    const { count, error } = await this.supabase
+      .from(this.tableName)
+      .select('*', { count: 'exact', head: true })
+      .or('archived.eq.false,archived.is.null');
+
+    if (error) {
+      console.error('Error getting active products count:', error);
+      return 0;
+    }
+
+    return count ?? 0;
+  }
+
   async updateProduct(
     id: string,
     updates: Partial<Product>
