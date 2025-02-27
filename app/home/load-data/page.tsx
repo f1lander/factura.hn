@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useCompanyStore } from "@/store/companyStore";
-import { useCustomersStore } from "@/store/customersStore";
-import { useInvoicesStore } from "@/store/invoicesStore";
-import { useIsLoadedStore } from "@/store/isLoadedStore";
-import { useProductsStore } from "@/store/productsStore";
-import { useRouter } from "next/navigation";
-import React, { useEffect } from "react";
+import { useCompanyStore } from '@/store/companyStore';
+import { useCustomersStore } from '@/store/customersStore';
+import { useInvoicesStore } from '@/store/invoicesStore';
+import { useIsLoadedStore } from '@/store/isLoadedStore';
+import { useProductsStore } from '@/store/productsStore';
+import { useRouter } from 'next/navigation';
+import React, { useEffect } from 'react';
 
 export default function LoadData() {
   const router = useRouter();
@@ -29,7 +29,7 @@ export default function LoadData() {
       };
       syncData();
     }
-    router.push("/home");
+    router.push('/home');
   }, [
     syncProducts,
     syncInvoices,
@@ -41,6 +41,6 @@ export default function LoadData() {
     setIsLoaded,
   ]);
   return (
-    <div>{isLoaded ? "Se han cargado los datos" : "Cargando tus datos..."}</div>
+    <div>{isLoaded ? 'Se han cargado los datos' : 'Cargando tus datos...'}</div>
   );
 }
