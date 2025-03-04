@@ -49,6 +49,7 @@ interface DataGridProps<T> {
   onDelete?: () => void;
   onAddExcelSpreadSheet?: () => void;
   handleOnUpdateRows?: (rows: T[]) => Promise<void>;
+  onDiscardChanges?: () => void;
   searchPlaceholder?: string;
   height?: string;
   idField?: keyof T;
@@ -81,6 +82,7 @@ export function DataGrid<T>({
   onDelete,
   onAddExcelSpreadSheet,
   handleOnUpdateRows,
+  onDiscardChanges,
   searchPlaceholder,
   height = '500px',
   idField = 'id' as keyof T,
@@ -203,7 +205,7 @@ export function DataGrid<T>({
         return [...filtered, newData];
       });
     },
-    [idField, autoUpdate]
+    [idField, autoUpdate, onRowValueChangedAuto]
   );
 
   const handleSaveChanges = useCallback(async () => {
@@ -218,13 +220,17 @@ export function DataGrid<T>({
     setShowSaveDialog(false);
   }, [editedRows, handleOnUpdateRows]);
 
+  // Update the handleDiscardChanges function
   const handleDiscardChanges = useCallback(() => {
     if (gridApi) {
       gridApi.setGridOption('rowData', [...originalData]);
       setEditedRows([]);
     }
     setShowDiscardDialog(false);
-  }, [gridApi, originalData]);
+
+    // Call the parent's onDiscardChanges if provided
+    onDiscardChanges?.();
+  }, [gridApi, originalData, onDiscardChanges]);
 
   const onGridReady = (params: GridReadyEvent) => {
     setGridApi(params.api);
@@ -343,18 +349,22 @@ export function DataGrid<T>({
               >
                 Descartar Cambios
               </Button>
-              <Button
-                onClick={() => handleOnUndo()}
-                className='border-gray-600 bg-transparent text-gray-900 hover:bg-gray-200 hover:text-gray-700'
-              >
-                <Undo2Icon className='h-4 w-4' />
-              </Button>
-              <Button
-                onClick={() => handleOnRedo()}
-                className='border-gray-600 bg-transparent text-gray-900 hover:bg-gray-200 hover:text-gray-700'
-              >
-                <Redo2Icon className='h-4 w-4' />
-              </Button>
+              {autoUpdate && (
+                <>
+                  <Button
+                    onClick={() => handleOnUndo()}
+                    className='border-gray-600 bg-transparent text-gray-900 hover:bg-gray-200 hover:text-gray-700'
+                  >
+                    <Undo2Icon className='h-4 w-4' />
+                  </Button>
+                  <Button
+                    onClick={() => handleOnRedo()}
+                    className='border-gray-600 bg-transparent text-gray-900 hover:bg-gray-200 hover:text-gray-700'
+                  >
+                    <Redo2Icon className='h-4 w-4' />
+                  </Button>
+                </>
+              )}
             </div>
           )}
         </div>
