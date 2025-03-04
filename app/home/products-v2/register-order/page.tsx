@@ -320,7 +320,7 @@ const RegisterProductPage: React.FC = () => {
                     handleOnUpdateRows={handleCreateProductRegisterOrder}
                     onDiscardChanges={handleDiscardChanges}
                     onSelectionChange={setSelectedProducts}
-                    // onDelete={() => setIsDeleteDialogOpen(true)}
+                    onDelete={() => setIsDeleteDialogOpen(true)}
                     pageSizeOptions={[5, 10, 20, 50]}
                   />
                   <Dialog
