@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { DataGrid } from '@/components/molecules/DataGrid';
@@ -13,7 +12,6 @@ import {
   ProductToOrder,
 } from '@/lib/supabase/services/product';
 import { useQuery } from '@tanstack/react-query';
-import { Popover } from '@/components/ui/popover';
 import { Dialog, DialogClose } from '@radix-ui/react-dialog';
 import {
   DialogContent,
@@ -23,7 +21,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { useFieldArray, useForm, useFormState } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Input } from '@/components/ui/input';
@@ -69,7 +67,11 @@ const RegisterProductPage: React.FC = () => {
     resolver: yupResolver(RegisterProductOrderSchema),
   });
 
-  const { fields: rowData, remove } = useFieldArray({
+  const {
+    fields: rowData,
+    remove,
+    update,
+  } = useFieldArray({
     control,
     name: 'update_products',
     rules: {
@@ -106,10 +108,26 @@ const RegisterProductPage: React.FC = () => {
         ...rowData,
         { product_id: product.id, product, quantity_delta: 0 },
       ]);
-      // setRowData([...rowData, { product_id: product.id, product, quantity_delta: 0 }]);
-      // append({ product_id: product.id, product, quantity_delta: 0 });
     }
     setSearchText('');
+  };
+
+  const handleRowUpdate = async (index: number, newData: any) => {
+    update(index, newData);
+  };
+
+  const handleRowDelete = async (index: number) => {
+    remove(index);
+  };
+
+  // Add this function to properly handle discarding changes
+  const handleDiscardChanges = () => {
+    // This function should be called when "Discard Changes" is clicked
+    // It will reset the form state for the products
+    reset({
+      ...values,
+      update_products: [],
+    });
   };
 
   const handleCreateProductRegisterOrder = async (rows: ProductToOrder[]) => {
@@ -183,10 +201,7 @@ const RegisterProductPage: React.FC = () => {
                       <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
                     </div>
                   ) : (
-                    <div
-                      id='product-list'
-                      className='hidden md:block space-y-2 pr-4'
-                    >
+                    <div id='product-list' className='block space-y-2'>
                       {filteredProducts.map((product) => (
                         <Card
                           key={product.id}
@@ -299,7 +314,11 @@ const RegisterProductPage: React.FC = () => {
                         type: 'numericColumn',
                       },
                     ]}
+                    // autoUpdate
+                    // onRowUpdate={handleRowUpdate}
+                    // onRowDelete={handleRowDelete}
                     handleOnUpdateRows={handleCreateProductRegisterOrder}
+                    onDiscardChanges={handleDiscardChanges}
                     onSelectionChange={setSelectedProducts}
                     onDelete={() => setIsDeleteDialogOpen(true)}
                     pageSizeOptions={[5, 10, 20, 50]}
