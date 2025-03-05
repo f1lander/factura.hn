@@ -20,12 +20,15 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useMediaQuery } from '@/lib/hooks';
-import { Switch } from '@/components/ui/switch';
-import { Product } from '@/lib/supabase/services/product';
+import { Customer, customerService } from '@/lib/supabase/services/customer';
 import { useQuery } from '@tanstack/react-query';
-import { productService } from '@/lib/supabase/services/product';
 import * as XLSX from 'xlsx';
 import { TrashIcon } from 'lucide-react';
+
+type FieldMapping = {
+  label: string;
+  value: string;
+};
 
 enum STEPS {
   UPLOAD_FILE,
@@ -40,10 +43,10 @@ const steps = [
 ];
 
 const defaultFieldNames = {
-  sku: 'sku',
-  description: 'description',
-  unit_cost: 'unit_cost',
-  is_service: 'is_service',
+  name: 'name',
+  rtn: 'rtn',
+  email: 'email',
+  // is_service: 'is_service',
 };
 
 const stepIconMap = [
@@ -96,7 +99,7 @@ const stepIconMap = [
   </svg>,
 ];
 
-interface ProductImportStepperProps {
+interface CustomersImportStepperProps {
   onCancel: () => void;
   onComplete: (mappedData: any[]) => Promise<void>;
   xlsFile: any[] | null;
@@ -107,9 +110,11 @@ interface ProductImportStepperProps {
   handleXlsFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   setCurrentSheet: React.Dispatch<React.SetStateAction<string>>;
   currentSheet: string;
+  // requiredFields: string[];
+  fieldMappings: FieldMapping[];
 }
 
-export function ProductImportStepper({
+export function CustomerImportStepper({
   onCancel,
   onComplete,
   xlsFile,
@@ -119,10 +124,12 @@ export function ProductImportStepper({
   sheetNames,
   setCurrentSheet,
   currentSheet,
-}: ProductImportStepperProps) {
-  const { data: existingProducts } = useQuery(
-    ['products'],
-    () => productService.getProductsByCompany(),
+  fieldMappings,
+}: // requiredFields,
+CustomersImportStepperProps) {
+  const { data: existingCustomers } = useQuery(
+    ['customers'],
+    () => customerService.getCustomersByCompany(),
     {
       staleTime: 300000,
       cacheTime: 600000,
@@ -152,24 +159,26 @@ export function ProductImportStepper({
   // Add media query hook
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  const getDuplicatedSkus = (data: any[]) => {
-    const skuMap = new Map();
+  const getDuplicatedRtns = (data: Customer[]) => {
+    const rtnuMap = new Map();
     const duplicates = new Set<string>();
 
     // Check duplicates within mappedData
     data.forEach((item) => {
-      if (skuMap.has(item.sku)) {
-        duplicates.add(item.sku);
+      if (rtnuMap.has(item.rtn)) {
+        duplicates.add(item.rtn);
       }
-      skuMap.set(item.sku, true);
+      rtnuMap.set(item.rtn, true);
     });
 
-    // Check duplicates with existing products
-    existingProducts?.forEach((product) => {
-      if (skuMap.has(product.sku)) {
-        duplicates.add(product.sku);
+    // Check duplicates with existing Customers
+    existingCustomers?.forEach((client) => {
+      if (rtnuMap.has(client.rtn)) {
+        duplicates.add(client.rtn);
       }
     });
+
+    console.log({ duplicates, existingCustomers, data });
 
     return duplicates;
   };
@@ -178,23 +187,23 @@ export function ProductImportStepper({
     if (!xlsFile) return;
 
     const transformedRows = xlsFile.map((row) => ({
-      sku: row[data.sku] || '',
-      description: row[data.description] || '',
-      unit_cost: row[data.unit_cost] || 0,
-      is_service: Boolean(row[data.is_service]),
+      name: row[data.name] || '',
+      rtn: String(row[data.rtn]) || '',
+      email: row[data.email] || 0,
+      // is_service: Boolean(row[data.is_service]?.toLowerCase()),
     }));
 
     setMappedData(transformedRows);
     setCurrentStep(STEPS.REVIEW_DATA);
   };
 
-  const handleRowUpdate = async (index: number, newData: Product) => {
+  const handleRowUpdate = async (index: number, newData: Customer) => {
     const newMappedData = [...mappedData];
     newMappedData[index] = newData;
     setMappedData(newMappedData);
   };
 
-  const handleRowDelete = async (index: number, data: Product) => {
+  const handleRowDelete = async (index: number, data: Customer) => {
     const newMappedData = [...mappedData];
     newMappedData.splice(index, 1);
     setMappedData(newMappedData);
@@ -315,21 +324,16 @@ export function ProductImportStepper({
               onSubmit={handleSubmit(handleFieldMapping)}
               className='space-y-6'
             >
-              {[
-                { key: 'sku', label: 'Código' },
-                { key: 'description', label: 'Descripción' },
-                { key: 'unit_cost', label: 'Precio Unitario' },
-                { key: 'is_service', label: 'Tipo de Producto' },
-              ].map(({ key, label }) => (
+              {fieldMappings.map(({ value, label }) => (
                 <div
-                  key={key}
+                  key={value}
                   className='flex flex-col md:flex-row md:items-center gap-2 md:gap-4 md:justify-between'
                 >
                   <span className='font-medium'>{label}</span>
                   <Controller
                     control={control}
                     // @ts-ignore
-                    name={key}
+                    name={value}
                     render={({ field: { onChange, value } }) => (
                       <Select onValueChange={onChange} value={value}>
                         <SelectTrigger className='w-full md:w-[200px]'>
@@ -365,8 +369,8 @@ export function ProductImportStepper({
         );
 
       case STEPS.REVIEW_DATA: {
-        const duplicatedSkus = getDuplicatedSkus(mappedData);
-        const hasErrors = duplicatedSkus.size > 0;
+        const duplicatedRtns = getDuplicatedRtns(mappedData);
+        const hasErrors = duplicatedRtns.size > 0;
 
         return (
           <div className='flex flex-col gap-6 p-4 md:p-8'>
@@ -376,12 +380,12 @@ export function ProductImportStepper({
                 <div className='flex'>
                   <div className='ml-3'>
                     <h3 className='text-sm font-medium text-destructive'>
-                      Se encontraron SKUs duplicados
+                      Se encontraron Clients duplicados (RTNs)
                     </h3>
                     <div className='mt-2 text-sm text-destructive/90'>
                       <ul className='list-disc space-y-1 pl-5'>
-                        {Array.from(duplicatedSkus).map((sku) => (
-                          <li key={sku}>{sku}</li>
+                        {Array.from(duplicatedRtns).map((rtn) => (
+                          <li key={rtn}>{rtn}</li>
                         ))}
                       </ul>
                     </div>
@@ -395,15 +399,15 @@ export function ProductImportStepper({
                   <Card
                     key={index}
                     className={
-                      duplicatedSkus.has(item.sku) ? 'border-destructive' : ''
+                      duplicatedRtns.has(item.rtn) ? 'border-destructive' : ''
                     }
                   >
                     <CardHeader>
                       <CardTitle className='text-sm flex justify-between items-center'>
-                        <span>Item #{index + 1}</span>
-                        {duplicatedSkus.has(item.sku) && (
+                        <span>Client #{index + 1}</span>
+                        {duplicatedRtns.has(item.rtn) && (
                           <span className='text-xs text-destructive'>
-                            SKU duplicado
+                            RTN duplicado
                           </span>
                         )}
                       </CardTitle>
@@ -412,52 +416,21 @@ export function ProductImportStepper({
                       {Object.entries(item).map(([key, value]) => (
                         <div key={key} className='flex flex-col gap-1'>
                           <span className='text-sm font-medium'>
-                            {key === 'sku'
-                              ? 'SKU'
-                              : key === 'description'
-                              ? 'Descripción'
-                              : key === 'unit_cost'
-                              ? 'Precio Unitario'
-                              : 'Es Servicio'}
+                            {fieldMappings.find(
+                              (mapping) => mapping.value === key
+                            )?.label || key}
                           </span>
-                          {key === 'is_service' ? (
-                            <div className='flex items-center justify-between space-x-2'>
-                              <Switch
-                                id={`toggle-${index}`}
-                                checked={value as boolean}
-                                onCheckedChange={(checked) => {
-                                  const newData = [...mappedData];
-                                  newData[index] = {
-                                    ...newData[index],
-                                    [key]: checked,
-                                  };
-                                  setMappedData(newData);
-                                }}
-                                className='data-[state=checked]:bg-primary'
-                              />
-                              <label
-                                htmlFor={`toggle-${index}`}
-                                className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
-                              >
-                                {value ? 'Servicio' : 'Producto'}
-                              </label>
-                            </div>
-                          ) : (
-                            <Input
-                              value={value as string}
-                              onChange={(e) => {
-                                const newData = [...mappedData];
-                                newData[index] = {
-                                  ...newData[index],
-                                  [key]:
-                                    key === 'unit_cost'
-                                      ? Number(e.target.value)
-                                      : e.target.value,
-                                };
-                                setMappedData(newData);
-                              }}
-                            />
-                          )}
+                          <Input
+                            value={value as string}
+                            onChange={(e) => {
+                              const newData = [...mappedData];
+                              newData[index] = {
+                                ...newData[index],
+                                [key]: e.target.value,
+                              };
+                              setMappedData(newData);
+                            }}
+                          />
                         </div>
                       ))}
                     </CardContent>
@@ -481,31 +454,26 @@ export function ProductImportStepper({
                 data={mappedData}
                 columnDefs={[
                   {
-                    field: 'sku',
-                    headerName: 'SKU',
+                    field: 'name',
+                    headerName: 'Nombre',
                     editable: true,
                     cellStyle: (params) => ({
-                      backgroundColor: duplicatedSkus.has(params.value)
+                      backgroundColor: duplicatedRtns.has(params.value)
                         ? 'rgba(239, 68, 68, 0.1)'
                         : '',
-                      color: duplicatedSkus.has(params.value)
+                      color: duplicatedRtns.has(params.value)
                         ? 'rgb(239, 68, 68)'
                         : '',
                     }),
                   },
                   {
-                    field: 'description',
-                    headerName: 'Descripción',
+                    field: 'rtn',
+                    headerName: 'RTN',
                     editable: true,
                   },
                   {
-                    field: 'unit_cost',
-                    headerName: 'Precio Unitario',
-                    editable: true,
-                  },
-                  {
-                    field: 'is_service',
-                    headerName: 'Es Servicio',
+                    field: 'email',
+                    headerName: 'Email',
                     editable: true,
                   },
                 ]}
@@ -525,7 +493,7 @@ export function ProductImportStepper({
                 onClick={() => onComplete(mappedData)}
                 disabled={hasErrors}
               >
-                Importar Productos
+                Importar Clientes
               </Button>
             </div>
           </div>
