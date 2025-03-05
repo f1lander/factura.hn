@@ -7,7 +7,6 @@ import GenericEmptyState from '@/components/molecules/GenericEmptyState';
 import { ProductForm } from '@/components/molecules/ProductForm';
 import { Dialog } from '@radix-ui/react-dialog';
 import { DataGrid } from '@/components/molecules/DataGrid';
-import { Input } from '@/components/ui/input';
 import useUploadXls from '@/hooks/useUploadXls';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,9 +37,7 @@ export default function ProductsPage() {
   const excelFileInputRef = useRef<HTMLInputElement | null>(null);
   const {
     handleXlsFileUpload,
-    xlsFile,
     fileName,
-    tableFieldnames,
     sheetNames,
     sheets,
     setAreProductsLoading,
@@ -79,7 +76,6 @@ export default function ProductsPage() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     handleXlsFileUpload(event);
-    // setIsImporting(true);
   };
 
   const handleImportComplete = async (mappedData: any[]) => {
@@ -260,25 +256,6 @@ export default function ProductsPage() {
           )}
         </main>
       </div>
-      <section className='px-16 flex flex-col gap-5 pb-16'>
-        {/* <Button
-          onClick={() => setIsImporting(true)}
-          variant='outline'
-          className='border-blue-600 text-blue-600 hover:bg-blue-50 hover:text-blue-700 flex items-center'
-        >
-          <Package className='h-4 w-4 mr-2' />
-          Agregar productos desde Excel
-        </Button> */}
-        {/* <Input
-          id='xls'
-          name='xls'
-          type='file'
-          accept='.xlsx,.xls,.csv'
-          className='hidden'
-          onChange={handleFileUpload}
-          ref={excelFileInputRef}
-        /> */}
-      </section>
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
