@@ -20,6 +20,7 @@ import { DialogClose } from '@radix-ui/react-dialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { productColumns } from '@/utils/tableColumns';
 import { useRouter } from 'next/navigation';
+import { ProductImportStepper } from '@/components/organisms/products/ProductImportStepper';
 
 interface ProductKeyMappings {
   sku: string;
@@ -28,9 +29,6 @@ interface ProductKeyMappings {
   is_service: string;
   quantity_in_stock: string;
 }
-
-// Add import
-import { ProductImportStepper } from '@/components/organisms/products/ProductImportStepper';
 
 export default function ProductsPage() {
   const { push } = useRouter();
