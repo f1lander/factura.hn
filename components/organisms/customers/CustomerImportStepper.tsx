@@ -457,6 +457,11 @@ CustomersImportStepperProps) {
                     field: 'name',
                     headerName: 'Nombre',
                     editable: true,
+                  },
+                  {
+                    field: 'rtn',
+                    headerName: 'RTN',
+                    editable: true,
                     cellStyle: (params) => ({
                       backgroundColor: duplicatedRtns.has(params.value)
                         ? 'rgba(239, 68, 68, 0.1)'
@@ -465,11 +470,6 @@ CustomersImportStepperProps) {
                         ? 'rgb(239, 68, 68)'
                         : '',
                     }),
-                  },
-                  {
-                    field: 'rtn',
-                    headerName: 'RTN',
-                    editable: true,
                   },
                   {
                     field: 'email',
