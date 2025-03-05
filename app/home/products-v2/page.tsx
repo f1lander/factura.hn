@@ -7,7 +7,6 @@ import GenericEmptyState from '@/components/molecules/GenericEmptyState';
 import { ProductForm } from '@/components/molecules/ProductForm';
 import { Dialog } from '@radix-ui/react-dialog';
 import { DataGrid } from '@/components/molecules/DataGrid';
-import { Input } from '@/components/ui/input';
 import useUploadXls from '@/hooks/useUploadXls';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,12 +37,15 @@ export default function ProductsPage() {
   const excelFileInputRef = useRef<HTMLInputElement | null>(null);
   const {
     handleXlsFileUpload,
-    xlsFile,
     fileName,
-    tableFieldnames,
-
+    sheetNames,
+    sheets,
     setAreProductsLoading,
     setXlsFile,
+    getCurrentSheeData,
+    getCurrentSheetFieldNames,
+    setCurrentSheet,
+    currentSheet,
   } = useUploadXls();
 
   const queryClient = useQueryClient();
@@ -74,7 +76,6 @@ export default function ProductsPage() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     handleXlsFileUpload(event);
-    setIsImporting(true);
   };
 
   const handleImportComplete = async (mappedData: any[]) => {
@@ -185,10 +186,14 @@ export default function ProductsPage() {
           setXlsFile(null);
         }}
         onComplete={handleImportComplete}
-        xlsFile={xlsFile}
+        xlsFile={getCurrentSheeData()}
         fileName={fileName}
-        tableFieldnames={tableFieldnames}
+        tableFieldnames={getCurrentSheetFieldNames()}
+        sheetNames={sheetNames}
         handleXlsFileUpload={handleFileUpload}
+        setCurrentSheet={setCurrentSheet}
+        currentSheet={currentSheet}
+        sheets={sheets}
       />
     );
   }
@@ -232,7 +237,7 @@ export default function ProductsPage() {
                 onDelete={() => setIsDeleteDialogOpen(true)}
                 pageSize={pageSize}
                 pageSizeOptions={[5, 10, 20, 50]}
-                onAddExcelSpreadSheet={triggerFileInput}
+                onAddExcelSpreadSheet={() => setIsImporting(true)}
                 handleOnUpdateRows={handleOnUpdateRows}
               />
             )}
@@ -251,17 +256,6 @@ export default function ProductsPage() {
           )}
         </main>
       </div>
-      <section className='px-16 flex flex-col gap-5 pb-16'>
-        <Input
-          id='xls'
-          name='xls'
-          type='file'
-          accept='.xlsx,.xls,.csv'
-          className='hidden'
-          onChange={handleFileUpload}
-          ref={excelFileInputRef}
-        />
-      </section>
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
