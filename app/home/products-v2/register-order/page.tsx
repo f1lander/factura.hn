@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { DataGrid } from '@/components/molecules/DataGrid';
@@ -13,7 +12,6 @@ import {
   ProductToOrder,
 } from '@/lib/supabase/services/product';
 import { useQuery } from '@tanstack/react-query';
-import { Popover } from '@/components/ui/popover';
 import { Dialog, DialogClose } from '@radix-ui/react-dialog';
 import {
   DialogContent,
@@ -106,8 +104,6 @@ const RegisterProductPage: React.FC = () => {
         ...rowData,
         { product_id: product.id, product, quantity_delta: 0 },
       ]);
-      // setRowData([...rowData, { product_id: product.id, product, quantity_delta: 0 }]);
-      // append({ product_id: product.id, product, quantity_delta: 0 });
     }
     setSearchText('');
   };

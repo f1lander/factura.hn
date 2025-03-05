@@ -11,13 +11,14 @@ import {
 } from '@/components/ui/select';
 import { DataGrid } from '@/components/molecules/DataGrid';
 import { Controller, useForm } from 'react-hook-form';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useMediaQuery } from '@/lib/hooks';
 import { Switch } from '@/components/ui/switch';
 import { Product } from '@/lib/supabase/services/product';
 import { useQuery } from '@tanstack/react-query';
 import { productService } from '@/lib/supabase/services/product';
+import * as XLSX from 'xlsx';
 
 enum STEPS {
   UPLOAD_FILE,
@@ -30,6 +31,13 @@ const steps = [
   { id: STEPS.MAP_FIELDS, name: 'Mapear Campos' },
   { id: STEPS.REVIEW_DATA, name: 'Revisar Datos' },
 ];
+
+const defaultFieldNames = {
+  sku: 'sku',
+  description: 'description',
+  unit_cost: 'unit_cost',
+  is_service: 'is_service',
+};
 
 const stepIconMap = [
   <svg
@@ -87,7 +95,11 @@ interface ProductImportStepperProps {
   xlsFile: any[] | null;
   fileName: string;
   tableFieldnames: string[];
+  sheetNames: string[];
+  sheets?: Record<string, XLSX.Sheet>;
   handleXlsFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  setCurrentSheet: React.Dispatch<React.SetStateAction<string>>;
+  currentSheet: string;
 }
 
 export function ProductImportStepper({
@@ -97,6 +109,9 @@ export function ProductImportStepper({
   fileName,
   tableFieldnames,
   handleXlsFileUpload,
+  sheetNames,
+  setCurrentSheet,
+  currentSheet,
 }: ProductImportStepperProps) {
   const { data: existingProducts } = useQuery(
     ['products'],
@@ -109,14 +124,23 @@ export function ProductImportStepper({
   );
   const [currentStep, setCurrentStep] = useState(STEPS.UPLOAD_FILE);
   const [mappedData, setMappedData] = useState<any[]>([]);
-  const { control, handleSubmit } = useForm({
-    defaultValues: {
-      sku: '',
-      description: '',
-      unit_cost: '',
-      is_service: '',
-    },
+  const { control, handleSubmit, setValue } = useForm({
+    defaultValues: defaultFieldNames,
   });
+
+  useEffect(() => {
+    // Check if default field names exist in tableFieldnames
+    Object.keys(defaultFieldNames).forEach((key) => {
+      // @ts-ignore
+      if (tableFieldnames.includes(defaultFieldNames[key])) {
+        // @ts-ignore
+        setValue(key, defaultFieldNames[key]);
+      } else {
+        // @ts-ignore
+        setValue(key, '');
+      }
+    });
+  }, [tableFieldnames, setValue]);
 
   // Add media query hook
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -220,6 +244,24 @@ export function ProductImportStepper({
                 onChange={handleXlsFileUpload}
                 className='hidden'
               />
+              <div className='mt-4'>
+                <Button
+                  variant='link'
+                  className='text-sm text-muted-foreground'
+                  onClick={() => {
+                    // Create download link for template
+                    const link = document.createElement('a');
+                    link.href =
+                      '/templates/Importar Productos (Plantilla).xlsx';
+                    link.download = 'Importar Productos (Plantilla).xlsx';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+                >
+                  Descargar plantilla de ejemplo
+                </Button>
+              </div>
               {fileName && (
                 <p className='text-sm text-muted-foreground'>
                   Archivo seleccionado: {fileName}
@@ -239,6 +281,30 @@ export function ProductImportStepper({
         return (
           <div className='flex flex-col gap-6 p-4 md:p-8'>
             <h2 className='text-xl md:text-2xl font-semibold'>Mapear Campos</h2>
+            {/* Add sheet selector if there are multiple sheets */}
+            {sheetNames.length > 0 && (
+              <div className='flex flex-col md:flex-row md:items-center gap-2 md:gap-4 md:justify-between'>
+                <span className='font-medium'>Hoja de Excel</span>
+                <Select
+                  value={currentSheet}
+                  onValueChange={(value) => setCurrentSheet(value)}
+                >
+                  <SelectTrigger className='w-full md:w-[200px]'>
+                    <SelectValue placeholder='Seleccionar hoja' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Hojas disponibles</SelectLabel>
+                      {sheetNames.map((name) => (
+                        <SelectItem key={name} value={name}>
+                          {name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <form
               onSubmit={handleSubmit(handleFieldMapping)}
               className='space-y-6'

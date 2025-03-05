@@ -41,9 +41,14 @@ export default function ProductsPage() {
     xlsFile,
     fileName,
     tableFieldnames,
-
+    sheetNames,
+    sheets,
     setAreProductsLoading,
     setXlsFile,
+    getCurrentSheeData,
+    getCurrentSheetFieldNames,
+    setCurrentSheet,
+    currentSheet,
   } = useUploadXls();
 
   const queryClient = useQueryClient();
@@ -74,7 +79,7 @@ export default function ProductsPage() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     handleXlsFileUpload(event);
-    setIsImporting(true);
+    // setIsImporting(true);
   };
 
   const handleImportComplete = async (mappedData: any[]) => {
@@ -185,10 +190,14 @@ export default function ProductsPage() {
           setXlsFile(null);
         }}
         onComplete={handleImportComplete}
-        xlsFile={xlsFile}
+        xlsFile={getCurrentSheeData()}
         fileName={fileName}
-        tableFieldnames={tableFieldnames}
+        tableFieldnames={getCurrentSheetFieldNames()}
+        sheetNames={sheetNames}
         handleXlsFileUpload={handleFileUpload}
+        setCurrentSheet={setCurrentSheet}
+        currentSheet={currentSheet}
+        sheets={sheets}
       />
     );
   }
@@ -232,7 +241,7 @@ export default function ProductsPage() {
                 onDelete={() => setIsDeleteDialogOpen(true)}
                 pageSize={pageSize}
                 pageSizeOptions={[5, 10, 20, 50]}
-                onAddExcelSpreadSheet={triggerFileInput}
+                onAddExcelSpreadSheet={() => setIsImporting(true)}
                 handleOnUpdateRows={handleOnUpdateRows}
               />
             )}
@@ -252,7 +261,15 @@ export default function ProductsPage() {
         </main>
       </div>
       <section className='px-16 flex flex-col gap-5 pb-16'>
-        <Input
+        {/* <Button
+          onClick={() => setIsImporting(true)}
+          variant='outline'
+          className='border-blue-600 text-blue-600 hover:bg-blue-50 hover:text-blue-700 flex items-center'
+        >
+          <Package className='h-4 w-4 mr-2' />
+          Agregar productos desde Excel
+        </Button> */}
+        {/* <Input
           id='xls'
           name='xls'
           type='file'
@@ -260,7 +277,7 @@ export default function ProductsPage() {
           className='hidden'
           onChange={handleFileUpload}
           ref={excelFileInputRef}
-        />
+        /> */}
       </section>
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
