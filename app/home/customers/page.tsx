@@ -129,11 +129,9 @@ export default function CustomersPage() {
     setEditContacts(null);
   };
 
-  const handleFormSubmit = async (
-    data: Partial<Customer>,
-    _selectedCustomer?: Customer
-  ) => {
-    const customer = _selectedCustomer || selectedCustomer;
+  const handleFormSubmit = async (data: Partial<Customer>) => {
+    const customer = selectedCustomer || editContacts;
+
     try {
       if (customer) {
         await customerService.updateCustomer(customer.id!, data);
