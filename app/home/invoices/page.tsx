@@ -23,17 +23,19 @@ import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import CreateInvoiceButton from '@/components/molecules/CreateInvoiceButton';
 import { useCompanyStore } from '@/store/companyStore';
 import { useQuery } from '@tanstack/react-query';
+import { companyService } from '@/lib/supabase/services/company';
 
 export default function Invoices() {
-  const { data: allInvoices, isLoading: areInvoicesLoading } = useQuery(
-    ['allInvoices'],
-    () => invoiceService.getInvoices(),
-    {
-      staleTime: 300000,
-      cacheTime: 600000,
-      refetchOnWindowFocus: true,
-    }
+  const { data: companyId } = useQuery(['companyId'], () =>
+    companyService.getCompanyId()
   );
+
+  const { data: allInvoices, isLoading: areInvoicesLoading } = useQuery(
+    ['allInvoices', companyId],
+    () => invoiceService.getInvoices(),
+    { placeholderData: [], enabled: !!companyId }
+  );
+  console.log('allInvoices', allInvoices);
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [weeklyRevenue, setWeeklyRevenue] = useState(0);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);

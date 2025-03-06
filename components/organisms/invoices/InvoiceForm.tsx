@@ -67,6 +67,7 @@ import UnitCostInput from '@/components/molecules/invoiceProductInputs/UnitCostI
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { productService } from '@/lib/supabase/services/product';
 import { Checkbox } from '@/components/ui/checkbox';
+import { companyService } from '@/lib/supabase/services/company';
 
 interface InvoiceFormProps {
   onSave: (invoice: Invoice) => void;
@@ -116,18 +117,32 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   //     refetchOnWindowFocus: true,
   //   }
   // );
-  const { data: products, isLoading: areProductsLoading } = useQuery(
-    ['products'],
-    () => productService.getProductsByCompany(),
-    {
-      staleTime: 300000,
-      cacheTime: 600000,
-      refetchOnWindowFocus: true,
-    }
+  const { data: companyId } = useQuery(['companyId'], () =>
+    companyService.getCompanyId()
   );
+
+  const { data: company } = useQuery(
+    ['company', companyId],
+    () => companyService.getCompanyById(),
+    { enabled: !!companyId }
+  );
+  const { data: products, isLoading: areProductsLoading } = useQuery(
+    ['products', companyId],
+    () => productService.getProductsByCompany(),
+    { enabled: !!companyId }
+  );
+
+  const { data: allInvoices } = useQuery(
+    ['allInvoices', companyId],
+    () => invoiceService.getInvoices(),
+    { placeholderData: [], enabled: !!companyId }
+  );
+
+  console.log('allInvoices', company);
+
   // const { products } = useProductsStore();
-  const { company } = useCompanyStore();
-  const { allInvoices } = useInvoicesStore();
+  // const { company } = useCompanyStore();
+  // const { allInvoices } = useInvoicesStore();
 
   const [lastInvoiceNumber, setLastInvoiceNumber] = useState<
     string | undefined
@@ -166,7 +181,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
   useEffect(() => {
     if (
-      allInvoices.filter((item) => item.status !== 'cancelled').at(-1) !==
+      allInvoices?.filter((item) => item.status !== 'cancelled').at(-1) !==
       undefined
     ) {
       setLastInvoiceExists(true);
@@ -228,7 +243,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   useEffect(() => {
     if (!isEditing) {
       const lastInvoice = allInvoices
-        .filter((item) => item.status !== 'cancelled')
+        ?.filter((item) => item.status !== 'cancelled')
         .at(-1);
       let nextInvoiceNumber = '';
       if (lastInvoice) {
