@@ -1,14 +1,15 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import supabase from "../client";
+import { SupabaseClient } from '@supabase/supabase-js';
+import supabase from '../client';
 
 export type Table =
-  | "companies"
-  | "users"
-  | "products"
-  | "customers"
-  | "invoices"
-  | "invoice_items"
-  | "product_register_orders";
+  | 'companies'
+  | 'users'
+  | 'products'
+  | 'customers'
+  | 'invoices'
+  | 'invoice_items'
+  | 'product_register_orders'
+  | 'sar_cai';
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -40,18 +41,18 @@ export class BaseService {
       data: { user },
     } = await this.supabase.auth.getUser();
     if (!user) {
-      console.error("No authenticated user found");
+      console.error('No authenticated user found');
       return null;
     }
 
     const { data, error } = await this.supabase
-      .from("companies")
-      .select("id")
-      .eq("user_id", user.id)
+      .from('companies')
+      .select('id')
+      .eq('user_id', user.id)
       .single();
 
     if (error) {
-      console.error("Error fetching company:", error);
+      console.error('Error fetching company:', error);
       return null;
     }
 
@@ -72,12 +73,12 @@ export class BaseService {
     // Get total count
     const countQuery = this.supabase
       .from(table)
-      .select("*", { count: "exact", head: true });
+      .select('*', { count: 'exact', head: true });
 
-    if (table === "customers") {
+    if (table === 'customers') {
       countQuery.or(`company_id.eq.${companyId},is_universal.eq.true`);
     } else {
-      countQuery.eq("company_id", companyId);
+      countQuery.eq('company_id', companyId);
     }
 
     const { count, error: countError } = await countQuery;
@@ -88,17 +89,17 @@ export class BaseService {
     }
 
     // Get paginated data
-    const dataQuery = this.supabase.from(table).select("*");
+    const dataQuery = this.supabase.from(table).select('*');
 
-    if (table === "customers") {
+    if (table === 'customers') {
       dataQuery.or(`company_id.eq.${companyId},is_universal.eq.true`);
     } else {
-      dataQuery.eq("company_id", companyId);
+      dataQuery.eq('company_id', companyId);
     }
 
     const { data, error } = await dataQuery
       .range(start, end)
-      .order("created_at", { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error(`Error fetching paginated ${table}:`, error);
@@ -115,16 +116,16 @@ export class BaseService {
     const companyId = await this.ensureCompanyId();
     if (!companyId) return [];
 
-    const query = this.supabase.from(table).select("*");
+    const query = this.supabase.from(table).select('*');
 
-    if (table === "products") {
-      query.or("archived.eq.false,archived.is.null");
+    if (table === 'products') {
+      query.or('archived.eq.false,archived.is.null');
     }
 
-    if (table === "customers") {
+    if (table === 'customers') {
       query.or(`company_id.eq.${companyId},is_universal.eq.true`);
     } else {
-      query.eq("company_id", companyId);
+      query.eq('company_id', companyId);
     }
 
     const { data, error } = await query;
@@ -143,9 +144,9 @@ export class BaseService {
 
     const { data, error } = await this.supabase
       .from(table)
-      .select("*")
-      .eq("id", id)
-      .eq("company_id", companyId)
+      .select('*')
+      .eq('id', id)
+      .eq('company_id', companyId)
       .single();
 
     if (error) {
@@ -160,7 +161,10 @@ export class BaseService {
     const companyId = await this.ensureCompanyId();
     if (!companyId) return null;
 
-    const insertData = table === 'product_register_orders' ? item : { ...item, company_id: companyId };
+    const insertData =
+      table === 'product_register_orders'
+        ? item
+        : { ...item, company_id: companyId };
 
     const { data, error } = await this.supabase
       .from(table)
@@ -184,7 +188,7 @@ export class BaseService {
     if (!companyId)
       return {
         success: false,
-        message: "No existe ninguna compañía. ¿Has iniciado sesión?",
+        message: 'No existe ninguna compañía. ¿Has iniciado sesión?',
       };
 
     const rowsWithId = items.map((item) => {
@@ -195,20 +199,20 @@ export class BaseService {
       return newItem;
     });
 
-    console.log("length: ", rowsWithId.length);
+    console.log('length: ', rowsWithId.length);
     const { error } = await this.supabase.from(table).insert(rowsWithId);
 
     if (error) {
       console.error(`Error creating ${table}:`, error);
       return {
         success: false,
-        message: "Hubo un error al subir los elementos",
+        message: 'Hubo un error al subir los elementos',
       };
     } else {
-      console.log("Se han subido los elementos con éxito");
+      console.log('Se han subido los elementos con éxito');
     }
 
-    return { success: true, message: "Se subieron los elementos con éxito" };
+    return { success: true, message: 'Se subieron los elementos con éxito' };
   }
 
   protected async update<T>(
@@ -222,8 +226,8 @@ export class BaseService {
     const { data, error } = await this.supabase
       .from(table)
       .update(updates)
-      .eq("id", id)
-      .eq("company_id", companyId)
+      .eq('id', id)
+      .eq('company_id', companyId)
       .single();
 
     if (error) {
@@ -244,7 +248,7 @@ export class BaseService {
       return await this.supabase
         .from(table)
         .update(otherUpdateFields)
-        .eq("id", id);
+        .eq('id', id);
     });
     const updatedRows = await Promise.all(updatedRowsPromise);
     const didSomeRowUpdateFail = updatedRows.some(
@@ -253,9 +257,9 @@ export class BaseService {
     if (didSomeRowUpdateFail)
       return {
         success: false,
-        message: "No se pudieron actualizar los valores",
+        message: 'No se pudieron actualizar los valores',
       };
-    return { success: true, message: "Se actualizaron los valores con éxito" };
+    return { success: true, message: 'Se actualizaron los valores con éxito' };
   }
 
   protected async delete(table: Table, id: string): Promise<boolean> {
@@ -265,8 +269,8 @@ export class BaseService {
     const { error } = await this.supabase
       .from(table)
       .delete()
-      .eq("id", id)
-      .eq("company_id", companyId);
+      .eq('id', id)
+      .eq('company_id', companyId);
 
     if (error) {
       console.error(`Error deleting ${table}:`, error);
@@ -286,8 +290,8 @@ export class BaseService {
 
     const { data, error } = await this.supabase
       .from(table)
-      .select("*")
-      .eq("company_id", companyId)
+      .select('*')
+      .eq('company_id', companyId)
       .ilike(column, `%${query}%`);
 
     if (error) {

@@ -5,7 +5,7 @@ import InvoicePreview from '@/components/organisms/invoices/InvoicePreview';
 import { Invoice, invoiceService } from '@/lib/supabase/services/invoice';
 import { useInvoicesStore } from '@/store/invoicesStore';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, Resolver, useForm } from 'react-hook-form';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
@@ -13,6 +13,105 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DeliveryConfirmDialog } from '@/components/organisms/invoices/DeliveryConfirmDialog';
 import { productService } from '@/lib/supabase/services/product';
+import * as yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { useQuery } from '@tanstack/react-query';
+import { companyService } from '@/lib/supabase/services/company';
+
+const invoiceSchema = yup.object().shape({
+  id: yup.string().optional(),
+  company_id: yup.string(),
+  customer_id: yup.string().required('Customer ID is required'),
+  invoice_number: yup
+    .string()
+    .required('Invoice number is required')
+    .test(
+      'valid-invoice-number',
+      'Número de factura inválido o fuera de secuencia',
+      async function (value, ctx) {
+        // Access context variables through this.options.context
+        const { isEditing, latestInvoiceNumber, latestSarCai, lastInvoice } =
+          this.options.context || {};
+
+        const {
+          parent: { is_proforma },
+        } = ctx;
+
+        console.log('value', value);
+        console.log('context', this.options.context);
+        console.log('ctx', ctx);
+
+        if (isEditing || is_proforma) return true; // Skip validation when editing
+
+        if (!latestInvoiceNumber || !value) return false;
+
+        const previousInvoiceNumber = latestInvoiceNumber as string;
+        const nextInvoiceNumber = value;
+
+        const isValid =
+          await invoiceService.validateNextInvoiceNumberWithSarCai(
+            previousInvoiceNumber,
+            nextInvoiceNumber,
+            latestSarCai,
+            !!lastInvoice
+          );
+
+        if (typeof isValid === 'string') {
+          return ctx.createError({
+            message: isValid,
+          });
+        }
+
+        return isValid;
+      }
+    ),
+  // invoice_number: yup.string().required('Invoice number is required'),
+  date: yup.string().required('Date is required'),
+  subtotal: yup.number().min(0, 'Subtotal must be positive').required(),
+  tax_exonerado: yup
+    .number()
+    .min(0, 'Tax exonerado must be positive')
+    .required(),
+  exento: yup.boolean().default(false),
+  tax_exento: yup.number().min(0, 'Tax exento must be positive').required(),
+  tax_gravado_15: yup.number().min(0, 'Tax gravado 15 must be positive'),
+  tax_gravado_18: yup.number().min(0, 'Tax gravado 18 must be positive'),
+  tax: yup.number().min(0, 'Tax must be positive').required(),
+  tax_18: yup.number().min(0, 'Tax 18 must be positive').required(),
+  total: yup.number().min(0, 'Total must be positive').required(),
+  numbers_to_letters: yup.string(),
+  proforma_number: yup.string().nullable(),
+  is_proforma: yup.boolean(),
+  created_at: yup.string().required(),
+  updated_at: yup.string().required(),
+  customers: yup.object().shape({
+    name: yup.string().required('Customer name is required'),
+    rtn: yup.string().required('RTN is required'),
+    email: yup
+      .string()
+      .email('Invalid email format')
+      .required('Email is required'),
+  }),
+  invoice_items: yup
+    .array()
+    .of(
+      yup.object().shape({
+        id: yup.string().optional(),
+        invoice_id: yup.string().optional(),
+        product_id: yup.string().required('Product ID is required'),
+        description: yup.string().optional(),
+        quantity: yup.number().min(1, 'Quantity must be at least 1').required(),
+        unit_cost: yup.number().min(0, 'Price must be positive').required(),
+        discount: yup.number().min(0).default(0),
+        is_service: yup.boolean().optional(),
+        created_at: yup.string().optional(),
+        updated_at: yup.string().optional(),
+      })
+    )
+    .min(1, 'At least one item is required'),
+  status: yup.string().oneOf(['pending', 'paid'], 'Invalid status'),
+  sar_cai_id: yup.string().nullable().optional(),
+});
 
 export default function CreateInvoicePage() {
   const [loading, setLoading] = useState(true);
@@ -22,7 +121,67 @@ export default function CreateInvoicePage() {
   const invoiceId = searchParams.get('invoice_id');
   const router = useRouter();
 
+  const { data: companyId } = useQuery(['companyId'], () =>
+    companyService.getCompanyId()
+  );
+
+  const { data: latestSarCai, isLoading } = useQuery(
+    ['latestSarCai', companyId],
+    () => invoiceService.getLatestSarCai(),
+    {
+      // Cache for 30 minutes
+      staleTime: 30 * 60 * 1000,
+      // Keep the data in cache for 24 hours
+      cacheTime: 24 * 60 * 60 * 1000,
+      // Don't refetch on window focus for this data as it rarely changes
+      refetchOnWindowFocus: false,
+      // Only run the query when we have a companyId
+      enabled: !!companyId,
+    }
+  );
+
+  const { data: lastInvoice } = useQuery(
+    ['lastInvoice', companyId],
+    () => invoiceService.getLastInvoice(),
+    {
+      // Cache for 10 minutes
+      staleTime: 10 * 60 * 1000,
+      // Keep the data in cache for 30 minutes
+      cacheTime: 30 * 60 * 1000,
+      // Don't refetch on window focus for this data as it rarely changes
+      refetchOnWindowFocus: false,
+      // Only run the query when we have a companyId
+      enabled: !!companyId,
+    }
+  );
+
+  const { data: latestInvoiceNumber } = useQuery(
+    ['latestInvoiceNumberInRange', companyId],
+    () => invoiceService.getLatestInvoiceNumberInSarCaiRange(),
+    {
+      enabled: !!companyId,
+      // onSuccess: (data) => {
+      //   if (data && !isEditing) {
+      //     // setLastInvoiceNumber(data);
+      //     const nextInvoiceNumber =
+      //       invoiceService.generateNextInvoiceNumber(data);
+      //     setValue('invoice_number', nextInvoiceNumber);
+      //   }
+      // },
+    }
+  );
+
   const methods = useForm<Invoice>({
+    reValidateMode: 'onBlur',
+    mode: 'onBlur',
+    resolver: yupResolver(invoiceSchema) as Resolver<Invoice>,
+    context: {
+      isEditing: !!invoiceId,
+      // isProforma: false, // Set this based on your form state
+      latestInvoiceNumber,
+      latestSarCai,
+      lastInvoice,
+    },
     defaultValues: {
       company_id: '',
       customer_id: '',
@@ -33,6 +192,7 @@ export default function CreateInvoicePage() {
       tax_exento: 0,
       tax_gravado_15: 0,
       tax_gravado_18: 0,
+      exento: false,
       tax: 0,
       tax_18: 0,
       total: 0,
@@ -44,6 +204,7 @@ export default function CreateInvoicePage() {
       customers: { name: '', rtn: '', email: '' },
       invoice_items: [],
       status: 'pending',
+      sar_cai_id: null,
     },
   });
 
