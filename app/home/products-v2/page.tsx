@@ -222,7 +222,7 @@ export default function ProductsPage() {
                 description='Agrega tus productos o servicios para incluirlos en tus facturas'
                 buttonText='Agregar Producto'
                 onAction={handleCreateProduct}
-                onAddExcelSpreadSheet={triggerFileInput}
+                onAddExcelSpreadSheet={() => setIsImporting(true)}
               />
             ) : (
               <DataGrid
