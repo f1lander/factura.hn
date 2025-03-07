@@ -68,6 +68,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { productService } from '@/lib/supabase/services/product';
 import { Checkbox } from '@/components/ui/checkbox';
 import { companyService } from '@/lib/supabase/services/company';
+import { differenceInCalendarDays } from 'date-fns';
 
 interface InvoiceFormProps {
   onSave: (invoice: Invoice) => void;
@@ -86,6 +87,17 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   invoice,
 }) => {
   const queryClient = useQueryClient();
+  const {
+    control,
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+    setError,
+    reset,
+  } = useFormContext<Invoice>();
+  const invoiceNumber = watch('invoice_number');
 
   const [expandedCardIndex, setExpandedCardIndex] = useState<number | null>(
     null
@@ -117,6 +129,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   //     refetchOnWindowFocus: true,
   //   }
   // );
+
   const { data: companyId } = useQuery(['companyId'], () =>
     companyService.getCompanyId()
   );
@@ -133,10 +146,13 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
     {
       enabled: !!companyId,
       onSuccess: (data) => {
-        if (data && !isEditing) {
+        if (data?.latest_invoice_number && !isEditing) {
           // setLastInvoiceNumber(data);
-          const nextInvoiceNumber =
-            invoiceService.generateNextInvoiceNumber(data);
+          const nextInvoiceNumber = data?.error
+            ? data?.latest_invoice_number
+            : invoiceService.generateNextInvoiceNumber(
+                data?.latest_invoice_number
+              );
           setValue('invoice_number', nextInvoiceNumber);
         }
       },
@@ -167,6 +183,11 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
       refetchOnWindowFocus: false,
       // Only run the query when we have a companyId
       enabled: !!companyId,
+      onSuccess: (data) => {
+        if (data && !isEditing && !invoiceNumber) {
+          setValue('invoice_number', data.range_invoice1);
+        }
+      },
     }
   );
 
@@ -190,9 +211,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
     if (latestSarCai) {
       const limitDate = new Date(latestSarCai.limit_date);
       const today = new Date();
-      const daysUntilExpiration = Math.floor(
-        (limitDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-      );
+      const daysUntilExpiration = differenceInCalendarDays(limitDate, today);
 
       if (daysUntilExpiration <= 30) {
         toast({
@@ -214,19 +233,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   // const [lastInvoiceExists, setLastInvoiceExists] = useState<boolean>(false);
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] =
     useState<boolean>(false);
-
-  const {
-    control,
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors },
-    setError,
-    reset,
-  } = useFormContext<Invoice>();
-
-  console.log('errors', errors);
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -387,9 +393,11 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 if (latestInvoiceNumber) {
                   setValue(
                     'invoice_number',
-                    invoiceService.generateNextInvoiceNumber(
-                      latestInvoiceNumber
-                    )
+                    latestInvoiceNumber?.error
+                      ? (latestInvoiceNumber?.latest_invoice_number as string)
+                      : invoiceService.generateNextInvoiceNumber(
+                          latestInvoiceNumber?.latest_invoice_number as string
+                        )
                   );
                 }
               }}
@@ -454,7 +462,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                       <Label className='whitespace-nowrap'>
                         {isEditing ? 'Número actual' : 'Última factura'}
                       </Label>
-                      <Input value={latestInvoiceNumber || ''} disabled />
+                      <Input
+                        value={latestInvoiceNumber?.latest_invoice_number || ''}
+                        disabled
+                      />
                     </div>
                   </div>
 

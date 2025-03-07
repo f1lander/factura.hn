@@ -6,6 +6,7 @@ import { AlertCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { sarCaiService } from '@/lib/supabase/services/sar_cai';
 import { useCompanyStore } from '@/store/companyStore';
+import { differenceInCalendarDays } from 'date-fns';
 
 export default function CaiExpirationWarning() {
   const { company } = useCompanyStore();
@@ -24,8 +25,7 @@ export default function CaiExpirationWarning() {
     if (sarCaiData?.limit_date) {
       const limitDate = new Date(sarCaiData.limit_date);
       const today = new Date();
-      const diffTime = limitDate.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const diffDays = differenceInCalendarDays(limitDate, today);
       setDaysUntilExpiration(diffDays);
     }
   }, [sarCaiData]);

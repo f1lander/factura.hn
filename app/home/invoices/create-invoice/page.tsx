@@ -43,9 +43,10 @@ const invoiceSchema = yup.object().shape({
 
         if (isEditing || is_proforma) return true; // Skip validation when editing
 
-        if (!latestInvoiceNumber || !value) return false;
+        if (!latestInvoiceNumber?.latest_invoice_number || !value) return false;
 
-        const previousInvoiceNumber = latestInvoiceNumber as string;
+        const previousInvoiceNumber =
+          latestInvoiceNumber?.latest_invoice_number as string;
         const nextInvoiceNumber = value;
 
         const isValid =
@@ -53,7 +54,7 @@ const invoiceSchema = yup.object().shape({
             previousInvoiceNumber,
             nextInvoiceNumber,
             latestSarCai,
-            !!lastInvoice
+            !latestInvoiceNumber?.error
           );
 
         if (typeof isValid === 'string') {

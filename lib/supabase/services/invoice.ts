@@ -800,7 +800,10 @@ class InvoiceService extends BaseService {
    *
    * @returns {Promise<string | null>} The latest invoice number or null if not found
    */
-  async getLatestInvoiceNumberInSarCaiRange(): Promise<string | null> {
+  async getLatestInvoiceNumberInSarCaiRange(): Promise<{
+    latest_invoice_number: string | null;
+    error: string | null;
+  } | null> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
 
@@ -816,7 +819,10 @@ class InvoiceService extends BaseService {
       return null;
     }
 
-    return data;
+    return {
+      latest_invoice_number: data.data,
+      error: data.error,
+    };
   }
 
   /**
