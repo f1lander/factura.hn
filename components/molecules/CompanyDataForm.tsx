@@ -133,7 +133,10 @@ export default function CompanyDataForm({
     }
   };
 
-  const onSubmit = async (data: CompanyFormData) => {
+  const onSubmit = async ({
+    sarCaiData: sarCaiDataUpdate,
+    ...data
+  }: CompanyFormData) => {
     data.logo_url = '';
 
     try {
@@ -181,19 +184,20 @@ export default function CompanyDataForm({
 
         // Check if sarCaiData has changed
         if (
-          sarCaiData &&
-          (data.sarCaiData.cai !== sarCaiData.cai ||
-            data.sarCaiData.limit_date !==
-              format(new Date(sarCaiData.limit_date), 'yyyy-MM-dd') ||
-            data.sarCaiData.range_invoice1 !== sarCaiData.range_invoice1 ||
-            data.sarCaiData.range_invoice2 !== sarCaiData.range_invoice2)
+          !sarCaiData ||
+          (sarCaiData &&
+            (sarCaiDataUpdate.cai !== sarCaiData.cai ||
+              sarCaiDataUpdate.limit_date !==
+                format(new Date(sarCaiData.limit_date), 'yyyy-MM-dd') ||
+              sarCaiDataUpdate.range_invoice1 !== sarCaiData.range_invoice1 ||
+              sarCaiDataUpdate.range_invoice2 !== sarCaiData.range_invoice2))
         ) {
           // Create new SarCai record
           await sarCaiService.createSarCai({
-            ...data.sarCaiData,
+            ...sarCaiDataUpdate,
             company_id: initialCompany.id,
             limit_date: transpose(
-              endOfDay(new UTCDate(data.sarCaiData.limit_date)),
+              endOfDay(new UTCDate(sarCaiDataUpdate.limit_date)),
               tz(Intl.DateTimeFormat().resolvedOptions().timeZone)
             ).toISOString(),
           });
@@ -213,12 +217,12 @@ export default function CompanyDataForm({
         }
 
         // Create initial SarCai record for new company
-        if (data.sarCaiData) {
+        if (sarCaiDataUpdate) {
           await sarCaiService.createSarCai({
-            ...data.sarCaiData,
+            ...sarCaiDataUpdate,
             company_id: result[0].id,
             limit_date: transpose(
-              endOfDay(new UTCDate(data.sarCaiData.limit_date)),
+              endOfDay(new UTCDate(sarCaiDataUpdate.limit_date)),
               tz(Intl.DateTimeFormat().resolvedOptions().timeZone)
             ).toISOString(),
           });
@@ -444,7 +448,9 @@ export default function CompanyDataForm({
           </div>
           <div className='flex flex-col settingsPageMin:flex-row gap-3'>
             <div className='w-full'>
-              <Label htmlFor='range_invoice1'>Rango de factura inicio</Label>
+              <Label htmlFor='sarCaiData.range_invoice1'>
+                Rango de factura inicio
+              </Label>
               <InputMask
                 className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
                 mask='___-___-__-________'
@@ -459,20 +465,22 @@ export default function CompanyDataForm({
                 })}
                 placeholder='000-000-00-00000000'
               />
-              {errors.range_invoice1 && (
+              {errors.sarCaiData?.range_invoice1 && (
                 <p className='text-red-500 text-sm'>
-                  {errors.range_invoice1.message}
+                  {errors.sarCaiData?.range_invoice1.message}
                 </p>
               )}
             </div>
 
             <div className='w-full'>
-              <Label htmlFor='range_invoice2'>Rango de factura fin</Label>
+              <Label htmlFor='sarCaiData.range_invoice2'>
+                Rango de factura fin
+              </Label>
               <InputMask
                 className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
                 mask='___-___-__-________'
                 replacement={{ _: /\d/ }}
-                id='range_invoice2'
+                id='sarCaiData.range_invoice2'
                 {...register('sarCaiData.range_invoice2', {
                   required: 'Por favor, ingresa un rango de factura de fin',
                   pattern: {
@@ -484,11 +492,12 @@ export default function CompanyDataForm({
                     // If they're undefined, they'll be validated by other rules
                     if (
                       value === undefined &&
-                      formValues.range_invoice2 === undefined
+                      formValues.sarCaiData?.range_invoice2 === undefined
                     )
                       return true;
 
-                    const invoiceRange1 = formValues.range_invoice1 as string;
+                    const invoiceRange1 = formValues.sarCaiData
+                      .range_invoice1 as string;
                     const invoiceRange2 = value as string;
                     const isRange1LessThanRange2 =
                       invoiceService.compareInvoiceNumbers(
@@ -501,9 +510,9 @@ export default function CompanyDataForm({
                 })}
                 placeholder='000-000-00-00000000'
               />
-              {errors.range_invoice2 && (
+              {errors.sarCaiData?.range_invoice2 && (
                 <p className='text-red-500 text-sm'>
-                  {errors.range_invoice2.message}
+                  {errors.sarCaiData?.range_invoice2.message}
                 </p>
               )}
             </div>
