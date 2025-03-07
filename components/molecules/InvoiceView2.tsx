@@ -118,9 +118,9 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
 
   // Query to fetch SAR CAI data
   const { data: sarCaiData, isLoading: isSarCaiLoading } = useQuery({
-    queryKey: ['sarCai', company?.id],
-    queryFn: () => sarCaiService.getActiveSarCaiByCompanyId(company?.id ?? ''),
-    enabled: !!company?.id,
+    queryKey: ['sarCai', invoice?.sar_cai_id],
+    queryFn: () => sarCaiService.getSarCaiById(invoice?.sar_cai_id ?? ''),
+    enabled: !!invoice?.sar_cai_id,
   });
 
   const toggleRow = (id: string) => {
