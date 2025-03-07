@@ -35,7 +35,7 @@ export default function Invoices() {
     () => invoiceService.getInvoices(),
     { placeholderData: [], enabled: !!companyId }
   );
-  console.log('allInvoices', allInvoices);
+
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [weeklyRevenue, setWeeklyRevenue] = useState(0);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
