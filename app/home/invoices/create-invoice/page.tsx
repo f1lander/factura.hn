@@ -15,7 +15,7 @@ import { DeliveryConfirmDialog } from '@/components/organisms/invoices/DeliveryC
 import { productService } from '@/lib/supabase/services/product';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/lib/supabase/services/company';
 
 const invoiceSchema = yup.object().shape({
@@ -117,6 +117,7 @@ export default function CreateInvoicePage() {
   const searchParams = useSearchParams();
   const invoiceId = searchParams.get('invoice_id');
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const { data: companyId } = useQuery(['companyId'], () =>
     companyService.getCompanyId()
@@ -281,7 +282,7 @@ export default function CreateInvoicePage() {
 
       if (!hasPhysicalItems) {
         // If all items are services, skip delivery dialog and redirect
-        syncInvoices();
+        queryClient.invalidateQueries(['allInvoices', companyId]);
         router.push('/home/invoices');
         return;
       }
@@ -319,7 +320,7 @@ export default function CreateInvoicePage() {
 
       // Close dialog and redirect
       setIsDeliveryDialogOpen(false);
-      syncInvoices();
+      queryClient.invalidateQueries(['allInvoices', companyId]);
       router.push('/home/invoices');
     } catch (error) {
       console.error('Error updating inventory:', error);
@@ -328,7 +329,7 @@ export default function CreateInvoicePage() {
 
   const handleDeliveryCancel = () => {
     setIsDeliveryDialogOpen(false);
-    syncInvoices();
+    queryClient.invalidateQueries(['allInvoices', companyId]);
     router.push('/home/invoices');
   };
 
