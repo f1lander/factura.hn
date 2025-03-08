@@ -30,8 +30,6 @@ export default function CaiExpirationWarning() {
     }
   }, [sarCaiData]);
 
-  console.log('sarCaiData', { sarCaiData, daysUntilExpiration, company });
-
   if (!daysUntilExpiration || daysUntilExpiration > 30) {
     return null;
   }
