@@ -660,7 +660,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
         onOpenChange={setIsAddClientDialogOpen}
       >
         <DialogTrigger asChild></DialogTrigger>
-        <DialogContent className='w-[90%]' id='contenido del dialogo papa'>
+        <DialogContent
+          className='w-[90%] overflow-auto max-h-lvh'
+          id='contenido del dialogo papa'
+        >
           <div className='transition-all duration-300 ease-in-out'>
             <CustomerForm
               customer={undefined}
