@@ -37,10 +37,6 @@ const invoiceSchema = yup.object().shape({
           parent: { is_proforma },
         } = ctx;
 
-        console.log('value', value);
-        console.log('context', this.options.context);
-        console.log('ctx', ctx);
-
         if (isEditing || is_proforma) return true; // Skip validation when editing
 
         if (!latestInvoiceNumber?.latest_invoice_number || !value) return false;

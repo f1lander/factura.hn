@@ -422,7 +422,10 @@ class InvoiceService extends BaseService {
     }
 
     // Check if the last invoice exists
-    const lastInvoice = _lastInvoiceExists || (await this.getLastInvoice());
+    const lastInvoice =
+      _lastInvoiceExists !== undefined
+        ? _lastInvoiceExists
+        : await this.getLastInvoice();
     const lastInvoiceExists = !!lastInvoice;
 
     // Use the existing validation logic with the SAR CAI range
