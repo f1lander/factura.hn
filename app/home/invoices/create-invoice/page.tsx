@@ -372,7 +372,8 @@ export default function CreateInvoicePage() {
       </section>
       <DeliveryConfirmDialog
         open={isDeliveryDialogOpen}
-        onOpenChange={setIsDeliveryDialogOpen}
+        // onOpenChange={setIsDeliveryDialogOpen}
+        // onOpenChange={handleDeliveryCancel}
         onConfirm={handleDeliveryConfirm}
         onCancel={handleDeliveryCancel}
       />

@@ -5,12 +5,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface DeliveryConfirmDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange?: (open: boolean) => void;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -31,12 +31,10 @@ export function DeliveryConfirmDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={onCancel}>
+          <Button variant='outline' onClick={onCancel}>
             No, solo guardar
           </Button>
-          <Button onClick={onConfirm}>
-            Sí, actualizar inventario
-          </Button>
+          <Button onClick={onConfirm}>Sí, actualizar inventario</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
