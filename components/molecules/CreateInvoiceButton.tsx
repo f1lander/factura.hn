@@ -6,6 +6,7 @@ import { toast } from '../ui/use-toast';
 import { useCompanyStore } from '@/store/companyStore';
 import { useQuery } from '@tanstack/react-query';
 import { productService } from '@/lib/supabase/services/product';
+import { sarCaiService } from '@/lib/supabase/services/sar_cai';
 
 export default function CreateInvoiceButton() {
   const { data: productsCount = 0, isLoading: areProductsFromDBLoading } =
@@ -20,12 +21,18 @@ export default function CreateInvoiceButton() {
     );
 
   const { company } = useCompanyStore();
+
+  const { data: sarCaiData } = useQuery(
+    ['sar-cai-data', company?.id ?? ''],
+    () => sarCaiService.getActiveSarCaiByCompanyId(company?.id ?? ''),
+    {
+      enabled: !!company?.id,
+      refetchOnWindowFocus: true,
+    }
+  );
+
   const ensureProductsExistenceAndCreateInvoice = () => {
-    if (
-      company?.range_invoice1 === null ||
-      company?.range_invoice2 === null ||
-      company?.cai === null
-    ) {
+    if (!sarCaiData) {
       return toast({
         variant: 'destructive',
         title: 'Necesitamos datos de compañía',

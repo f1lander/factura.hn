@@ -72,6 +72,8 @@ import { useInvoicesStore } from '@/store/invoicesStore';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import Image from 'next/image';
+import { sarCaiService } from '@/lib/supabase/services/sar_cai';
+import { useQuery } from '@tanstack/react-query';
 
 interface InvoiceViewProps {
   invoice?: Invoice;
@@ -113,6 +115,13 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
       });
     }
   }, [company]);
+
+  // Query to fetch SAR CAI data
+  const { data: sarCaiData, isLoading: isSarCaiLoading } = useQuery({
+    queryKey: ['sarCai', invoice?.sar_cai_id],
+    queryFn: () => sarCaiService.getSarCaiById(invoice?.sar_cai_id ?? ''),
+    enabled: !!invoice?.sar_cai_id,
+  });
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev: any) => ({
@@ -187,10 +196,10 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             address1: company?.address1,
             address2: company?.address2,
             phone: company?.phone,
-            cai: company?.cai,
-            limitDate,
-            rangeInvoice1: company?.range_invoice1,
-            rangeInvoice2: company?.range_invoice2,
+            cai: sarCaiData?.cai,
+            limitDate: sarCaiData?.limit_date,
+            rangeInvoice1: sarCaiData?.range_invoice1,
+            rangeInvoice2: sarCaiData?.range_invoice2,
             email: company?.email,
             logo_url: logoUrl,
           },
@@ -826,7 +835,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             <Button
               className='bg-slate-800'
               onClick={handleDownloadPdf}
-              disabled={isDownloading}
+              disabled={isDownloading || isSarCaiLoading}
               size='sm'
             >
               {isDownloading ? 'Descargando...' : 'PDF'}{' '}

@@ -34,6 +34,7 @@ export interface Invoice {
   notes?: string | null;
   delivered_date?: string | null;
   reg_order_id?: string | null;
+  sar_cai_id?: string | null;
 }
 
 export interface InvoiceItem {
@@ -53,6 +54,15 @@ interface CustomerInfo {
   name: string;
   email: string;
   rtn: string;
+}
+
+interface SarCaiInfo {
+  id: string;
+  invoice_number: string;
+  cai: string;
+  limit_date: string;
+  range_invoice1: string;
+  range_invoice2: string;
 }
 
 class InvoiceService extends BaseService {
@@ -374,6 +384,76 @@ class InvoiceService extends BaseService {
     return true;
   }
 
+  /**
+   * Validates the next invoice number using the SAR CAI system
+   *
+   * @param {string} previousInvoiceNumber - The previous invoice number
+   * @param {string} nextInvoiceNumber - The next invoice number to validate
+   * @returns {Promise<string|true>} - Returns `true` if valid, or an error message
+   */
+  async validateNextInvoiceNumberWithSarCai(
+    previousInvoiceNumber: string,
+    nextInvoiceNumber: string,
+    latestSarCaiInfo?: SarCaiInfo,
+    _lastInvoiceExists?: boolean
+  ): Promise<string | true> {
+    // Get the latest SAR CAI
+    const latestSarCai = latestSarCaiInfo || (await this.getLatestSarCai());
+    if (!latestSarCai) {
+      return 'No se encontró un registro SAR CAI válido';
+    }
+
+    // Check if CAI is expired
+    const limitDate = new Date(latestSarCai.limit_date);
+    const today = new Date();
+    if (today > limitDate) {
+      return 'El CAI ha expirado. Por favor, actualice su registro CAI antes de continuar.';
+    }
+
+    // Check if invoice number is within the allowed range
+    if (
+      !this.isInvoiceNumberInRange(
+        nextInvoiceNumber,
+        latestSarCai.range_invoice1,
+        latestSarCai.range_invoice2
+      )
+    ) {
+      return `El número de factura ${nextInvoiceNumber} está fuera del rango permitido (${latestSarCai.range_invoice1} - ${latestSarCai.range_invoice2})`;
+    }
+
+    // Check if the last invoice exists
+    const lastInvoice = _lastInvoiceExists || (await this.getLastInvoice());
+    const lastInvoiceExists = !!lastInvoice;
+
+    // Use the existing validation logic with the SAR CAI range
+    return this.validateNextInvoiceNumber(
+      previousInvoiceNumber,
+      nextInvoiceNumber,
+      latestSarCai.range_invoice2,
+      lastInvoiceExists
+    );
+  }
+
+  // Helper method to check if invoice number is within range
+  private isInvoiceNumberInRange(
+    invoiceNumber: string,
+    rangeStart: string,
+    rangeEnd: string
+  ): boolean {
+    const compareWithStart = this.compareInvoiceNumbers(
+      invoiceNumber,
+      rangeStart
+    );
+    const compareWithEnd = this.compareInvoiceNumbers(invoiceNumber, rangeEnd);
+
+    return (
+      (compareWithStart === 'equal' ||
+        compareWithStart === 'first greater than second') &&
+      (compareWithEnd === 'equal' ||
+        compareWithEnd === 'first less than second')
+    );
+  }
+
   async searchInvoices(
     searchTerm: string,
     startDate?: Date,
@@ -557,10 +637,21 @@ class InvoiceService extends BaseService {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
 
+    // Get the appropriate SAR CAI for this invoice number if it exists
+    let sarCaiId = null;
+    if (invoice.invoice_number) {
+      const { isValid, sarCai } = await this.validateInvoiceNumberWithSarCai(
+        invoice.invoice_number
+      );
+      if (isValid && sarCai) {
+        sarCaiId = sarCai.id;
+      }
+    }
+
     const { invoice_items: invoiceItems, ...rest } = invoice;
     const { data, error } = await this.supabase
       .from(this.tableName)
-      .insert({ ...rest, company_id: companyId })
+      .insert({ ...rest, company_id: companyId, sar_cai_id: sarCaiId })
       .select()
       .single();
 
@@ -597,7 +688,7 @@ class InvoiceService extends BaseService {
     if (!companyId) return null;
 
     const { invoice_items, ...invoiceUpdates } = updates;
-
+    console.log({ updates });
     const { error } = await this.supabase
       .from(this.tableName)
       .update(invoiceUpdates)
@@ -620,7 +711,7 @@ class InvoiceService extends BaseService {
         return null;
       }
 
-      const itemsToInsert = invoice_items.map((item) => ({
+      const itemsToInsert = invoice_items.map(({ id: itemId, ...item }) => ({
         ...item,
         invoice_id: id,
       }));
@@ -683,10 +774,15 @@ class InvoiceService extends BaseService {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return null;
 
+    const sarCai = await this.getLatestSarCai();
+    if (!sarCai) return null;
+
     const { data, error } = await this.supabase
       .from(this.tableName)
       .select('invoice_number')
       .eq('company_id', companyId)
+      .lte('invoice_number', sarCai.range_invoice2)
+      .gte('invoice_number', sarCai.range_invoice1)
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
@@ -697,6 +793,95 @@ class InvoiceService extends BaseService {
     }
 
     return data.invoice_number;
+  }
+
+  /**
+   * Gets the latest invoice number using a direct SQL query within the range of the latest SAR CAI
+   *
+   * @returns {Promise<string | null>} The latest invoice number or null if not found
+   */
+  async getLatestInvoiceNumberInSarCaiRange(): Promise<{
+    latest_invoice_number: string | null;
+    error: string | null;
+  } | null> {
+    const companyId = await this.ensureCompanyIdForInvoice();
+    if (!companyId) return null;
+
+    const { data, error } = await this.supabase.rpc(
+      'get_latest_invoice_number_in_range',
+      {
+        p_company_id: companyId,
+      }
+    );
+
+    if (error) {
+      console.error('Error fetching latest invoice number in range:', error);
+      return null;
+    }
+
+    return {
+      latest_invoice_number: data.data,
+      error: data.error,
+    };
+  }
+
+  /**
+   * Gets the latest SAR CAI entry for the current company
+   *
+   * @returns {Promise<{id: string, cai: string, range_invoice1: string, range_invoice2: string, expiration_date: string} | null>}
+   */
+  async getLatestSarCai(): Promise<any | null> {
+    const companyId = await this.ensureCompanyIdForInvoice();
+    if (!companyId) return null;
+
+    const { data: companyData, error: companyError } = await this.supabase
+      .from('companies')
+      .select(
+        'current_sar_cai_id, sar_cai!companies_current_sar_cai_id_fkey(*)'
+      )
+      .eq('id', companyId)
+      .single();
+
+    if (companyError) {
+      console.error('Error fetching company SAR CAI:', companyError);
+      return null;
+    }
+
+    const { data, error } = await this.supabase
+      .from('sar_cai')
+      .select('*')
+      .eq('id', companyData.current_sar_cai_id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching latest SAR CAI:', error);
+      return null;
+    }
+
+    return data;
+  }
+
+  /**
+   * Validates if an invoice number is within a valid SAR CAI range
+   *
+   * @param {string} invoiceNumber - The invoice number to validate
+   * @returns {Promise<{isValid: boolean, sarCai: any | null}>}
+   */
+  async validateInvoiceNumberWithSarCai(
+    invoiceNumber: string
+  ): Promise<{ isValid: boolean; sarCai: any | null }> {
+    const sarCai = await this.getLatestSarCai();
+
+    if (!sarCai) {
+      console.error('No active SAR CAI found');
+      return { isValid: false, sarCai: null };
+    }
+
+    if (this.isInvoiceNumberValid(invoiceNumber, sarCai.range_invoice2)) {
+      return { isValid: true, sarCai };
+    }
+
+    return { isValid: false, sarCai: null };
   }
 }
 

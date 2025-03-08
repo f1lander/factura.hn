@@ -67,6 +67,8 @@ import UnitCostInput from '@/components/molecules/invoiceProductInputs/UnitCostI
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { productService } from '@/lib/supabase/services/product';
 import { Checkbox } from '@/components/ui/checkbox';
+import { companyService } from '@/lib/supabase/services/company';
+import { differenceInCalendarDays } from 'date-fns';
 
 interface InvoiceFormProps {
   onSave: (invoice: Invoice) => void;
@@ -85,6 +87,17 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   invoice,
 }) => {
   const queryClient = useQueryClient();
+  const {
+    control,
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+    setError,
+    reset,
+  } = useFormContext<Invoice>();
+  const invoiceNumber = watch('invoice_number');
 
   const [expandedCardIndex, setExpandedCardIndex] = useState<number | null>(
     null
@@ -116,36 +129,110 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   //     refetchOnWindowFocus: true,
   //   }
   // );
-  const { data: products, isLoading: areProductsLoading } = useQuery(
-    ['products'],
-    () => productService.getProductsByCompany(),
+
+  const { data: companyId } = useQuery(['companyId'], () =>
+    companyService.getCompanyId()
+  );
+
+  const { data: company } = useQuery(
+    ['company', companyId],
+    () => companyService.getCompanyById(),
+    { enabled: !!companyId }
+  );
+
+  const { data: latestInvoiceNumber } = useQuery(
+    ['latestInvoiceNumberInRange', companyId],
+    () => invoiceService.getLatestInvoiceNumberInSarCaiRange(),
     {
-      staleTime: 300000,
-      cacheTime: 600000,
-      refetchOnWindowFocus: true,
+      enabled: !!companyId,
+      onSuccess: (data) => {
+        if (data?.latest_invoice_number && !isEditing) {
+          // setLastInvoiceNumber(data);
+          const nextInvoiceNumber = data?.error
+            ? data?.latest_invoice_number
+            : invoiceService.generateNextInvoiceNumber(
+                data?.latest_invoice_number
+              );
+          setValue('invoice_number', nextInvoiceNumber);
+        }
+      },
     }
   );
-  // const { products } = useProductsStore();
-  const { company } = useCompanyStore();
-  const { allInvoices } = useInvoicesStore();
 
-  const [lastInvoiceNumber, setLastInvoiceNumber] = useState<
-    string | undefined
-  >();
-  const [lastInvoiceExists, setLastInvoiceExists] = useState<boolean>(false);
+  const { data: products, isLoading: areProductsLoading } = useQuery(
+    ['products', companyId],
+    () => productService.getProductsByCompany(),
+    { enabled: !!companyId }
+  );
+
+  const { data: allInvoices } = useQuery(
+    ['allInvoices', companyId],
+    () => invoiceService.getInvoices(),
+    { placeholderData: [], enabled: !!companyId }
+  );
+
+  const { data: latestSarCai, isLoading } = useQuery(
+    ['latestSarCai', companyId],
+    () => invoiceService.getLatestSarCai(),
+    {
+      // Cache for 30 minutes
+      staleTime: 30 * 60 * 1000,
+      // Keep the data in cache for 24 hours
+      cacheTime: 24 * 60 * 60 * 1000,
+      // Don't refetch on window focus for this data as it rarely changes
+      refetchOnWindowFocus: false,
+      // Only run the query when we have a companyId
+      enabled: !!companyId,
+      onSuccess: (data) => {
+        if (data && !isEditing && !invoiceNumber) {
+          setValue('invoice_number', data.range_invoice1);
+        }
+      },
+    }
+  );
+
+  const { data: lastInvoice } = useQuery(
+    ['lastInvoice', companyId],
+    () => invoiceService.getLastInvoice(),
+    {
+      // Cache for 10 minutes
+      staleTime: 10 * 60 * 1000,
+      // Keep the data in cache for 30 minutes
+      cacheTime: 30 * 60 * 1000,
+      // Don't refetch on window focus for this data as it rarely changes
+      refetchOnWindowFocus: false,
+      // Only run the query when we have a companyId
+      enabled: !!companyId,
+    }
+  );
+
+  // Example check that could be added to a dashboard component
+  useEffect(() => {
+    if (latestSarCai) {
+      const limitDate = new Date(latestSarCai.limit_date);
+      const today = new Date();
+      const daysUntilExpiration = differenceInCalendarDays(limitDate, today);
+
+      if (daysUntilExpiration <= 30) {
+        toast({
+          title: 'CAI próximo a vencer',
+          description: `Su CAI actual vencerá en ${daysUntilExpiration} días. Por favor, gestione un nuevo CAI.`,
+          duration: 10000,
+        });
+      }
+    }
+  }, [latestSarCai, toast]);
+
+  // const { products } = useProductsStore();
+  // const { company } = useCompanyStore();
+  // const { allInvoices } = useInvoicesStore();
+
+  // const [lastInvoiceNumber, setLastInvoiceNumber] = useState<
+  //   string | undefined
+  // >();
+  // const [lastInvoiceExists, setLastInvoiceExists] = useState<boolean>(false);
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] =
     useState<boolean>(false);
-
-  const {
-    control,
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors },
-    setError,
-    reset,
-  } = useFormContext<Invoice>();
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -156,24 +243,24 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const isProforma = watch('is_proforma');
   const isExento = watch('exento');
 
-  // Initialize form with invoice data when editing
-  useEffect(() => {
-    if (isEditing && invoice) {
-      reset(invoice);
-      setLastInvoiceNumber(invoice.invoice_number);
-    }
-  }, [isEditing, invoice, reset]);
+  // // Initialize form with invoice data when editing
+  // useEffect(() => {
+  //   if (isEditing && invoice) {
+  //     reset(invoice);
+  //     setLastInvoiceNumber(invoice.invoice_number);
+  //   }
+  // }, [isEditing, invoice, reset]);
 
-  useEffect(() => {
-    if (
-      allInvoices.filter((item) => item.status !== 'cancelled').at(-1) !==
-      undefined
-    ) {
-      setLastInvoiceExists(true);
-    } else {
-      setLastInvoiceExists(false);
-    }
-  }, [setLastInvoiceExists, allInvoices]);
+  // useEffect(() => {
+  //   if (
+  //     allInvoices?.filter((item) => item.status !== 'cancelled').at(-1) !==
+  //     undefined
+  //   ) {
+  //     setLastInvoiceExists(true);
+  //   } else {
+  //     setLastInvoiceExists(false);
+  //   }
+  // }, [setLastInvoiceExists, allInvoices]);
 
   const handleAddCustomerFormSubmit = async (data: Partial<Customer>) => {
     try {
@@ -225,24 +312,24 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   }, [watchInvoiceItems, setValue, isExento]);
 
   /** Logic for setting the last and next invoice number */
-  useEffect(() => {
-    if (!isEditing) {
-      const lastInvoice = allInvoices
-        .filter((item) => item.status !== 'cancelled')
-        .at(-1);
-      let nextInvoiceNumber = '';
-      if (lastInvoice) {
-        setLastInvoiceNumber(lastInvoice.invoice_number);
-        nextInvoiceNumber = invoiceService.generateNextInvoiceNumber(
-          lastInvoice.invoice_number
-        );
-        setValue('invoice_number', nextInvoiceNumber);
-      } else if (company && company.range_invoice1) {
-        setLastInvoiceNumber(company.range_invoice1);
-        setValue('invoice_number', company.range_invoice1);
-      }
-    }
-  }, [company, allInvoices, setValue, isEditing]);
+  // useEffect(() => {
+  //   if (!isEditing) {
+  //     const lastInvoice = allInvoices
+  //       ?.filter((item) => item.status !== 'cancelled')
+  //       .at(-1);
+  //     let nextInvoiceNumber = '';
+  //     if (lastInvoice) {
+  //       setLastInvoiceNumber(lastInvoice.invoice_number);
+  //       nextInvoiceNumber = invoiceService.generateNextInvoiceNumber(
+  //         lastInvoice.invoice_number
+  //       );
+  //       setValue('invoice_number', nextInvoiceNumber);
+  //     } else if (company && company.range_invoice1) {
+  //       setLastInvoiceNumber(company.range_invoice1);
+  //       setValue('invoice_number', company.range_invoice1);
+  //     }
+  //   }
+  // }, [company, allInvoices, setValue, isEditing]);
 
   /** Logic for setting the customer */
   // we're not going to need this since we'll retrieve this from the server, not from a list
@@ -260,6 +347,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   // }, [customerId, customers, setValue]);
 
   const onSubmit = (data: Invoice) => {
+    console.log('data', data);
     if (data.invoice_items.length < 1)
       setError('invoice_items', {
         type: 'required',
@@ -302,10 +390,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
               className='bg-slate-600 text-white'
               onClick={() => {
                 reset();
-                if (lastInvoiceNumber) {
+                if (latestInvoiceNumber) {
                   setValue(
                     'invoice_number',
-                    invoiceService.generateNextInvoiceNumber(lastInvoiceNumber)
+                    latestInvoiceNumber?.error
+                      ? (latestInvoiceNumber?.latest_invoice_number as string)
+                      : invoiceService.generateNextInvoiceNumber(
+                          latestInvoiceNumber?.latest_invoice_number as string
+                        )
                   );
                 }
               }}
@@ -370,7 +462,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                       <Label className='whitespace-nowrap'>
                         {isEditing ? 'Número actual' : 'Última factura'}
                       </Label>
-                      <Input value={lastInvoiceNumber} disabled />
+                      <Input
+                        value={latestInvoiceNumber?.latest_invoice_number || ''}
+                        disabled
+                      />
                     </div>
                   </div>
 
@@ -384,20 +479,26 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                         mask='___-___-__-________'
                         replacement={{ _: /\d/ }}
                         {...register('invoice_number', {
-                          required: 'Este campo es requerido',
-                          validate: (value) => {
-                            if (isEditing || isProforma) return true; // Skip validation when editing
-                            const previousInvoiceNumber =
-                              lastInvoiceNumber as string;
-                            const nextInvoiceNumber = value;
-                            const lastInvoiceRange = company!.range_invoice2!;
-                            return invoiceService.validateNextInvoiceNumber(
-                              previousInvoiceNumber,
-                              nextInvoiceNumber,
-                              lastInvoiceRange,
-                              lastInvoiceExists
-                            );
-                          },
+                          // required: 'Este campo es requerido',
+                          // validate: (value) => {
+                          //   if (isEditing || isProforma) return true; // Skip validation when editing
+                          //   const previousInvoiceNumber =
+                          //     latestInvoiceNumber as string;
+                          //   const nextInvoiceNumber = value;
+                          //   // const lastInvoiceRange = company!.range_invoice2!;
+                          //   return invoiceService.validateNextInvoiceNumberWithSarCai(
+                          //     previousInvoiceNumber,
+                          //     nextInvoiceNumber,
+                          //     latestSarCai,
+                          //     !!lastInvoice
+                          //   );
+                          //   // return invoiceService.validateNextInvoiceNumber(
+                          //   //   previousInvoiceNumber,
+                          //   //   nextInvoiceNumber,
+                          //   //   lastInvoiceRange,
+                          //   //   lastInvoiceExists
+                          //   // );
+                          // },
                         })}
                         placeholder='000-000-00-00000000'
                         disabled={isEditing || isProforma}
