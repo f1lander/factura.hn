@@ -613,10 +613,11 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                       </div>
 
                       <div className='space-y-2'>
-                        <Label>Precio Unitario</Label>
+                        <Label>Precio Unitario L.</Label>
+                        {/* <UnitCostInput index={index} control={control} /> */}
                         <Badge
                           variant='outline'
-                          className='w-full py-2 px-3 flex items-center justify-between'
+                          className='w-full px-3 py-0 pr-0 flex items-center justify-between'
                         >
                           <span>L.</span>
                           <Controller
@@ -624,9 +625,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                             control={control}
                             defaultValue={0}
                             render={({ field }) => (
-                              <div className='w-24 text-right'>
-                                {field.value.toFixed(2)}
-                              </div>
+                              <UnitCostInput
+                                index={index}
+                                control={control}
+                                className='border-none bg-transparent w-full shadow-none'
+                              />
+                              // <div className='w-24 text-right'>
+                              //   {field.value.toFixed(2)}
+                              // </div>
                             )}
                           />
                         </Badge>
