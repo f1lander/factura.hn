@@ -21,10 +21,10 @@ import { companyService } from '@/lib/supabase/services/company';
 const invoiceSchema = yup.object().shape({
   id: yup.string().optional(),
   company_id: yup.string(),
-  customer_id: yup.string().required('Customer ID is required'),
+  customer_id: yup.string().required('El ID del cliente es requerido'),
   invoice_number: yup
     .string()
-    .required('Invoice number is required')
+    .required('El número de factura es requerido')
     .test(
       'valid-invoice-number',
       'Número de factura inválido o fuera de secuencia',
@@ -62,32 +62,50 @@ const invoiceSchema = yup.object().shape({
         return isValid;
       }
     ),
-  // invoice_number: yup.string().required('Invoice number is required'),
-  date: yup.string().required('Date is required'),
-  subtotal: yup.number().min(0, 'Subtotal must be positive').required(),
+  date: yup.string().required('La fecha es requerida'),
+  subtotal: yup
+    .number()
+    .min(0, 'El subtotal debe ser positivo')
+    .required('El subtotal es requerido'),
   tax_exonerado: yup
     .number()
-    .min(0, 'Tax exonerado must be positive')
-    .required(),
+    .min(0, 'El impuesto exonerado debe ser positivo')
+    .required('El impuesto exonerado es requerido'),
   exento: yup.boolean().default(false),
-  tax_exento: yup.number().min(0, 'Tax exento must be positive').required(),
-  tax_gravado_15: yup.number().min(0, 'Tax gravado 15 must be positive'),
-  tax_gravado_18: yup.number().min(0, 'Tax gravado 18 must be positive'),
-  tax: yup.number().min(0, 'Tax must be positive').required(),
-  tax_18: yup.number().min(0, 'Tax 18 must be positive').required(),
-  total: yup.number().min(0, 'Total must be positive').required(),
+  tax_exento: yup
+    .number()
+    .min(0, 'El impuesto exento debe ser positivo')
+    .required('El impuesto exento es requerido'),
+  tax_gravado_15: yup
+    .number()
+    .min(0, 'El impuesto gravado 15% debe ser positivo'),
+  tax_gravado_18: yup
+    .number()
+    .min(0, 'El impuesto gravado 18% debe ser positivo'),
+  tax: yup
+    .number()
+    .min(0, 'El impuesto debe ser positivo')
+    .required('El impuesto es requerido'),
+  tax_18: yup
+    .number()
+    .min(0, 'El impuesto 18% debe ser positivo')
+    .required('El impuesto 18% es requerido'),
+  total: yup
+    .number()
+    .min(0, 'El total debe ser positivo')
+    .required('El total es requerido'),
   numbers_to_letters: yup.string(),
   proforma_number: yup.string().nullable(),
   is_proforma: yup.boolean(),
-  created_at: yup.string().required(),
-  updated_at: yup.string().required(),
+  created_at: yup.string().required('La fecha de creación es requerida'),
+  updated_at: yup.string().required('La fecha de actualización es requerida'),
   customers: yup.object().shape({
-    name: yup.string().required('Customer name is required'),
-    rtn: yup.string().required('RTN is required'),
+    name: yup.string().required('El nombre del cliente es requerido'),
+    rtn: yup.string().required('El RTN es requerido'),
     email: yup
       .string()
-      .email('Invalid email format')
-      .required('Email is required'),
+      .email('Formato de correo electrónico inválido')
+      .required('El correo electrónico es requerido'),
   }),
   invoice_items: yup
     .array()
@@ -95,18 +113,29 @@ const invoiceSchema = yup.object().shape({
       yup.object().shape({
         id: yup.string().optional(),
         invoice_id: yup.string().optional(),
-        product_id: yup.string().required('Product ID is required'),
+        product_id: yup.string().required('El ID del producto es requerido'),
         description: yup.string().optional(),
-        quantity: yup.number().min(1, 'Quantity must be at least 1').required(),
-        unit_cost: yup.number().min(0, 'Price must be positive').required(),
-        discount: yup.number().min(0).default(0),
+        quantity: yup
+          .number()
+          .min(1, 'La cantidad debe ser al menos 1')
+          .required('La cantidad es requerida'),
+        unit_cost: yup
+          .number()
+          // .transform((value) => (isNaN(value) ? undefined : Number(value)))
+          .min(0, 'El precio debe ser positivo')
+          .required('El precio es requerido'),
+        discount: yup
+          .number()
+          // .transform((value) => (isNaN(value) ? undefined : Number(value)))
+          .min(0, 'El descuento debe ser positivo')
+          .default(0),
         is_service: yup.boolean().optional(),
         created_at: yup.string().optional(),
         updated_at: yup.string().optional(),
       })
     )
-    .min(1, 'At least one item is required'),
-  status: yup.string().oneOf(['pending', 'paid'], 'Invalid status'),
+    .min(1, 'Se requiere al menos un artículo'),
+  status: yup.string().oneOf(['pending', 'paid'], 'Estado inválido'),
   sar_cai_id: yup.string().nullable().optional(),
 });
 

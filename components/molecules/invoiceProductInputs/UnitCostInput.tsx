@@ -9,7 +9,7 @@ const UnitCostInput = ({ index, control, className }: InputProps) => (
     control={control}
     render={({ field }) => (
       <Input
-        type='number'
+        type='decimal'
         {...field}
         min={0}
         placeholder='Unit Cost'
