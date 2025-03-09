@@ -217,7 +217,7 @@ const InvoicePreview: React.FC = () => {
             <CardTitle className='group flex items-center gap-2 text-lg'>
               {!watch('is_proforma')
                 ? `Número de factura ${watch('invoice_number')}`
-                : 'Factura Proforma'}
+                : `Número de proforma ${watch('proforma_number')}`}
             </CardTitle>
             <CardDescription>
               Fecha: {new Date(watch('date')).toLocaleString()}

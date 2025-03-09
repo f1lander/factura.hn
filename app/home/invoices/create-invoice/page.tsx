@@ -24,44 +24,48 @@ const invoiceSchema = yup.object().shape({
   customer_id: yup.string().required('El ID del cliente es requerido'),
   invoice_number: yup
     .string()
-    .required('El número de factura es requerido')
-    .test(
-      'valid-invoice-number',
-      'Número de factura inválido o fuera de secuencia',
-      async function (value, ctx) {
-        // Access context variables through this.options.context
-        const { isEditing, latestInvoiceNumber, latestSarCai, lastInvoice } =
-          this.options.context || {};
+    .nullable()
+    .when('is_proforma', {
+      is: true,
+      then: (schema) => schema.matches(
+        /^PROFORM-\d{8}-\d{3}$/,
+        'El número de proforma debe tener el formato PROFORM-YYYYMMDD-XXX siempre puede ser modificado'
+      ),
+      otherwise: (schema) => schema.required('El número de factura es requerido')
+        .test(
+          'valid-invoice-number',
+          'Número de factura inválido o fuera de secuencia',
+          async function (value, ctx) {
+            // Access context variables through this.options.context
+            const { isEditing, latestInvoiceNumber, latestSarCai, lastInvoice } =
+              this.options.context || {};
 
-        const {
-          parent: { is_proforma },
-        } = ctx;
+            if (isEditing) return true; // Skip validation when editing
 
-        if (isEditing || is_proforma) return true; // Skip validation when editing
+            if (!latestInvoiceNumber?.latest_invoice_number || !value) return false;
 
-        if (!latestInvoiceNumber?.latest_invoice_number || !value) return false;
+            const previousInvoiceNumber =
+              latestInvoiceNumber?.latest_invoice_number as string;
+            const nextInvoiceNumber = value;
 
-        const previousInvoiceNumber =
-          latestInvoiceNumber?.latest_invoice_number as string;
-        const nextInvoiceNumber = value;
+            const isValid =
+              await invoiceService.validateNextInvoiceNumberWithSarCai(
+                previousInvoiceNumber,
+                nextInvoiceNumber,
+                latestSarCai,
+                !latestInvoiceNumber?.error
+              );
 
-        const isValid =
-          await invoiceService.validateNextInvoiceNumberWithSarCai(
-            previousInvoiceNumber,
-            nextInvoiceNumber,
-            latestSarCai,
-            !latestInvoiceNumber?.error
-          );
+            if (typeof isValid === 'string') {
+              return ctx.createError({
+                message: isValid,
+              });
+            }
 
-        if (typeof isValid === 'string') {
-          return ctx.createError({
-            message: isValid,
-          });
-        }
-
-        return isValid;
-      }
-    ),
+            return isValid;
+          }
+        )
+    }),
   date: yup.string().required('La fecha es requerida'),
   subtotal: yup
     .number()
@@ -105,7 +109,8 @@ const invoiceSchema = yup.object().shape({
     email: yup
       .string()
       .email('Formato de correo electrónico inválido')
-      .required('El correo electrónico es requerido'),
+      .nullable()
+      .optional(),
   }),
   invoice_items: yup
     .array()
@@ -213,6 +218,8 @@ export default function CreateInvoicePage() {
       company_id: '',
       customer_id: '',
       invoice_number: '',
+      proforma_number: null,
+      is_proforma: false,
       date: new Date().toISOString(),
       subtotal: 0,
       tax_exonerado: 0,
@@ -224,8 +231,6 @@ export default function CreateInvoicePage() {
       tax_18: 0,
       total: 0,
       numbers_to_letters: '',
-      proforma_number: null,
-      is_proforma: false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       customers: { name: '', rtn: '', email: '' },
