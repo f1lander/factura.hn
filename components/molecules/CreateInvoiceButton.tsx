@@ -7,6 +7,7 @@ import { useCompanyStore } from '@/store/companyStore';
 import { useQuery } from '@tanstack/react-query';
 import { productService } from '@/lib/supabase/services/product';
 import { sarCaiService } from '@/lib/supabase/services/sar_cai';
+import { companyService } from '@/lib/supabase/services/company';
 
 export default function CreateInvoiceButton() {
   const { data: productsCount = 0, isLoading: areProductsFromDBLoading } =
@@ -22,11 +23,15 @@ export default function CreateInvoiceButton() {
 
   const { company } = useCompanyStore();
 
+  const { data: companyId } = useQuery(['companyId'], () =>
+    companyService.getCompanyId()
+  );
+
   const { data: sarCaiData } = useQuery(
     ['sar-cai-data', company?.id ?? ''],
-    () => sarCaiService.getActiveSarCaiByCompanyId(company?.id ?? ''),
+    () => sarCaiService.getActiveSarCaiByCompanyId(companyId ?? ''),
     {
-      enabled: !!company?.id,
+      enabled: !!companyId,
       refetchOnWindowFocus: true,
     }
   );
