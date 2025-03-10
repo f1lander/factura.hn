@@ -21,14 +21,12 @@ export default function CreateInvoiceButton() {
       }
     );
 
-  const { company } = useCompanyStore();
-
   const { data: companyId } = useQuery(['companyId'], () =>
     companyService.getCompanyId()
   );
 
   const { data: sarCaiData } = useQuery(
-    ['sar-cai-data', company?.id ?? ''],
+    ['sar-cai-data', companyId ?? ''],
     () => sarCaiService.getActiveSarCaiByCompanyId(companyId ?? ''),
     {
       enabled: !!companyId,
