@@ -12,7 +12,6 @@ import {
   ChevronDown,
   ChevronUp,
   CreditCard,
-  DollarSign,
   Receipt,
   Truck,
 } from 'lucide-react';
@@ -572,7 +571,7 @@ const EnhancedInvoiceTable = ({
               {/* Total Amount - Prominent Display */}
               <div className='flex items-center justify-between py-2 px-3 bg-gray-50 rounded-md'>
                 <div className='flex items-center gap-1 text-gray-600'>
-                  <DollarSign className='w-4 h-4' />
+                  <p className='font-semibold'>Lps.</p>
                   <span>Total</span>
                 </div>
                 <span className='font-semibold text-green-600'>

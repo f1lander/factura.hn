@@ -40,9 +40,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import {
   ChevronDown,
   ChevronUp,
-  DollarSign,
   DownloadIcon,
-  Edit2Icon,
   EditIcon,
   Hash,
   Package,
@@ -55,10 +53,8 @@ import {
   InvoiceItem,
   invoiceService,
 } from '@/lib/supabase/services/invoice';
-// import { Customer, customerService } from "@/lib/supabase/services/customer";
 import { Product } from '@/lib/supabase/services/product';
-// import { Company, companyService } from "@/lib/supabase/services/company";
-import { formatDate, getSignedLogoUrl, numberToWords } from '@/lib/utils';
+import { getSignedLogoUrl, numberToWords } from '@/lib/utils';
 import { getStatusBadge } from './InvoicesTable';
 import { renderPdf, getSignedPdfUrl } from '@/app/do-functions';
 import { toast } from '@/components/ui/use-toast';
@@ -725,7 +721,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
                   </div>
                   <div className='flex items-center gap-2'>
                     <div className='flex items-center text-green-600'>
-                      <DollarSign className='w-4 h-4' />
+                      <p className='font-semibold'>Lps.</p>
                       <span className='font-medium'>
                         {`${(
                           item.quantity * item.unit_cost -
