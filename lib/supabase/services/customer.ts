@@ -1,4 +1,4 @@
-import { BaseService, Table } from "@/lib/supabase/services/BaseService";
+import { BaseService, Table } from '@/lib/supabase/services/BaseService';
 
 // Contact type definition
 export interface Contact {
@@ -22,20 +22,20 @@ export interface Customer {
 }
 
 class CustomerService extends BaseService {
-  private tableName: Table = "customers";
+  private tableName: Table = 'customers';
 
   // Helper method to ensure company ID is available
   private async ensureCompanyIdForCustomer(): Promise<string | null> {
     const companyId = await this.ensureCompanyId();
     if (!companyId) {
-      console.error("No company ID available for this operation");
+      console.error('No company ID available for this operation');
     }
     return companyId;
   }
 
   // Create a new customer
   async createCustomer(
-    customer: Omit<Customer, "id" | "company_id" | "created_at" | "updated_at">
+    customer: Omit<Customer, 'id' | 'company_id' | 'created_at' | 'updated_at'>
   ): Promise<Customer | null> {
     const companyId = await this.ensureCompanyIdForCustomer();
     if (!companyId) return null;
@@ -61,15 +61,15 @@ class CustomerService extends BaseService {
 
   async getCustomersByCompanyAndCustomerName(customerName: string): Promise<
     // { id: string | number; name: string; email: string; rtn: string }[]
-    Pick<Customer, "id" | "name" | "rtn" | "email">[]
+    Pick<Customer, 'id' | 'name' | 'rtn' | 'email'>[]
   > {
     const companyId = await this.ensureCompanyIdForCustomer();
     if (!companyId) return [];
     const { data, error } = await this.supabase
       .from(this.tableName)
-      .select("id, name, email, rtn")
-      .eq("company_id", companyId)
-      .ilike("name", `%${customerName}%`);
+      .select('id, name, email, rtn')
+      .or(`company_id.eq.${companyId},is_universal.eq.true`)
+      .ilike('name', `%${customerName}%`);
     if (error || !data) return [];
     return data;
   }
@@ -87,8 +87,13 @@ class CustomerService extends BaseService {
   async updateMultipleCustomers(
     customers: Customer[]
   ): Promise<{ success: boolean; message: string }> {
-    const filteredCustomers = customers.filter((customer) => !customer.is_universal);
-    const response = await this.updateMultiple<Customer>(this.tableName, filteredCustomers);
+    const filteredCustomers = customers.filter(
+      (customer) => !customer.is_universal
+    );
+    const response = await this.updateMultiple<Customer>(
+      this.tableName,
+      filteredCustomers
+    );
     return response;
   }
 
@@ -166,12 +171,12 @@ class CustomerService extends BaseService {
 
     const { data, error } = await this.supabase
       .from(this.tableName)
-      .select("*")
-      .eq("company_id", companyId)
+      .select('*')
+      .eq('company_id', companyId)
       .or(`name.ilike.%${query}%,email.ilike.%${query}%`);
 
     if (error) {
-      console.error("Error searching customers:", error);
+      console.error('Error searching customers:', error);
       return [];
     }
 

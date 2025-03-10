@@ -1,12 +1,13 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { PlusCircleIcon } from 'lucide-react';
+import { LoaderIcon, PlusCircleIcon } from 'lucide-react';
 import { toast } from '../ui/use-toast';
 import { useCompanyStore } from '@/store/companyStore';
 import { useQuery } from '@tanstack/react-query';
 import { productService } from '@/lib/supabase/services/product';
 import { sarCaiService } from '@/lib/supabase/services/sar_cai';
+import { companyService } from '@/lib/supabase/services/company';
 
 export default function CreateInvoiceButton() {
   const { data: productsCount = 0, isLoading: areProductsFromDBLoading } =
@@ -20,13 +21,15 @@ export default function CreateInvoiceButton() {
       }
     );
 
-  const { company } = useCompanyStore();
+  const { data: companyId } = useQuery(['companyId'], () =>
+    companyService.getCompanyId()
+  );
 
-  const { data: sarCaiData } = useQuery(
-    ['sar-cai-data', company?.id ?? ''],
-    () => sarCaiService.getActiveSarCaiByCompanyId(company?.id ?? ''),
+  const { data: sarCaiData, isSuccess } = useQuery(
+    ['sar-cai-data', companyId ?? ''],
+    () => sarCaiService.getActiveSarCaiByCompanyId(companyId ?? ''),
     {
-      enabled: !!company?.id,
+      enabled: !!companyId,
       refetchOnWindowFocus: true,
     }
   );
@@ -54,9 +57,13 @@ export default function CreateInvoiceButton() {
     <Button
       className='bg-[#00A1D4] text-white text-lg font-semibold flex gap-4 p-8'
       onClick={ensureProductsExistenceAndCreateInvoice}
+      disabled={areProductsFromDBLoading || !isSuccess}
     >
       <PlusCircleIcon />
       Crear factura
+      {(areProductsFromDBLoading || !isSuccess) && (
+        <LoaderIcon className='h-4 w-4 animate-spin' />
+      )}
     </Button>
   );
 }

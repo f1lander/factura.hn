@@ -25,12 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 
 import { DatePicker } from '@/components/ui/date-picker';
-import {
-  CheckIcon,
-  HelpCircle,
-  PlusCircleIcon,
-  Trash2,
-} from 'lucide-react';
+import { CheckIcon, HelpCircle, PlusCircleIcon, Trash2 } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -140,8 +135,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
           const nextInvoiceNumber = data?.error
             ? data?.latest_invoice_number
             : invoiceService.generateNextInvoiceNumber(
-              data?.latest_invoice_number
-            );
+                data?.latest_invoice_number
+              );
           setValue('invoice_number', nextInvoiceNumber);
         }
       },
@@ -230,7 +225,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
-      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const random = Math.floor(Math.random() * 1000)
+        .toString()
+        .padStart(3, '0');
       const proformaNumber = `PROFORM-${year}${month}${day}-${random}`;
       setValue('invoice_number', proformaNumber);
       setValue('proforma_number', proformaNumber);
@@ -240,13 +237,11 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
         latestInvoiceNumber?.error
           ? latestInvoiceNumber?.latest_invoice_number
           : invoiceService.generateNextInvoiceNumber(
-            latestInvoiceNumber?.latest_invoice_number
-          )
+              latestInvoiceNumber?.latest_invoice_number
+            )
       );
     }
   }, [isProforma, setValue, latestInvoiceNumber]);
-
-  
 
   const handleAddCustomerFormSubmit = async (data: Partial<Customer>) => {
     try {
@@ -297,7 +292,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
     setValue('tax_exento', isExento ? subtotal : 0);
   }, [watchInvoiceItems, setValue, isExento]);
 
-
   const onSubmit = (data: Invoice) => {
     console.log('data', data);
     if (data.invoice_items.length < 1)
@@ -342,14 +336,25 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
               className='bg-slate-600 text-white'
               onClick={() => {
                 reset();
-                if (latestInvoiceNumber) {
+                if (isProforma) {
+                  const date = new Date();
+                  const year = date.getFullYear();
+                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                  const day = String(date.getDate()).padStart(2, '0');
+                  const random = Math.floor(Math.random() * 1000)
+                    .toString()
+                    .padStart(3, '0');
+                  const proformaNumber = `PROFORM-${year}${month}${day}-${random}`;
+                  setValue('invoice_number', proformaNumber);
+                  setValue('proforma_number', proformaNumber);
+                } else if (latestInvoiceNumber) {
                   setValue(
                     'invoice_number',
                     latestInvoiceNumber?.error
                       ? (latestInvoiceNumber?.latest_invoice_number as string)
                       : invoiceService.generateNextInvoiceNumber(
-                        latestInvoiceNumber?.latest_invoice_number as string
-                      )
+                          latestInvoiceNumber?.latest_invoice_number as string
+                        )
                   );
                 }
               }}
@@ -443,18 +448,17 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   </div>
                 </>
               ) : (
-
                 <div className='flex flex-col gap-2'>
                   <Label className='whitespace-nowrap flex items-center gap-2'>
                     Número de Proforma
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                          <HelpCircle className='h-4 w-4 text-muted-foreground cursor-help' />
                         </TooltipTrigger>
-                        <TooltipContent className="w-80">
+                        <TooltipContent className='w-80'>
                           <p>El formato por defecto es PROFORM-YYYYMMDD-XXX:</p>
-                          <ul className="list-disc list-inside">
+                          <ul className='list-disc list-inside'>
                             <li>YYYY: año actual</li>
                             <li>MM: mes (01-12)</li>
                             <li>DD: día (01-31)</li>
@@ -576,7 +580,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                                 control={control}
                                 className='border-none bg-transparent w-full shadow-none'
                               />
-                              
                             )}
                           />
                         </Badge>
