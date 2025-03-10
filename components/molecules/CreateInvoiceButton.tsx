@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { PlusCircleIcon } from 'lucide-react';
+import { LoaderIcon, PlusCircleIcon } from 'lucide-react';
 import { toast } from '../ui/use-toast';
 import { useCompanyStore } from '@/store/companyStore';
 import { useQuery } from '@tanstack/react-query';
@@ -25,7 +25,7 @@ export default function CreateInvoiceButton() {
     companyService.getCompanyId()
   );
 
-  const { data: sarCaiData } = useQuery(
+  const { data: sarCaiData, isSuccess } = useQuery(
     ['sar-cai-data', companyId ?? ''],
     () => sarCaiService.getActiveSarCaiByCompanyId(companyId ?? ''),
     {
@@ -57,9 +57,13 @@ export default function CreateInvoiceButton() {
     <Button
       className='bg-[#00A1D4] text-white text-lg font-semibold flex gap-4 p-8'
       onClick={ensureProductsExistenceAndCreateInvoice}
+      disabled={areProductsFromDBLoading || !isSuccess}
     >
       <PlusCircleIcon />
       Crear factura
+      {(areProductsFromDBLoading || !isSuccess) && (
+        <LoaderIcon className='h-4 w-4 animate-spin' />
+      )}
     </Button>
   );
 }
