@@ -112,12 +112,16 @@ export class BaseService {
     };
   }
 
-  protected async getAll<T>(table: Table): Promise<T[]> {
+  protected async getAll<T>(
+    table: Table,
+    filters?: Record<string, any>
+  ): Promise<T[]> {
     const companyId = await this.ensureCompanyId();
     if (!companyId) return [];
 
     const query = this.supabase.from(table).select('*');
 
+    // Apply default table-specific filters
     if (table === 'products') {
       query.or('archived.eq.false,archived.is.null');
     }
@@ -126,6 +130,41 @@ export class BaseService {
       query.or(`company_id.eq.${companyId},is_universal.eq.true`);
     } else {
       query.eq('company_id', companyId);
+    }
+
+    // Apply additional filters if provided
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          query.in(key, value);
+        } else if (typeof value === 'object' && value !== null) {
+          // Handle operators like gt, lt, gte, lte, etc.
+          Object.entries(value).forEach(([operator, operatorValue]) => {
+            // Type-safe operator handling
+            switch (operator) {
+              case 'gt':
+                query.gt(key, operatorValue);
+                break;
+              case 'lt':
+                query.lt(key, operatorValue);
+                break;
+              case 'gte':
+                query.gte(key, operatorValue);
+                break;
+              case 'lte':
+                query.lte(key, operatorValue);
+                break;
+              case 'neq':
+                query.neq(key, operatorValue);
+                break;
+              default:
+                query.eq(key, operatorValue);
+            }
+          });
+        } else {
+          query.eq(key, value);
+        }
+      });
     }
 
     const { data, error } = await query;
