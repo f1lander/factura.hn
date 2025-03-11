@@ -36,6 +36,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { companyService } from '@/lib/supabase/services/company';
 
 const RegisterProductOrderSchema = yup.object().shape({
   type: yup.string().oneOf(['ADD', 'DELETE']).required(),
@@ -79,15 +81,33 @@ const RegisterProductPage: React.FC = () => {
     },
   });
 
+  const { token, userId } = useSupabaseAuth();
+
+  const { data: companyId } = useQuery(
+    ['companyId', userId],
+    () => companyService.getCompanyId(),
+    {
+      enabled: !!token,
+    }
+  );
+
   const {
     data: products,
     isLoading: areProductsLoading,
     refetch,
-  } = useQuery(['products'], () => productService.getProductsByCompany(), {
-    staleTime: 300000,
-    cacheTime: 600000,
-    refetchOnWindowFocus: true,
-  });
+  } = useQuery(
+    ['products', companyId],
+    () =>
+      productService.getProductsByCompany({
+        is_service: false,
+      }),
+    {
+      staleTime: 300000,
+      cacheTime: 600000,
+      refetchOnWindowFocus: true,
+      enabled: !!token,
+    }
+  );
 
   const values = watch();
 
