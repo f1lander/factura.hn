@@ -47,6 +47,8 @@ import {
   Percent,
   ShoppingCart,
   Trash2,
+  EyeIcon,
+  X,
 } from 'lucide-react';
 import {
   Invoice,
@@ -63,13 +65,17 @@ import { useCustomersStore } from '@/store/customersStore';
 import { useProductsStore } from '@/store/productsStore';
 import { useCompanyStore } from '@/store/companyStore';
 import { CustomerForm } from './CustomerForm';
-import { Customer, customerService } from '@/lib/supabase/services/customer';
+import { customerService } from '@/lib/supabase/services/customer';
 import { useInvoicesStore } from '@/store/invoicesStore';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { sarCaiService } from '@/lib/supabase/services/sar_cai';
 import { useQuery } from '@tanstack/react-query';
+import InvoiceViewPdf from '@/components/molecules/InvoiceViewPdf';
+import { companyService } from '@/lib/supabase/services/company';
+import { Company } from '@/lib/supabase/services/company';
+import { Customer } from '@/lib/supabase/services/customer';
 
 interface InvoiceViewProps {
   invoice?: Invoice;
@@ -93,6 +99,9 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] =
     useState<boolean>(false);
+  const [showPdfViewer, setShowPdfViewer] = useState(false);
+  const [companyData, setCompanyData] = useState<Company | null>(null);
+
   useEffect(() => {
     if (allInvoices.at(-1) !== undefined) {
       setLastInvoiceExists(true);
@@ -118,6 +127,18 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     queryFn: () => sarCaiService.getSarCaiById(invoice?.sar_cai_id ?? ''),
     enabled: !!invoice?.sar_cai_id,
   });
+
+  // Add this useEffect to fetch company data
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      const companyData = await companyService.getCompanyById();
+      if (companyData) {
+        setCompanyData(companyData);
+      }
+    };
+    
+    fetchCompanyData();
+  }, []);
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev: any) => ({
@@ -636,6 +657,10 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     router.push(`/home/invoices/create-invoice?invoice_id=${invoice?.id}`);
   };
 
+  const handleViewPdf = () => {
+    setShowPdfViewer(true);
+  };
+
   const renderReadOnlyContent = () => (
     <>
       <div className='grid gap-3'>
@@ -810,6 +835,18 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
           {watch('numbers_to_letters')}
         </p>
       </div>
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleViewPdf}
+          className="flex items-center gap-2"
+        >
+          <EyeIcon size={16} />
+          <span>Ver PDF</span>
+        </Button>
+        {/* Existing buttons */}
+      </div>
     </>
   );
 
@@ -890,6 +927,17 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
           </div>
         </CardFooter>
       </Card>
+      {showPdfViewer && invoice && (
+        <div className="p-4">
+          <div className="flex justify-between mb-4">
+            <h2 className="text-xl font-bold">Vista previa de Factura</h2>
+            <Button variant="outline" onClick={() => setShowPdfViewer(false)}>
+              <X className="h-4 w-4 mr-2" /> Cerrar
+            </Button>
+          </div>
+          <InvoiceViewPdf invoice={invoice} company={companyData || undefined} />
+        </div>
+      )}
     </>
   );
 };

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CheckCircle,
   ChevronLeft,
@@ -14,6 +14,8 @@ import {
   CreditCard,
   Receipt,
   Truck,
+  X,
+  FileText,
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
@@ -46,13 +48,22 @@ import {
   Dialog,
   DialogTrigger,
   DialogContent,
-  DialogTitle,
   DialogDescription,
   DialogHeader,
+  DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import { Toggle } from '@/components/ui/toggle';
 import { cn } from '@/lib/utils';
+import InvoiceViewPdf from '@/components/molecules/InvoiceViewPdf';
+import { Company } from '@/lib/supabase/services/company';
+import { companyService } from '@/lib/supabase/services/company';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const statusMap: { [key: string]: string } = {
   Pagadas: 'paid',
@@ -188,9 +199,6 @@ const InvoiceStatusButtons = ({
                   Delivered: `¿Está seguro de que desea marcar ${selectedInvoices.length} factura(s) como entregada?`,
                 }[currentAction!]
               }
-              {/* {currentAction === 'paid'
-                ? `¿Está seguro de que desea marcar ${selectedInvoices.length} factura(s) como pagadas?`
-                : `¿Está seguro de que desea anular ${selectedInvoices.length} factura(s)?`} */}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -205,9 +213,6 @@ const InvoiceStatusButtons = ({
                   Delivered: 'Marcar como entregada',
                 }[currentAction!]
               }
-              {/* {currentAction === 'paid'
-                ? 'Marcar como pagada'
-                : 'Anular factura'} */}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -229,8 +234,21 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
-
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
+  const [showPdfModal, setShowPdfModal] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [companyData, setCompanyData] = useState<Company | null>(null);
+
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      const data = await companyService.getCompanyById();
+      if (data) {
+        setCompanyData(data);
+      }
+    };
+    
+    fetchCompanyData();
+  }, []);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newSearchTerm = e.target.value;
@@ -295,6 +313,16 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
     const endIndex = startIndex + itemsPerPage;
     return invoices.slice(startIndex, endIndex);
   };
+
+  const handleInvoiceClick = (invoice: Invoice, event: React.MouseEvent) => {
+    // Stop propagation to prevent triggering checkbox
+    event.stopPropagation();
+    setSelectedInvoice(invoice);
+    setShowPdfModal(true);
+    // Still call the original onSelectInvoice for other functionality
+    // onSelectInvoice(invoice);
+  };
+
   return (
     <div className='flex w-full flex-col gap-4'>
       <div className='flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4 w-full'>
@@ -368,6 +396,7 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
             invoices={invoices}
             selectedInvoices={selectedInvoices}
             onSelectInvoice={onSelectInvoice}
+            handleInvoiceClick={handleInvoiceClick}
             handleSelectAllChange={handleSelectAllChange}
             handleInvoiceSelect={handleInvoiceSelect}
             getCurrentPageItems={getCurrentPageItems}
@@ -402,6 +431,34 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
           </div>
         </CardFooter>
       </Card>
+
+      <Dialog open={showPdfModal} onOpenChange={setShowPdfModal}>
+        <DialogContent className="sm:max-w-[95%] sm:w-[95%] sm:h-[95vh] max-h-[95vh] p-0 overflow-hidden">
+          <div className="flex flex-col h-full">
+            <DialogHeader className="px-6 py-4 border-b">
+              <div className="flex justify-between items-center">
+                <DialogTitle>Vista previa de factura</DialogTitle>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => setShowPdfModal(false)}
+                  className="h-8 w-8 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </DialogHeader>
+            <div className="flex-1 overflow-auto p-6">
+              {selectedInvoice && (
+                <InvoiceViewPdf 
+                  invoice={selectedInvoice} 
+                  company={companyData || undefined} 
+                />
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -410,6 +467,7 @@ const EnhancedInvoiceTable = ({
   invoices,
   selectedInvoices,
   onSelectInvoice,
+  handleInvoiceClick,
   handleSelectAllChange,
   handleInvoiceSelect,
   getCurrentPageItems,
@@ -464,8 +522,8 @@ const EnhancedInvoiceTable = ({
             {getCurrentPageItems().map((invoice: Invoice) => (
               <TableRow
                 key={invoice.id}
-                className='cursor-pointer hover:bg-muted/50 transition-colors'
-                onClick={() => onSelectInvoice(invoice)}
+                className='cursor-pointer hover:bg-muted/50 transition-colors group relative'
+                onClick={(e) => handleInvoiceClick(invoice, e)}
               >
                 <TableCell
                   className='py-4'
@@ -478,10 +536,34 @@ const EnhancedInvoiceTable = ({
                     }
                   />
                 </TableCell>
-                <TableCell className='py-4'>
-                  {invoice?.proforma_number
-                    ? invoice?.proforma_number
-                    : invoice.invoice_number}
+                <TableCell className='py-4 relative'>
+                  <div className="flex items-center">
+                    <span>
+                      {invoice?.proforma_number
+                        ? invoice?.proforma_number
+                        : invoice.invoice_number}
+                    </span>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="ml-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInvoiceClick(invoice, e);
+                            }}
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Ver PDF de factura</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                 </TableCell>
                 <TableCell className='py-4'>
                   {new Date(invoice.date).toLocaleDateString()}
@@ -583,7 +665,7 @@ const EnhancedInvoiceTable = ({
             {/* Expandable Section Button */}
             <div
               className='border-t px-4 py-2 flex items-center justify-center gap-2 text-sm text-gray-500 cursor-pointer hover:bg-gray-50 transition-colors'
-              onClick={() => toggleRow(invoice.id)}
+              onClick={(e) => toggleRow(invoice.id)}
             >
               {expandedRows[invoice.id] ? (
                 <>
@@ -631,6 +713,20 @@ const EnhancedInvoiceTable = ({
                 >
                   Ver factura completa
                 </div>
+
+                {/* Add View PDF Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full flex items-center justify-center gap-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleInvoiceClick(invoice, e);
+                  }}
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>Ver PDF</span>
+                </Button>
               </div>
             )}
           </div>

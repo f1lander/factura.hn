@@ -16,7 +16,7 @@ import { productService } from '@/lib/supabase/services/product';
 import { Invoice, invoiceService } from '@/lib/supabase/services/invoice';
 import InvoiceView from '@/components/molecules/InvoiceView2';
 import { InvoicesTable } from '@/components/molecules/InvoicesTable';
-import { useAccount, useDebounce, useMediaQuery } from '@/lib/hooks';
+import { useDebounce } from '@/lib/hooks';
 import { toast } from '@/components/ui/use-toast';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
