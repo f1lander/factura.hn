@@ -271,7 +271,7 @@ const RegisterProductPage: React.FC = () => {
                         onClick={() => setValue('type', 'ADD')}
                         className='w-full sm:w-24'
                       >
-                        Agregar
+                        Incrementar
                       </Button>
                       <Button
                         variant={
@@ -280,7 +280,7 @@ const RegisterProductPage: React.FC = () => {
                         onClick={() => setValue('type', 'DELETE')}
                         className='w-full sm:w-24'
                       >
-                        Eliminar
+                        Reducir
                       </Button>
                     </div>
                   </div>
