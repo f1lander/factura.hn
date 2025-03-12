@@ -351,13 +351,13 @@ const RegisterProductPage: React.FC = () => {
                           //   await handleCreateProductRegisterOrder(rowData);
                           // }}
                         >
-                          Registrar
+                          Guardar
                         </Button>
                         <Button
                           variant='destructive'
                           onClick={handleDiscardChanges}
                         >
-                          Discard Changes
+                          Deshacer cambios
                         </Button>
                       </div>
                     )}
@@ -444,7 +444,9 @@ const RegisterProductPage: React.FC = () => {
                           field: 'quantity_delta',
                           editable: true,
                           type: 'numericColumn',
-                          cellStyle: (params) => {
+                          cellStyle: (
+                            params
+                          ): { backgroundColor?: string; color?: string } => {
                             // Check if quantity is invalid
                             const isInvalid = params.value <= 0;
                             // For DELETE operations, also check if quantity exceeds stock
