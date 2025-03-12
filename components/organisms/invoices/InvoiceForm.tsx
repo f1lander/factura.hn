@@ -104,24 +104,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
       : 'Escribe algo para buscar a un cliente';
   };
 
-  // const { data: customers, isLoading: areCustomersLoading } = useQuery(
-  //   ["customers"], // unique query key
-  //   () => customerService.getCustomersByCompany(), // the function for fetching
-  //   {
-  //     staleTime: 300000,
-  //     cacheTime: 600000,
-  //     refetchOnWindowFocus: true,
-  //   }
-  // );
-
   const { data: companyId } = useQuery(['companyId'], () =>
     companyService.getCompanyId()
-  );
-
-  const { data: company } = useQuery(
-    ['company', companyId],
-    () => companyService.getCompanyById(),
-    { enabled: !!companyId }
   );
 
   const { data: latestInvoiceNumber } = useQuery(
@@ -149,12 +133,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
     { enabled: !!companyId }
   );
 
-  const { data: allInvoices } = useQuery(
-    ['allInvoices', companyId],
-    () => invoiceService.getInvoices(),
-    { placeholderData: [], enabled: !!companyId }
-  );
-
   const { data: latestSarCai, isLoading } = useQuery(
     ['latestSarCai', companyId],
     () => invoiceService.getLatestSarCai(),
@@ -172,21 +150,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
           setValue('invoice_number', data.range_invoice1);
         }
       },
-    }
-  );
-
-  const { data: lastInvoice } = useQuery(
-    ['lastInvoice', companyId],
-    () => invoiceService.getLastInvoice(),
-    {
-      // Cache for 10 minutes
-      staleTime: 10 * 60 * 1000,
-      // Keep the data in cache for 30 minutes
-      cacheTime: 30 * 60 * 1000,
-      // Don't refetch on window focus for this data as it rarely changes
-      refetchOnWindowFocus: false,
-      // Only run the query when we have a companyId
-      enabled: !!companyId,
     }
   );
 

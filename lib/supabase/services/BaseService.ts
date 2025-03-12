@@ -128,6 +128,7 @@ export class BaseService {
 
     if (table === 'customers') {
       query.or(`company_id.eq.${companyId},is_universal.eq.true`);
+      query.or(`archived.eq.false,archived.is.null`);
     } else {
       query.eq('company_id', companyId);
     }
