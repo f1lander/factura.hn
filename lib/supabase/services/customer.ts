@@ -70,6 +70,7 @@ class CustomerService extends BaseService {
       .from(this.tableName)
       .select('id, name, email, rtn')
       .or(`company_id.eq.${companyId},is_universal.eq.true`)
+      .or(`archived.eq.false,archived.is.null`)
       .ilike('name', `%${customerName}%`);
     if (error || !data) return [];
     return data;
