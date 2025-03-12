@@ -153,17 +153,18 @@ export default function CustomersPage() {
     }
   };
 
-  // const handleDeleteClick = () => {
-  //   if (selectedCustomers.length > 0) {
-  //     setIsDeleteDialogOpen(true);
-  //   }
-  // };
+  const handleDeleteClick = () => {
+    if (selectedCustomers.length > 0) {
+      setIsDeleteDialogOpen(true);
+    }
+  };
 
   const handleConfirmDelete = async () => {
     try {
-      await Promise.all(
-        selectedCustomers.map((id) => customerService.deleteCustomer(id))
-      );
+      await customerService.archiveCustomers(selectedCustomers);
+      // await Promise.all(
+      //   selectedCustomers.map((id) => customerService.deleteCustomer(id))
+      // );
       queryClient.invalidateQueries(['customers']);
       setSelectedCustomers([]);
       setIsDeleteDialogOpen(false);
@@ -251,7 +252,8 @@ export default function CustomersPage() {
                   data={customers!}
                   columnDefs={customerColumns}
                   onCreateNew={handleCreateCustomer}
-                  onDelete={() => setIsDeleteDialogOpen(true)}
+                  onSelectionChange={setSelectedCustomers}
+                  onDelete={handleDeleteClick}
                   handleOnUpdateRows={handleOnUpdateRows}
                   pageSize={10}
                   pageSizeOptions={[5, 10, 20, 50]}

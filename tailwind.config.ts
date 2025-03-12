@@ -20,6 +20,7 @@ const config = {
     },
     extend: {
       colors: {
+        facturaBlue: "#00A1D4",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

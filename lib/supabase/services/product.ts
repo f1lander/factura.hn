@@ -58,8 +58,10 @@ class ProductService extends BaseService {
     return this.getById<Product>(this.tableName, id);
   }
 
-  async getProductsByCompany(): Promise<Product[]> {
-    return this.getAll<Product>(this.tableName);
+  async getProductsByCompany(
+    filters: Partial<Product> = {}
+  ): Promise<Product[]> {
+    return await this.getAll<Product>(this.tableName, filters);
   }
 
   async getActiveProductsCount(): Promise<number> {
