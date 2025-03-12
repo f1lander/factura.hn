@@ -19,6 +19,7 @@ export interface Customer {
   contacts: Contact[];
   created_at?: string;
   updated_at?: string;
+  archived?: boolean;
 }
 
 class CustomerService extends BaseService {
@@ -85,14 +86,14 @@ class CustomerService extends BaseService {
   }
 
   async updateMultipleCustomers(
-    customers: Customer[]
+    customers: Partial<Customer>[]
   ): Promise<{ success: boolean; message: string }> {
     const filteredCustomers = customers.filter(
       (customer) => !customer.is_universal
     );
     const response = await this.updateMultiple<Customer>(
       this.tableName,
-      filteredCustomers
+      filteredCustomers as Customer[]
     );
     return response;
   }
@@ -181,6 +182,18 @@ class CustomerService extends BaseService {
     }
 
     return data as Customer[];
+  }
+
+  // Archive a customer
+  async archiveCustomers(
+    ids: string[]
+  ): Promise<{ success: boolean; message: string }> {
+    return this.updateMultipleCustomers(
+      ids.map((id) => ({
+        id,
+        archived: true,
+      }))
+    );
   }
 }
 
