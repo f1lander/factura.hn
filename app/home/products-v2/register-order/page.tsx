@@ -50,9 +50,35 @@ const RegisterProductOrderSchema = yup.object().shape({
           product_id: yup.string().required(),
           quantity_delta: yup
             .number()
-            .moreThan(0, 'La cantidad debe ser mayor que cero')
-            .required(),
-          // product: yup.object<Product>(),
+            .test(
+              'quantity-validation',
+              'Invalid quantity',
+              function (value, context) {
+                // Access the root form values to get the type
+                const type = this.parent.type || context.from?.[1]?.value?.type;
+                const product = context.parent.product;
+
+                if (!value || value <= 0) {
+                  return this.createError({
+                    message: 'La cantidad debe ser mayor que cero',
+                  });
+                }
+
+                const quantity_in_stock = product?.quantity_in_stock || 0;
+
+                if (type === 'DELETE') {
+                  return (
+                    value <= quantity_in_stock ||
+                    this.createError({
+                      message: 'La cantidad no puede ser mayor al stock',
+                    })
+                  );
+                }
+
+                return true;
+              }
+            )
+            .required('Cantidad es requerida'),
         })
         .required()
     )
@@ -69,7 +95,7 @@ const RegisterProductPage: React.FC = () => {
 
   const methods = useForm<ProductOrder>({
     mode: 'onSubmit',
-    reValidateMode: 'onSubmit',
+    reValidateMode: 'onBlur',
     resolver: yupResolver(RegisterProductOrderSchema),
     defaultValues: {
       type: 'ADD',
@@ -241,8 +267,6 @@ const RegisterProductPage: React.FC = () => {
     );
   };
 
-  console.log('errors', errors);
-
   return (
     <form
       onSubmit={handleSubmit(
@@ -348,7 +372,11 @@ const RegisterProductPage: React.FC = () => {
                           variant={
                             values.type === 'ADD' ? 'default' : 'outline'
                           }
-                          onClick={() => setValue('type', 'ADD')}
+                          type='button'
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setValue('type', 'ADD');
+                          }}
                           className='w-full sm:w-24'
                         >
                           Incrementar
@@ -357,7 +385,11 @@ const RegisterProductPage: React.FC = () => {
                           variant={
                             values.type === 'DELETE' ? 'destructive' : 'outline'
                           }
-                          onClick={() => setValue('type', 'DELETE')}
+                          type='button'
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setValue('type', 'DELETE');
+                          }}
                           className='w-full sm:w-24'
                         >
                           Reducir
@@ -412,6 +444,67 @@ const RegisterProductPage: React.FC = () => {
                           field: 'quantity_delta',
                           editable: true,
                           type: 'numericColumn',
+                          cellStyle: (params) => {
+                            // Check if quantity is invalid
+                            const isInvalid = params.value <= 0;
+                            // For DELETE operations, also check if quantity exceeds stock
+                            const exceedsStock =
+                              values.type === 'DELETE' &&
+                              params?.data?.product &&
+                              params.value >
+                                (params?.data?.product?.quantity_in_stock ?? 0);
+
+                            if (isInvalid || exceedsStock) {
+                              return {
+                                backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                                color: '#dc2626',
+                              };
+                            }
+                            return {};
+                          },
+                          cellRenderer: (params: {
+                            value: number;
+                            data: {
+                              product: {
+                                quantity_in_stock: number;
+                              };
+                            };
+                          }) => {
+                            const isInvalid = params.value <= 0;
+                            const exceedsStock =
+                              values.type === 'DELETE' &&
+                              params.data.product &&
+                              params.value >
+                                (params.data.product.quantity_in_stock ?? 0);
+
+                            let errorMessage = '';
+                            if (isInvalid) {
+                              errorMessage =
+                                'La cantidad debe ser mayor que cero';
+                            } else if (exceedsStock) {
+                              errorMessage =
+                                'La cantidad excede el stock disponible';
+                            }
+
+                            return (
+                              <div
+                                className={
+                                  errorMessage ? 'text-destructive' : ''
+                                }
+                              >
+                                {errorMessage && (
+                                  <span className='mr-1' title={errorMessage}>
+                                    ⚠️
+                                  </span>
+                                )}
+                                {params.value || 0}
+                              </div>
+                            );
+                          },
+                          valueParser: (params) => {
+                            const value = Number(params.newValue);
+                            return isNaN(value) ? 0 : value;
+                          },
                         },
                       ]}
                       autoUpdate
