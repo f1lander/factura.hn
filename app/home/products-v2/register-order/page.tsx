@@ -333,7 +333,7 @@ const RegisterProductPage: React.FC = () => {
             <div className='w-full lg:w-2/3 xl:w-3/4'>
               <Card className='shadow-md'>
                 <CardHeader>
-                  <div className='flex items-center justify-between'>
+                  <div className='flex flex-col md:flex-row gap-4 items-center justify-between'>
                     <div>
                       <CardTitle className='text-2xl'>
                         Registro de Productos
