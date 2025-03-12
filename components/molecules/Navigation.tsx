@@ -37,7 +37,7 @@ const navItems = [
   { href: "/home/settings", label: "Configuracion" },
 ];
 
-const FacturaLogo = () => (
+export const FacturaLogo = () => (
   <svg
     width="165"
     height="27"
