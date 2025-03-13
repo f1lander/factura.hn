@@ -53,6 +53,7 @@ import {
 } from '@/components/ui/dialog';
 import { Toggle } from '@/components/ui/toggle';
 import { cn } from '@/lib/utils';
+import { DeliveryConfirmDialog } from '../organisms/invoices/DeliveryConfirmDialog';
 
 const statusMap: { [key: string]: string } = {
   Pagadas: 'paid',
@@ -125,7 +126,10 @@ const InvoiceStatusButtons = ({
   onUpdateStatus,
 }: {
   selectedInvoices: string[];
-  onUpdateStatus: (newStatus: string) => void;
+  onUpdateStatus: (
+    newStatus: string,
+    processableIds?: string[]
+  ) => Promise<void>;
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentAction, setCurrentAction] = useState<string | null>(null);
@@ -135,12 +139,27 @@ const InvoiceStatusButtons = ({
     setIsDialogOpen(true);
   };
 
-  const handleConfirmAction = () => {
+  const handleConfirmAction = async (ids?: string[]) => {
     if (currentAction) {
-      onUpdateStatus(currentAction);
+      onUpdateStatus(currentAction, ids);
     }
     setIsDialogOpen(false);
   };
+
+  if (currentAction === 'Delivered') {
+    return (
+      <DeliveryConfirmDialog
+        open={isDialogOpen}
+        onCancel={() => {
+          setCurrentAction(null);
+          setIsDialogOpen(false);
+        }}
+        onOpenChange={setIsDialogOpen}
+        invoiceIds={selectedInvoices}
+        onConfirm={handleConfirmAction}
+      />
+    );
+  }
 
   return (
     <div className='mb-4 flex gap-2'>
@@ -197,7 +216,7 @@ const InvoiceStatusButtons = ({
             <Button onClick={() => setIsDialogOpen(false)} variant='outline'>
               Cancelar
             </Button>
-            <Button onClick={handleConfirmAction} type='submit'>
+            <Button onClick={() => handleConfirmAction()} type='submit'>
               {
                 {
                   paid: 'Marcar como pagada',
@@ -278,8 +297,8 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
     }
   };
 
-  const handleUpdateStatus = (newStatus: string) => {
-    onUpdateStatus(selectedInvoices, newStatus);
+  const handleUpdateStatus = (newStatus: string, validIds?: string[]) => {
+    onUpdateStatus(validIds || selectedInvoices, newStatus);
     setSelectedInvoices([]);
   };
 
@@ -362,7 +381,9 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
         <CardContent>
           <InvoiceStatusButtons
             selectedInvoices={selectedInvoices}
-            onUpdateStatus={handleUpdateStatus}
+            onUpdateStatus={async (newStatus, validIds) =>
+              handleUpdateStatus(newStatus, validIds)
+            }
           />
           <EnhancedInvoiceTable
             invoices={invoices}

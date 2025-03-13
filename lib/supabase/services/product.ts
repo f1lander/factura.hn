@@ -58,6 +58,20 @@ class ProductService extends BaseService {
     return this.getById<Product>(this.tableName, id);
   }
 
+  async getProductsInventory(productIds: string[]): Promise<Product[]> {
+    const { data, error } = await this.supabase
+      .from(this.tableName)
+      .select('*')
+      .in('id', productIds);
+
+    if (error || !data) {
+      console.error('Error fetching products inventory:', error);
+      return [];
+    }
+
+    return data;
+  }
+
   async getProductsByCompany(
     filters: Partial<Product> = {}
   ): Promise<Product[]> {
