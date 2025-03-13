@@ -69,6 +69,16 @@ const defaultColDef: ColDef = {
   resizable: true,
   editable: true,
   enableCellChangeFlash: true,
+  cellEditorParams: {
+    useFormatter: true,
+  },
+  suppressKeyboardEvent: (params) => {
+    // Stop editing when focus is lost
+    if (params.editing && !params.node.isSelected()) {
+      return true;
+    }
+    return false;
+  },
 };
 
 export function DataGrid<T>({
@@ -376,6 +386,9 @@ export function DataGrid<T>({
           gridOptions={{
             localeText: AG_GRID_LOCALE_ES,
             undoRedoCellEditing: true,
+            stopEditingWhenCellsLoseFocus: true,
+            enterNavigatesVertically: true,
+            enterNavigatesVerticallyAfterEdit: true,
           }}
           rowData={data}
           columnDefs={[...columnDefs, ...deleteActionsColumnDef]}
