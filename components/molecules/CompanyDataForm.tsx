@@ -354,7 +354,7 @@ export default function CompanyDataForm({
           <div>
             <Label htmlFor='rtn'>RTN</Label>
             <InputMask
-              mask='____-______-____'
+              mask='______________'
               replacement={{ _: /\d/ }}
               className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
               {...register('rtn', {
@@ -381,7 +381,15 @@ export default function CompanyDataForm({
           <div className='flex gap-3 flex-col settingsPageMin:flex-row'>
             <div className='w-full'>
               <Label htmlFor='phone'>Teléfono</Label>
-              <Input type='number' id='phone' {...register('phone')} />
+              <InputMask
+                mask='____-____'
+                replacement={{ _: /\d/ }}
+                className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+                {...register('phone')}
+                type='text'
+                id='phone'
+                placeholder='0000-0000'
+              />
               {errors.phone && (
                 <p className='text-red-500 text-sm'>{errors.phone.message}</p>
               )}
