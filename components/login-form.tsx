@@ -1,21 +1,21 @@
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { login } from "@/lib/supabase/auth"
-import { toast } from "@/components/ui/use-toast"
-import { useIsLoadedStore } from "@/store/isLoadedStore"
-import { useCompanyStore } from "@/store/companyStore"
-import { useCustomersStore } from "@/store/customersStore"
-import { useInvoicesStore } from "@/store/invoicesStore"
-import { useProductsStore } from "@/store/productsStore"
-import Link from "next/link"
-import { Card } from "./ui/card"
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { login } from '@/lib/supabase/auth';
+import { toast } from '@/components/ui/use-toast';
+import { useIsLoadedStore } from '@/store/isLoadedStore';
+import { useCompanyStore } from '@/store/companyStore';
+import { useCustomersStore } from '@/store/customersStore';
+import { useInvoicesStore } from '@/store/invoicesStore';
+import { useProductsStore } from '@/store/productsStore';
+import Link from 'next/link';
+import { Card } from './ui/card';
 
 export function LoginForm({
   className,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<'div'>) {
   const { resetCompany } = useCompanyStore();
   const { resetCustomers } = useCustomersStore();
   const { resetInvoices } = useInvoicesStore();
@@ -55,11 +55,15 @@ export function LoginForm({
   };
 
   return (
-    <Card className="p-4">
-      <div className={cn("flex flex-col gap-4", className)} {...props}>
+    <Card className='p-4'>
+      <div className={cn('flex flex-col gap-4', className)} {...props}>
         <div>
-          <h1 className="text-xl font-semibold mb-2 text-black text-center">Iniciar Sesión</h1>
-          <h2 className="text-sm font-semibold mb-4 text-gray-500 text-center">Accede a tu cuenta para gestionar tus facturas</h2>
+          <h1 className='text-xl font-semibold mb-2 text-black text-center'>
+            Iniciar Sesión
+          </h1>
+          <h2 className='text-sm font-semibold mb-4 text-gray-500 text-center'>
+            Accede a tu cuenta para gestionar tus facturas
+          </h2>
         </div>
         {/* 
       <div className="flex flex-col lg:flex-row items-center justify-between mb-2">
@@ -80,56 +84,87 @@ export function LoginForm({
         <p>o con tu correo</p>
       </div> */}
 
-        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+        <form onSubmit={handleSubmit} className='space-y-4 mt-2'>
           <div>
-            <Label htmlFor="email" className="block text-sm font-medium text-gray-700">Correo Electrónico</Label>
+            <Label
+              htmlFor='email'
+              className='block text-sm font-medium text-gray-700'
+            >
+              Correo Electrónico
+            </Label>
             <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="usuario@ejemplo.com"
+              id='email'
+              name='email'
+              type='email'
+              placeholder='usuario@ejemplo.com'
               required
-              className="mt-1 p-2 w-full border rounded-md focus:border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-colors duration-300"
+              className='mt-1 p-2 w-full border rounded-md focus:border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-colors duration-300'
             />
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <Label htmlFor="password" className="block text-sm font-medium text-gray-700">Contraseña</Label>
+            <div className='flex items-center justify-between mb-1'>
+              <Label
+                htmlFor='password'
+                className='block text-sm font-medium text-gray-700'
+              >
+                Contraseña
+              </Label>
               <Link
-                href="/auth/forgot-password"
-                className="text-sm text-blue-600 hover:underline"
+                href='/auth/forgot-password'
+                className='text-sm text-blue-600 hover:underline'
               >
                 ¿Olvidaste tu contraseña?
               </Link>
             </div>
             <Input
-              id="password"
-              name="password"
-              type="password"
+              id='password'
+              name='password'
+              type='password'
               required
-              className="mt-1 p-2 w-full border rounded-md focus:border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-colors duration-300"
+              className='mt-1 p-2 w-full border rounded-md focus:border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-colors duration-300'
             />
           </div>
 
-          <Button type="submit" className="w-full bg-facturaBlue text-white p-2 rounded-md hover:bg-gray-800 focus:outline-none focus:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-colors duration-300">
+          <Button
+            type='submit'
+            className='w-full bg-facturaBlue text-white p-2 rounded-md hover:bg-gray-800 focus:outline-none focus:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-colors duration-300'
+          >
             Iniciar Sesión
           </Button>
         </form>
 
-        <div className="mt-4 text-sm text-gray-600 text-center">
-          <p>¿No tienes una cuenta?{" "}
-            <Link href="/auth/signup" className="text-black hover:underline">
+        <div className='mt-4 text-sm text-gray-600 text-center'>
+          <p>
+            ¿No tienes una cuenta?{' '}
+            <Link href='/auth/signup' className='text-black hover:underline'>
               Regístrate aquí
             </Link>
           </p>
         </div>
 
-        <div className="text-balance text-center text-xs text-muted-foreground mt-2">
-          Al hacer clic en continuar, aceptas nuestros <Link href="/terms" className="underline underline-offset-4 hover:text-blue-600">Términos de Servicio</Link>{" "}
-          y <Link href="/privacy" className="underline underline-offset-4 hover:text-blue-600">Política de Privacidad</Link>.
+        <div className='text-balance text-center text-xs text-muted-foreground mt-2'>
+          Al hacer clic en continuar, aceptas nuestros{' '}
+          <Link
+            href='https://factura.hn/terms'
+            target='_blank'
+            rel='noopener noreferrer'
+            className='underline underline-offset-4 hover:text-blue-600'
+          >
+            Términos de Servicio
+          </Link>{' '}
+          y{' '}
+          <Link
+            href='https://factura.hn/privacy'
+            target='_blank'
+            rel='noopener noreferrer'
+            className='underline underline-offset-4 hover:text-blue-600'
+          >
+            Política de Privacidad
+          </Link>
+          .
         </div>
       </div>
     </Card>
-  )
+  );
 }
