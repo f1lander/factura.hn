@@ -29,6 +29,12 @@ import { tz } from '@date-fns/tz';
 import { SarCai, sarCaiService } from '@/lib/supabase/services/sar_cai';
 import { UTCDate } from '@date-fns/utc';
 import { useQuery } from '@tanstack/react-query';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../ui/tooltip';
 /** The fact that initialCompany can be null is extremely important:
  *
  * If the initialCompany is null, then it means that we have a new user and it'll
@@ -256,286 +262,345 @@ export default function CompanyDataForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <Card className='mb-6'>
-        <CardHeader>
-          <CardTitle>
-            {initialCompany
-              ? 'Datos generales de la compañía'
-              : 'Crear nueva compañía'}
-          </CardTitle>
-          <CardDescription>
-            {initialCompany
-              ? 'Actualice la información general de su compañía en el sistema.'
-              : 'Ingrese la información general de su nueva compañía.'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          {/*Here it goes!*/}
-          <div className='flex flex-col gap-2'>
-            <Label htmlFor='something'>Logo de la compañía</Label>
-            <div className='flex flex-col justify-around settingsPageMin:flex-row gap-3'>
-              <div className='relative w-full settingsPageMin:w-[50%] h-[100px] settingsPageMin:h-auto z-0'>
-                <Image
-                  src={photo !== null ? photo : '/placeholder.jpg'}
-                  alt='concierto-coldplay'
-                  fill
-                  style={{ objectFit: 'contain' }}
-                />
-              </div>
-              <label
-                htmlFor='coverImage'
-                className='flex settingsPageMin:w-1/3 w-[80%] mx-auto'
-              >
-                <div
-                  className='flex flex-col justify-center items-center gap-2 w-full border-dashed border-2 border-gray-300 p-4 rounded-[14px]'
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                >
-                  <input
-                    id='coverImage'
-                    {...register('logo_url')}
-                    type='file'
-                    accept='image/*'
-                    onChange={handleFileChange}
-                    className='hidden'
+    <TooltipProvider>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Card className='mb-6'>
+          <CardHeader>
+            <CardTitle>
+              {initialCompany
+                ? 'Datos generales de la compañía'
+                : 'Crear nueva compañía'}
+            </CardTitle>
+            <CardDescription>
+              {initialCompany
+                ? 'Actualice la información general de su compañía en el sistema.'
+                : 'Ingrese la información general de su nueva compañía.'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            {/*Here it goes!*/}
+            <div className='flex flex-col gap-2'>
+              <Label htmlFor='something'>Logo de la compañía</Label>
+              <div className='flex flex-col justify-around settingsPageMin:flex-row gap-3'>
+                <div className='relative w-full settingsPageMin:w-[50%] h-[100px] settingsPageMin:h-auto z-0'>
+                  <Image
+                    src={photo !== null ? photo : '/placeholder.jpg'}
+                    alt='concierto-coldplay'
+                    fill
+                    style={{ objectFit: 'contain' }}
                   />
-                  <CloudIcon />
-                  <span className='font-medium text-sm text-[#2A302D]'>
-                    Selecciona un archivo o arrástralo
-                  </span>
-                  <span className='font-normal text-[11px] text-[#6B736F]'>
-                    JPG, PNG
-                  </span>
                 </div>
-              </label>
-            </div>
-            {errors.logo_url && (
-              <p className='text-red-500 text-sm bottom-0'>
-                {errors.logo_url.message}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor='name'>Nombre de la compañía</Label>
-
-            <Input
-              id='name'
-              {...register('name', { required: 'Este campo es requerido' })}
-            />
-            {errors.name && (
-              <p className='text-red-500 text-sm'>{errors.name.message}</p>
-            )}
-          </div>
-          <div className='flex flex-col settingsPageMin:flex-row gap-3'>
-            <div className='w-full'>
-              <Label htmlFor='ceo_name'>Nombre (Gerente)</Label>
-
-              <Input id='ceo_name' {...register('ceo_name')} />
-              {errors.ceo_name && (
-                <p className='text-red-500 text-sm'>
-                  {errors.ceo_name.message}
+                <label
+                  htmlFor='coverImage'
+                  className='flex settingsPageMin:w-1/3 w-[80%] mx-auto'
+                >
+                  <div
+                    className='flex flex-col justify-center items-center gap-2 w-full border-dashed border-2 border-gray-300 p-4 rounded-[14px]'
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                  >
+                    <input
+                      id='coverImage'
+                      {...register('logo_url')}
+                      type='file'
+                      accept='image/*'
+                      onChange={handleFileChange}
+                      className='hidden'
+                    />
+                    <CloudIcon />
+                    <span className='font-medium text-sm text-[#2A302D]'>
+                      Selecciona un archivo o arrástralo
+                    </span>
+                    <span className='font-normal text-[11px] text-[#6B736F]'>
+                      JPG, PNG
+                    </span>
+                  </div>
+                </label>
+              </div>
+              {errors.logo_url && (
+                <p className='text-red-500 text-sm bottom-0'>
+                  {errors.logo_url.message}
                 </p>
               )}
             </div>
-            <div className='w-full'>
-              <Label htmlFor='ceo_name'>Apellido</Label>
 
-              <Input id='ceo_lastname' {...register('ceo_lastname')} />
-              {errors.ceo_lastname && (
-                <p className='text-red-500 text-sm'>
-                  {errors.ceo_lastname.message}
-                </p>
-              )}
-            </div>
-          </div>
+            <div>
+              <Label htmlFor='name'>Nombre de la compañía</Label>
 
-          <div>
-            <Label htmlFor='rtn'>RTN</Label>
-            <InputMask
-              mask='______________'
-              replacement={{ _: /\d/ }}
-              className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
-              {...register('rtn', {
-                required: 'Por favor, ingrese su RTN',
-              })}
-              id='rtn'
-              name='rtn'
-              type='text'
-              required
-              placeholder='Ingresa tu RTN'
-            />
-            {errors.rtn && (
-              <p className='text-red-500 text-sm'>{errors.rtn.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor='address0'>Dirección línea 1</Label>
-            <Textarea id='address0' {...register('address0')} />
-            {errors.address0 && (
-              <p className='text-red-500 text-sm'>{errors.address0.message}</p>
-            )}
-          </div>
-          <div className='flex gap-3 flex-col settingsPageMin:flex-row'>
-            <div className='w-full'>
-              <Label htmlFor='phone'>Teléfono</Label>
-              <InputMask
-                mask='____-____'
-                replacement={{ _: /\d/ }}
-                className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
-                {...register('phone')}
-                type='text'
-                id='phone'
-                placeholder='0000-0000'
-              />
-              {errors.phone && (
-                <p className='text-red-500 text-sm'>{errors.phone.message}</p>
-              )}
-            </div>
-
-            <div className='w-full'>
-              <Label htmlFor='email'>Correo electrónico</Label>
               <Input
-                id='email'
-                type='email'
-                {...register('email', {
-                  pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Dirección de correo inválida',
-                  },
-                })}
+                id='name'
+                {...register('name', { required: 'Este campo es requerido' })}
               />
-              {errors.email && (
-                <p className='text-red-500 text-sm'>{errors.email.message}</p>
+              {errors.name && (
+                <p className='text-red-500 text-sm'>{errors.name.message}</p>
               )}
             </div>
-          </div>
-        </CardContent>
-      </Card>
+            <div className='flex flex-col settingsPageMin:flex-row gap-3'>
+              <div className='w-full'>
+                <Label htmlFor='ceo_name'>Nombre (Gerente)</Label>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Datos de Facturación</CardTitle>
-          <CardDescription>
-            Ingrese la información relacionada con la facturación de su
-            compañía.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <div>
-            <Label htmlFor='cai'>CAI</Label>
-            <InputMask
-              id='sarCaiData.cai'
-              {...register('sarCaiData.cai', {
-                required: 'Por favor, ingresa tu CAI',
-              })}
-              placeholder='000000-000000000000-000000-000000-00'
-              className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
-              mask='______-____________-______-______-__'
-              replacement={{ _: /[A-Z0-9]/ }}
-            />
-            {errors.cai && (
-              <p className='text-red-500 text-sm'>{errors.cai.message}</p>
-            )}
-          </div>
+                <Input id='ceo_name' {...register('ceo_name')} />
+                {errors.ceo_name && (
+                  <p className='text-red-500 text-sm'>
+                    {errors.ceo_name.message}
+                  </p>
+                )}
+              </div>
+              <div className='w-full'>
+                <Label htmlFor='ceo_name'>Apellido</Label>
 
-          <div>
-            <Label htmlFor='limit_date'>Fecha límite</Label>
-            <Input
-              id='limit_date'
-              type='date'
-              {...register('sarCaiData.limit_date')}
-            />
-            {errors.limit_date && (
-              <p className='text-red-500 text-sm'>
-                {errors.limit_date.message}
-              </p>
-            )}
-          </div>
-          <div className='flex flex-col settingsPageMin:flex-row gap-3'>
-            <div className='w-full'>
-              <Label htmlFor='sarCaiData.range_invoice1'>
-                Rango de factura inicio
-              </Label>
+                <Input id='ceo_lastname' {...register('ceo_lastname')} />
+                {errors.ceo_lastname && (
+                  <p className='text-red-500 text-sm'>
+                    {errors.ceo_lastname.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor='rtn'>RTN</Label>
               <InputMask
-                className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
-                mask='___-___-__-________'
+                mask='______________'
                 replacement={{ _: /\d/ }}
-                {...register('sarCaiData.range_invoice1', {
-                  required: 'Por favor, ingresa un rango de factura de inicio',
-                  pattern: {
-                    value: /^(\d{3})-(\d{3})-(\d{2})-(\d{8})$/,
-                    message:
-                      'El formato del rango de factura de inicio no es válido',
-                  },
+                className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+                {...register('rtn', {
+                  required: 'Por favor, ingrese su RTN',
                 })}
-                placeholder='000-000-00-00000000'
+                id='rtn'
+                name='rtn'
+                type='text'
+                required
+                placeholder='Ingresa tu RTN'
               />
-              {errors.sarCaiData?.range_invoice1 && (
+              {errors.rtn && (
+                <p className='text-red-500 text-sm'>{errors.rtn.message}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor='address0'>Dirección de la empresa</Label>
+              <Textarea
+                id='address0'
+                {...register('address0')}
+                placeholder='Está dirección aparecera en tu factura'
+              />
+              {errors.address0 && (
                 <p className='text-red-500 text-sm'>
-                  {errors.sarCaiData?.range_invoice1.message}
+                  {errors.address0.message}
                 </p>
               )}
             </div>
+            <div className='flex gap-3 flex-col settingsPageMin:flex-row'>
+              <div className='w-full'>
+                <Label htmlFor='phone'>
+                  Teléfono de la empresa{' '}
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <svg
+                        xmlns='http://www.w3.org/2000/svg'
+                        width='16'
+                        height='16'
+                        viewBox='0 0 24 24'
+                        fill='none'
+                        stroke='currentColor'
+                        strokeWidth='2'
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        className='text-gray-500 cursor-help'
+                      >
+                        <circle cx='12' cy='12' r='10' />
+                        <path d='M12 16v-4' />
+                        <path d='M12 8h.01' />
+                      </svg>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Este teléfono aparecera en la factura
+                    </TooltipContent>
+                  </Tooltip>
+                </Label>
+                <InputMask
+                  mask='____-____'
+                  replacement={{ _: /\d/ }}
+                  className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+                  {...register('phone')}
+                  type='text'
+                  id='phone'
+                  placeholder='0000-0000'
+                />
+                {errors.phone && (
+                  <p className='text-red-500 text-sm'>{errors.phone.message}</p>
+                )}
+              </div>
 
-            <div className='w-full'>
-              <Label htmlFor='sarCaiData.range_invoice2'>
-                Rango de factura fin
-              </Label>
+              <div className='w-full'>
+                <Label htmlFor='email'>
+                  Correo Eléctronico de la Empresa{' '}
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <svg
+                        xmlns='http://www.w3.org/2000/svg'
+                        width='16'
+                        height='16'
+                        viewBox='0 0 24 24'
+                        fill='none'
+                        stroke='currentColor'
+                        strokeWidth='2'
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        className='text-gray-500 cursor-help'
+                      >
+                        <circle cx='12' cy='12' r='10' />
+                        <path d='M12 16v-4' />
+                        <path d='M12 8h.01' />
+                      </svg>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Este correo aparecera en la factura
+                    </TooltipContent>
+                  </Tooltip>
+                </Label>
+                <Input
+                  id='email'
+                  type='email'
+                  {...register('email', {
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: 'Dirección de correo inválida',
+                    },
+                  })}
+                />
+                {errors.email && (
+                  <p className='text-red-500 text-sm'>{errors.email.message}</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Datos de Facturación</CardTitle>
+            <CardDescription>
+              Ingrese la información relacionada con la facturación de su
+              compañía.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            <div>
+              <Label htmlFor='cai'>CAI</Label>
               <InputMask
-                className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
-                mask='___-___-__-________'
-                replacement={{ _: /\d/ }}
-                id='sarCaiData.range_invoice2'
-                {...register('sarCaiData.range_invoice2', {
-                  required: 'Por favor, ingresa un rango de factura de fin',
-                  pattern: {
-                    value: /^(\d{3})-(\d{3})-(\d{2})-(\d{8})$/,
-                    message:
-                      'El formato del rango de factura de fin no es válido',
-                  },
-                  validate: (value, formValues) => {
-                    // If they're undefined, they'll be validated by other rules
-                    if (
-                      value === undefined &&
-                      formValues.sarCaiData?.range_invoice2 === undefined
-                    )
-                      return true;
-
-                    const invoiceRange1 = formValues.sarCaiData
-                      .range_invoice1 as string;
-                    const invoiceRange2 = value as string;
-                    const isRange1LessThanRange2 =
-                      invoiceService.compareInvoiceNumbers(
-                        invoiceRange1,
-                        invoiceRange2
-                      ) === 'first less than second';
-                    if (!isRange1LessThanRange2)
-                      return 'El rango de factura fin debe ser mayor que el rango de factura de inicio';
-                  },
+                id='sarCaiData.cai'
+                {...register('sarCaiData.cai', {
+                  required: 'Por favor, ingresa tu CAI',
                 })}
-                placeholder='000-000-00-00000000'
+                placeholder='000000-000000000000-000000-000000-00'
+                className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+                mask='______-____________-______-______-__'
+                replacement={{ _: /[A-Z0-9]/ }}
               />
-              {errors.sarCaiData?.range_invoice2 && (
+              {errors.cai && (
+                <p className='text-red-500 text-sm'>{errors.cai.message}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor='limit_date'>Fecha límite</Label>
+              <Input
+                id='limit_date'
+                type='date'
+                {...register('sarCaiData.limit_date')}
+              />
+              {errors.limit_date && (
                 <p className='text-red-500 text-sm'>
-                  {errors.sarCaiData?.range_invoice2.message}
+                  {errors.limit_date.message}
                 </p>
               )}
             </div>
-          </div>
-        </CardContent>
-        <CardFooter className='border-t px-6 py-4'>
-          <Button type='submit' disabled={isSubmitting}>
-            {isSubmitting
-              ? 'Guardando...'
-              : initialCompany
-              ? 'Guardar cambios'
-              : 'Crear compañía'}
-          </Button>
-        </CardFooter>
-      </Card>
-    </form>
+            <div className='flex flex-col settingsPageMin:flex-row gap-3'>
+              <div className='w-full'>
+                <Label htmlFor='sarCaiData.range_invoice1'>
+                  Rango de factura inicio
+                </Label>
+                <InputMask
+                  className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+                  mask='___-___-__-________'
+                  replacement={{ _: /\d/ }}
+                  {...register('sarCaiData.range_invoice1', {
+                    required:
+                      'Por favor, ingresa un rango de factura de inicio',
+                    pattern: {
+                      value: /^(\d{3})-(\d{3})-(\d{2})-(\d{8})$/,
+                      message:
+                        'El formato del rango de factura de inicio no es válido',
+                    },
+                  })}
+                  placeholder='000-000-00-00000000'
+                />
+                {errors.sarCaiData?.range_invoice1 && (
+                  <p className='text-red-500 text-sm'>
+                    {errors.sarCaiData?.range_invoice1.message}
+                  </p>
+                )}
+              </div>
+
+              <div className='w-full'>
+                <Label htmlFor='sarCaiData.range_invoice2'>
+                  Rango de factura fin
+                </Label>
+                <InputMask
+                  className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+                  mask='___-___-__-________'
+                  replacement={{ _: /\d/ }}
+                  id='sarCaiData.range_invoice2'
+                  {...register('sarCaiData.range_invoice2', {
+                    required: 'Por favor, ingresa un rango de factura de fin',
+                    pattern: {
+                      value: /^(\d{3})-(\d{3})-(\d{2})-(\d{8})$/,
+                      message:
+                        'El formato del rango de factura de fin no es válido',
+                    },
+                    validate: (value, formValues) => {
+                      // If they're undefined, they'll be validated by other rules
+                      if (
+                        value === undefined &&
+                        formValues.sarCaiData?.range_invoice2 === undefined
+                      )
+                        return true;
+
+                      const invoiceRange1 = formValues.sarCaiData
+                        .range_invoice1 as string;
+                      const invoiceRange2 = value as string;
+                      const isRange1LessThanRange2 =
+                        invoiceService.compareInvoiceNumbers(
+                          invoiceRange1,
+                          invoiceRange2
+                        ) === 'first less than second';
+                      if (!isRange1LessThanRange2)
+                        return 'El rango de factura fin debe ser mayor que el rango de factura de inicio';
+                    },
+                  })}
+                  placeholder='000-000-00-00000000'
+                />
+                {errors.sarCaiData?.range_invoice2 && (
+                  <p className='text-red-500 text-sm'>
+                    {errors.sarCaiData?.range_invoice2.message}
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className='border-t px-6 py-4'>
+            <Button type='submit' disabled={isSubmitting}>
+              {isSubmitting
+                ? 'Guardando...'
+                : initialCompany
+                ? 'Guardar cambios'
+                : 'Crear compañía'}
+            </Button>
+          </CardFooter>
+        </Card>
+      </form>
+    </TooltipProvider>
   );
 }
