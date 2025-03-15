@@ -9,6 +9,7 @@ import {
   Image,
   PDFViewer,
   PDFDownloadLink,
+  pdf,
 } from '@react-pdf/renderer';
 import { Button } from '@/components/ui/button';
 import { Invoice, InvoiceItem } from '@/lib/supabase/services/invoice';
@@ -195,18 +196,27 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({
     }
   );
 
+  const pdfTitle = `factura-${
+    invoice.invoice_number || invoice.proforma_number
+  }-${invoice.customers.name}`;
+
   // Query to fetch SAR CAI data
-  const { data: sarCaiData, isLoading: isSarCaiLoading } = useQuery({
-    queryKey: ['sarCai', invoice?.sar_cai_id],
+  const {
+    data: sarCaiData,
+    isLoading: isSarCaiLoading,
+    isFetching: isSarCaiFetching,
+    error,
+  } = useQuery({
+    queryKey: ['sarCai', invoice?.id, invoice?.sar_cai_id],
     queryFn: () => sarCaiService.getSarCaiById(invoice?.sar_cai_id ?? ''),
-    enabled: !!invoice?.sar_cai_id,
+    enabled: !!invoice?.sar_cai_id && !invoice?.is_proforma,
   });
 
   if (!invoice) {
     return <div>No invoice data available</div>;
   }
 
-  if (isLoading || isFetching || isSarCaiLoading) {
+  if ((isLoading && isFetching) || (isSarCaiLoading && isSarCaiFetching)) {
     return (
       <div className='flex justify-center items-center h-screen'>
         <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary' />
@@ -223,7 +233,7 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({
     const isProforma = invoice.is_proforma;
 
     return (
-      <Document>
+      <Document author='factura.hn' title={pdfTitle}>
         <Page size='A4' style={styles.page}>
           {/* Header Section */}
           <View style={styles.container}>
@@ -424,6 +434,53 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({
     );
   };
 
+  const pdfObject = pdf(<InvoicePDF />);
+
+  const handlePrint = async () => {
+    try {
+      // const iframeRef = document.getElementsByTagName('iframe')[0];
+      // iframeRef?.contentWindow?.print();
+
+      const printIframe = document.getElementById(
+        'printIframe'
+      ) as HTMLIFrameElement;
+      const blob = await pdfObject.toBlob();
+      const blobUrl = URL.createObjectURL(blob);
+      const iframe = printIframe || document.createElement('iframe');
+      iframe.src = blobUrl;
+
+      if (!printIframe) {
+        iframe.id = 'printIframe';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+        iframe.onload = () => {
+          iframe.contentWindow?.print();
+        };
+      } else {
+        iframe.contentWindow?.print();
+      }
+
+      // Print the PDF from new window
+      //Generate PDF blob
+      // const blob = await pdf(<InvoicePDF />).toBlob();
+
+      // // Create object URL
+      // const blobUrl = URL.createObjectURL(blob);
+
+      // // Open in new window and print
+      // const printWindow = window.open(blobUrl, '_blank');
+      // if (printWindow) {
+      //   printWindow.onload = () => {
+      //     printWindow.print();
+      //     // Clean up
+      //     URL.revokeObjectURL(blobUrl);
+      //   };
+      // }
+    } catch (error) {
+      console.error('Print failed:', error);
+    }
+  };
+
   return (
     <div className='flex flex-col gap-4'>
       {/* PDF Viewer */}
@@ -437,14 +494,8 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({
       <div className='flex gap-3 justify-end'>
         {/* Print Button */}
         <Button
-          onClick={() => {
-            // Access the iframe and trigger print
-            const iframe = document.querySelector('iframe');
-            if (iframe && iframe.contentWindow) {
-              iframe.contentWindow.focus();
-              iframe.contentWindow.print();
-            }
-          }}
+          onClick={handlePrint}
+          size='sm'
           className='flex items-center gap-2'
         >
           <PrinterIcon size={16} />
@@ -454,11 +505,15 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({
         {/* Download Button */}
         <PDFDownloadLink
           document={<InvoicePDF />}
-          fileName={`factura-${invoice.invoice_number}.pdf`}
-          className='inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50'
+          fileName={`${pdfTitle}.pdf`}
+          // className='inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50'
         >
           {({ loading }) => (
-            <>
+            <Button
+              disabled={loading}
+              className='flex items-center gap-2'
+              size='sm'
+            >
               {loading ? (
                 'Preparando documento...'
               ) : (
@@ -467,7 +522,7 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({
                   <span>Descargar PDF</span>
                 </>
               )}
-            </>
+            </Button>
           )}
         </PDFDownloadLink>
       </div>
