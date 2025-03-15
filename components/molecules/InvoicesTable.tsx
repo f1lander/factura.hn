@@ -553,7 +553,8 @@ const EnhancedInvoiceTable = ({
               <TableRow
                 key={invoice.id}
                 className='cursor-pointer hover:bg-muted/50 transition-colors group relative'
-                onClick={(e) => handleInvoiceClick(invoice, e)}
+                // onClick={(e) => handleInvoiceClick(invoice, e)}
+                onClick={() => onSelectInvoice(invoice)}
               >
                 <TableCell
                   className='py-4'

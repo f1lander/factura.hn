@@ -849,18 +849,6 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
           {watch('numbers_to_letters')}
         </p>
       </div>
-      <div className='flex gap-2'>
-        <Button
-          type='button'
-          variant='outline'
-          onClick={handleViewPdf}
-          className='flex items-center gap-2'
-        >
-          <EyeIcon size={16} />
-          <span>Ver PDF</span>
-        </Button>
-        {/* Existing buttons */}
-      </div>
     </>
   );
 
@@ -879,76 +867,95 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
                 Editar <EditIcon className='h-4 w-4 ml-2' />
               </Button>
             )}
-            <Button
-              className='bg-slate-800'
-              onClick={handleDownloadPdf}
-              disabled={isDownloading || isSarCaiLoading}
-              size='sm'
-            >
-              {isDownloading ? 'Descargando...' : 'PDF'}{' '}
-              <DownloadIcon className='h-4 w-4 ml-2' />
-            </Button>
+            {!showPdfViewer && (
+              <>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={handleViewPdf}
+                  size='sm'
+                  className='flex items-center gap-2'
+                >
+                  <EyeIcon />
+                  PDF
+                </Button>
+                {/* <Button
+                  className='bg-slate-800'
+                  onClick={handleDownloadPdf}
+                  disabled={isDownloading || isSarCaiLoading}
+                  size='sm'
+                >
+                  {isDownloading ? 'Descargando...' : 'PDF'}{' '}
+                  <DownloadIcon className='h-4 w-4 ml-2' />
+                </Button> */}
+              </>
+            )}
+            {showPdfViewer && (
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => setShowPdfViewer(false)}
+              >
+                <X className='h-4 w-4 mr-2' /> Cerrar
+              </Button>
+            )}
           </div>
         )}
       </div>
-      <Card className='card-invoice overflow-hidden shadow-none rounded-sm px-0'>
-        <CardHeader className='flex flex-col md:flex-row items-start justify-between bg-muted/50'>
-          <div className='flex flex-row items-stretch justify-between w-full'>
-            <div className='flex-1 grid gap-0.5'>
-              <CardTitle className='group flex items-center gap-2 text-lg'>
-                {invoice?.is_proforma
-                  ? `Recibo / Proforma ${invoice?.proforma_number}`
-                  : isEditable
-                  ? 'Crear Factura'
-                  : `Número de Factura ${invoice?.invoice_number}`}
-              </CardTitle>
-              <CardDescription>
-                Fecha:{' '}
-                {isEditable
-                  ? new Date().toLocaleDateString()
-                  : new Date(invoice?.date || '').toLocaleDateString()}
-              </CardDescription>
-            </div>
-            {companyLogo !== null && (
-              <div className='relative h-[100px] aspect-video z-0'>
-                <Image
-                  src={companyLogo!}
-                  alt='company-logo'
-                  fill
-                  style={{ objectFit: 'contain' }}
-                />
+      {!showPdfViewer && (
+        <Card className='card-invoice overflow-hidden shadow-none rounded-sm px-0'>
+          <CardHeader className='flex flex-col md:flex-row items-start justify-between bg-muted/50'>
+            <div className='flex flex-row items-stretch justify-between w-full'>
+              <div className='flex-1 grid gap-0.5'>
+                <CardTitle className='group flex items-center gap-2 text-lg'>
+                  {invoice?.is_proforma
+                    ? `Recibo / Proforma ${invoice?.proforma_number}`
+                    : isEditable
+                    ? 'Crear Factura'
+                    : `Número de Factura ${invoice?.invoice_number}`}
+                </CardTitle>
+                <CardDescription>
+                  Fecha:{' '}
+                  {isEditable
+                    ? new Date().toLocaleDateString()
+                    : new Date(invoice?.date || '').toLocaleDateString()}
+                </CardDescription>
               </div>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className='p-6 text-sm'>
-          {isEditable ? renderEditableContent() : renderReadOnlyContent()}
-        </CardContent>
-        <CardFooter className='flex flex-row items-center justify-between border-t bg-muted/50 px-6 py-3'>
-          <div className='text-xs text-muted-foreground'>
-            Factura creada:{' '}
-            <time dateTime={watch('created_at')} suppressHydrationWarning>
-              {new Date(watch('created_at')).toLocaleString()}
-            </time>
-          </div>
-          <div>
-            <Badge variant={watch('is_proforma') ? 'outline' : 'secondary'}>
-              {watch('is_proforma') ? 'Proforma' : 'Factura'}
-            </Badge>
-            <Badge variant={watch('is_proforma') ? 'outline' : 'secondary'}>
-              {getStatusBadge(watch('status'), !!watch('delivered_date'))}
-            </Badge>
-          </div>
-        </CardFooter>
-      </Card>
+              {companyLogo !== null && (
+                <div className='relative h-[100px] aspect-video z-0'>
+                  <Image
+                    src={companyLogo!}
+                    alt='company-logo'
+                    fill
+                    style={{ objectFit: 'contain' }}
+                  />
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className='p-6 text-sm'>
+            {isEditable ? renderEditableContent() : renderReadOnlyContent()}
+          </CardContent>
+          <CardFooter className='flex flex-row items-center justify-between border-t bg-muted/50 px-6 py-3'>
+            <div className='text-xs text-muted-foreground'>
+              Factura creada:{' '}
+              <time dateTime={watch('created_at')} suppressHydrationWarning>
+                {new Date(watch('created_at')).toLocaleString()}
+              </time>
+            </div>
+            <div>
+              <Badge variant={watch('is_proforma') ? 'outline' : 'secondary'}>
+                {watch('is_proforma') ? 'Proforma' : 'Factura'}
+              </Badge>
+              <Badge variant={watch('is_proforma') ? 'outline' : 'secondary'}>
+                {getStatusBadge(watch('status'), !!watch('delivered_date'))}
+              </Badge>
+            </div>
+          </CardFooter>
+        </Card>
+      )}
       {showPdfViewer && invoice && (
-        <div className='p-4'>
-          <div className='flex justify-between mb-4'>
-            <h2 className='text-xl font-bold'>Vista previa de Factura</h2>
-            <Button variant='outline' onClick={() => setShowPdfViewer(false)}>
-              <X className='h-4 w-4 mr-2' /> Cerrar
-            </Button>
-          </div>
+        <div className='p-4 h-full'>
           <InvoiceViewPdf
             invoice={invoice}
             company={companyData || undefined}
