@@ -52,7 +52,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import { Toggle } from '@/components/ui/toggle';
 import { cn } from '@/lib/utils';
 import InvoiceViewPdf from '@/components/molecules/InvoiceViewPdf';
@@ -63,7 +63,8 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from '@/components/ui/tooltip';
+import { DeliveryConfirmDialog } from '../organisms/invoices/DeliveryConfirmDialog';
 
 const statusMap: { [key: string]: string } = {
   Pagadas: 'paid',
@@ -136,7 +137,10 @@ const InvoiceStatusButtons = ({
   onUpdateStatus,
 }: {
   selectedInvoices: string[];
-  onUpdateStatus: (newStatus: string) => void;
+  onUpdateStatus: (
+    newStatus: string,
+    processableIds?: string[]
+  ) => Promise<void>;
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentAction, setCurrentAction] = useState<string | null>(null);
@@ -146,12 +150,27 @@ const InvoiceStatusButtons = ({
     setIsDialogOpen(true);
   };
 
-  const handleConfirmAction = () => {
+  const handleConfirmAction = async (ids?: string[]) => {
     if (currentAction) {
-      onUpdateStatus(currentAction);
+      onUpdateStatus(currentAction, ids);
     }
     setIsDialogOpen(false);
   };
+
+  if (currentAction === 'Delivered') {
+    return (
+      <DeliveryConfirmDialog
+        open={isDialogOpen}
+        onCancel={() => {
+          setCurrentAction(null);
+          setIsDialogOpen(false);
+        }}
+        onOpenChange={setIsDialogOpen}
+        invoiceIds={selectedInvoices}
+        onConfirm={handleConfirmAction}
+      />
+    );
+  }
 
   return (
     <div className='mb-4 flex gap-2'>
@@ -205,7 +224,7 @@ const InvoiceStatusButtons = ({
             <Button onClick={() => setIsDialogOpen(false)} variant='outline'>
               Cancelar
             </Button>
-            <Button onClick={handleConfirmAction} type='submit'>
+            <Button onClick={() => handleConfirmAction()} type='submit'>
               {
                 {
                   paid: 'Marcar como pagada',
@@ -246,7 +265,7 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
         setCompanyData(data);
       }
     };
-    
+
     fetchCompanyData();
   }, []);
 
@@ -296,8 +315,8 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
     }
   };
 
-  const handleUpdateStatus = (newStatus: string) => {
-    onUpdateStatus(selectedInvoices, newStatus);
+  const handleUpdateStatus = (newStatus: string, validIds?: string[]) => {
+    onUpdateStatus(validIds || selectedInvoices, newStatus);
     setSelectedInvoices([]);
   };
 
@@ -390,7 +409,9 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
         <CardContent>
           <InvoiceStatusButtons
             selectedInvoices={selectedInvoices}
-            onUpdateStatus={handleUpdateStatus}
+            onUpdateStatus={async (newStatus, validIds) =>
+              handleUpdateStatus(newStatus, validIds)
+            }
           />
           <EnhancedInvoiceTable
             invoices={invoices}
@@ -433,26 +454,26 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
       </Card>
 
       <Dialog open={showPdfModal} onOpenChange={setShowPdfModal}>
-        <DialogContent className="sm:max-w-[95%] sm:w-[95%] sm:h-[95vh] max-h-[95vh] p-0 overflow-hidden">
-          <div className="flex flex-col h-full">
-            <DialogHeader className="px-6 py-4 border-b">
-              <div className="flex justify-between items-center">
+        <DialogContent className='sm:max-w-[95%] sm:w-[95%] sm:h-[95vh] max-h-[95vh] p-0 overflow-hidden'>
+          <div className='flex flex-col h-full'>
+            <DialogHeader className='px-6 py-4 border-b'>
+              <div className='flex justify-between items-center'>
                 <DialogTitle>Vista previa de factura</DialogTitle>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant='ghost'
+                  size='icon'
                   onClick={() => setShowPdfModal(false)}
-                  className="h-8 w-8 p-0"
+                  className='h-8 w-8 p-0'
                 >
-                  <X className="h-4 w-4" />
+                  <X className='h-4 w-4' />
                 </Button>
               </div>
             </DialogHeader>
-            <div className="flex-1 overflow-auto p-6">
+            <div className='flex-1 overflow-auto p-6'>
               {selectedInvoice && (
-                <InvoiceViewPdf 
-                  invoice={selectedInvoice} 
-                  company={companyData || undefined} 
+                <InvoiceViewPdf
+                  invoice={selectedInvoice}
+                  company={companyData || undefined}
                 />
               )}
             </div>
@@ -537,7 +558,7 @@ const EnhancedInvoiceTable = ({
                   />
                 </TableCell>
                 <TableCell className='py-4 relative'>
-                  <div className="flex items-center">
+                  <div className='flex items-center'>
                     <span>
                       {invoice?.proforma_number
                         ? invoice?.proforma_number
@@ -546,16 +567,16 @@ const EnhancedInvoiceTable = ({
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="ml-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='ml-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity'
                             onClick={(e) => {
                               e.stopPropagation();
                               handleInvoiceClick(invoice, e);
                             }}
                           >
-                            <FileText className="h-4 w-4" />
+                            <FileText className='h-4 w-4' />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
@@ -716,15 +737,15 @@ const EnhancedInvoiceTable = ({
 
                 {/* Add View PDF Button */}
                 <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full flex items-center justify-center gap-2"
+                  variant='outline'
+                  size='sm'
+                  className='w-full flex items-center justify-center gap-2'
                   onClick={(e) => {
                     e.stopPropagation();
                     handleInvoiceClick(invoice, e);
                   }}
                 >
-                  <FileText className="h-4 w-4" />
+                  <FileText className='h-4 w-4' />
                   <span>Ver PDF</span>
                 </Button>
               </div>

@@ -243,8 +243,6 @@ export default function CreateInvoicePage() {
     },
   });
 
-  const { syncInvoices } = useInvoicesStore();
-
   useEffect(() => {
     const fetchInvoice = async () => {
       if (!invoiceId) {
@@ -282,7 +280,7 @@ export default function CreateInvoicePage() {
     };
 
     fetchInvoice();
-  }, [invoiceId, methods]);
+  }, [invoiceId]);
 
   const [isDeliveryDialogOpen, setIsDeliveryDialogOpen] = useState(false);
   const [pendingInvoice, setPendingInvoice] = useState<Invoice | null>(null);
@@ -411,6 +409,7 @@ export default function CreateInvoicePage() {
         open={isDeliveryDialogOpen}
         // onOpenChange={setIsDeliveryDialogOpen}
         // onOpenChange={handleDeliveryCancel}
+        invoice={pendingInvoice}
         onConfirm={handleDeliveryConfirm}
         onCancel={handleDeliveryCancel}
       />

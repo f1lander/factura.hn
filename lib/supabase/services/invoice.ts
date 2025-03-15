@@ -634,6 +634,36 @@ class InvoiceService extends BaseService {
     );
   }
 
+  async getInvoicesByIds(invoiceIds: string[]): Promise<Invoice[]> {
+    const { data, error } = await this.supabase
+      .from(this.tableName)
+      .select(
+        `
+        *,
+        customers (rtn, name, email),
+        invoice_items (
+          id,
+          product_id, 
+          description,
+          quantity,
+          unit_cost,
+          discount,
+          is_service,
+          created_at,
+          updated_at
+        )
+      `
+      )
+      .in('id', invoiceIds);
+
+    if (error || !data) {
+      console.error('Error fetching invoices:', error);
+      return [];
+    }
+
+    return data;
+  }
+
   async createInvoiceWithItems(
     invoice: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>
   ): Promise<Invoice | null> {
