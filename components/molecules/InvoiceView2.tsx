@@ -47,6 +47,8 @@ import {
   Percent,
   ShoppingCart,
   Trash2,
+  EyeIcon,
+  X,
 } from 'lucide-react';
 import {
   Invoice,
@@ -63,13 +65,26 @@ import { useCustomersStore } from '@/store/customersStore';
 import { useProductsStore } from '@/store/productsStore';
 import { useCompanyStore } from '@/store/companyStore';
 import { CustomerForm } from './CustomerForm';
-import { Customer, customerService } from '@/lib/supabase/services/customer';
+import { customerService } from '@/lib/supabase/services/customer';
 import { useInvoicesStore } from '@/store/invoicesStore';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { sarCaiService } from '@/lib/supabase/services/sar_cai';
 import { useQuery } from '@tanstack/react-query';
+import { companyService } from '@/lib/supabase/services/company';
+import { Company } from '@/lib/supabase/services/company';
+import { Customer } from '@/lib/supabase/services/customer';
+import dynamic from 'next/dynamic';
+
+const InvoiceViewPdf = dynamic(
+  () =>
+    import('@/components/molecules/InvoiceViewPdf').then((mod) => mod.default),
+  {
+    loading: () => <div>Loading...</div>,
+    ssr: false,
+  }
+);
 
 interface InvoiceViewProps {
   invoice?: Invoice;
@@ -93,6 +108,9 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] =
     useState<boolean>(false);
+  const [showPdfViewer, setShowPdfViewer] = useState(false);
+  const [companyData, setCompanyData] = useState<Company | null>(null);
+
   useEffect(() => {
     if (allInvoices.at(-1) !== undefined) {
       setLastInvoiceExists(true);
@@ -102,15 +120,18 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   }, [setLastInvoiceExists, allInvoices]);
 
   const [expandedRows, setExpandedRows] = useState<any>({});
-  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (company?.logo_url) {
-      getSignedLogoUrl(company?.logo_url).then((base64image) => {
-        setCompanyLogo(base64image);
-      });
+  const {
+    data: companyLogo,
+    isLoading,
+    isFetching,
+  } = useQuery(
+    ['companyLogo', company?.logo_url],
+    () => getSignedLogoUrl(company?.logo_url),
+    {
+      enabled: !!company?.logo_url,
     }
-  }, [company]);
+  );
 
   // Query to fetch SAR CAI data
   const { data: sarCaiData, isLoading: isSarCaiLoading } = useQuery({
@@ -118,6 +139,18 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     queryFn: () => sarCaiService.getSarCaiById(invoice?.sar_cai_id ?? ''),
     enabled: !!invoice?.sar_cai_id,
   });
+
+  // Add this useEffect to fetch company data
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      const companyData = await companyService.getCompanyById();
+      if (companyData) {
+        setCompanyData(companyData);
+      }
+    };
+
+    fetchCompanyData();
+  }, []);
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev: any) => ({
@@ -351,7 +384,9 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   useEffect(() => {
     const customerId = watch('customer_id');
     if (customerId) {
-      const selectedCustomer = customers.find((c) => c.id === customerId);
+      const selectedCustomer = customers.find(
+        (c: Customer) => c.id === customerId
+      );
       if (selectedCustomer) {
         setValue('customers', {
           name: selectedCustomer.name,
@@ -430,7 +465,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
                   <SelectValue placeholder='Seleccione cliente' />
                 </SelectTrigger>
                 <SelectContent>
-                  {customers.map((customer) => (
+                  {customers.map((customer: Customer) => (
                     <SelectItem key={customer.id} value={customer.id}>
                       {customer.name}
                     </SelectItem>
@@ -636,6 +671,10 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     router.push(`/home/invoices/create-invoice?invoice_id=${invoice?.id}`);
   };
 
+  const handleViewPdf = () => {
+    setShowPdfViewer(true);
+  };
+
   const renderReadOnlyContent = () => (
     <>
       <div className='grid gap-3'>
@@ -828,68 +867,101 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
                 Editar <EditIcon className='h-4 w-4 ml-2' />
               </Button>
             )}
-            <Button
-              className='bg-slate-800'
-              onClick={handleDownloadPdf}
-              disabled={isDownloading || isSarCaiLoading}
-              size='sm'
-            >
-              {isDownloading ? 'Descargando...' : 'PDF'}{' '}
-              <DownloadIcon className='h-4 w-4 ml-2' />
-            </Button>
+            {!showPdfViewer && (
+              <>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={handleViewPdf}
+                  size='sm'
+                  className='flex items-center gap-2'
+                >
+                  <EyeIcon />
+                  PDF
+                </Button>
+                {/* <Button
+                  className='bg-slate-800'
+                  onClick={handleDownloadPdf}
+                  disabled={isDownloading || isSarCaiLoading}
+                  size='sm'
+                >
+                  {isDownloading ? 'Descargando...' : 'PDF'}{' '}
+                  <DownloadIcon className='h-4 w-4 ml-2' />
+                </Button> */}
+              </>
+            )}
+            {showPdfViewer && (
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => setShowPdfViewer(false)}
+              >
+                <X className='h-4 w-4 mr-2' /> Cerrar
+              </Button>
+            )}
           </div>
         )}
       </div>
-      <Card className='card-invoice overflow-hidden shadow-none rounded-sm px-0'>
-        <CardHeader className='flex flex-col md:flex-row items-start justify-between bg-muted/50'>
-          <div className='flex flex-row items-stretch justify-between w-full'>
-            <div className='flex-1 grid gap-0.5'>
-              <CardTitle className='group flex items-center gap-2 text-lg'>
-                {invoice?.is_proforma
-                  ? `Recibo / Proforma ${invoice?.proforma_number}`
-                  : isEditable
-                  ? 'Crear Factura'
-                  : `Número de Factura ${invoice?.invoice_number}`}
-              </CardTitle>
-              <CardDescription>
-                Fecha:{' '}
-                {isEditable
-                  ? new Date().toLocaleDateString()
-                  : new Date(invoice?.date || '').toLocaleDateString()}
-              </CardDescription>
-            </div>
-            {companyLogo !== null && (
-              <div className='relative h-[100px] aspect-video z-0'>
-                <Image
-                  src={companyLogo}
-                  alt='company-logo'
-                  fill
-                  style={{ objectFit: 'contain' }}
-                />
+      {!showPdfViewer && (
+        <Card className='card-invoice overflow-hidden shadow-none rounded-sm px-0'>
+          <CardHeader className='flex flex-col md:flex-row items-start justify-between bg-muted/50'>
+            <div className='flex flex-row items-stretch justify-between w-full'>
+              <div className='flex-1 grid gap-0.5'>
+                <CardTitle className='group flex items-center gap-2 text-lg'>
+                  {invoice?.is_proforma
+                    ? `Recibo / Proforma ${invoice?.proforma_number}`
+                    : isEditable
+                    ? 'Crear Factura'
+                    : `Número de Factura ${invoice?.invoice_number}`}
+                </CardTitle>
+                <CardDescription>
+                  Fecha:{' '}
+                  {isEditable
+                    ? new Date().toLocaleDateString()
+                    : new Date(invoice?.date || '').toLocaleDateString()}
+                </CardDescription>
               </div>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className='p-6 text-sm'>
-          {isEditable ? renderEditableContent() : renderReadOnlyContent()}
-        </CardContent>
-        <CardFooter className='flex flex-row items-center justify-between border-t bg-muted/50 px-6 py-3'>
-          <div className='text-xs text-muted-foreground'>
-            Factura creada:{' '}
-            <time dateTime={watch('created_at')} suppressHydrationWarning>
-              {new Date(watch('created_at')).toLocaleString()}
-            </time>
-          </div>
-          <div>
-            <Badge variant={watch('is_proforma') ? 'outline' : 'secondary'}>
-              {watch('is_proforma') ? 'Proforma' : 'Factura'}
-            </Badge>
-            <Badge variant={watch('is_proforma') ? 'outline' : 'secondary'}>
-              {getStatusBadge(watch('status'), !!watch('delivered_date'))}
-            </Badge>
-          </div>
-        </CardFooter>
-      </Card>
+              {companyLogo !== null && (
+                <div className='relative h-[100px] aspect-video z-0'>
+                  <Image
+                    src={companyLogo!}
+                    alt='company-logo'
+                    fill
+                    style={{ objectFit: 'contain' }}
+                  />
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className='p-6 text-sm'>
+            {isEditable ? renderEditableContent() : renderReadOnlyContent()}
+          </CardContent>
+          <CardFooter className='flex flex-row items-center justify-between border-t bg-muted/50 px-6 py-3'>
+            <div className='text-xs text-muted-foreground'>
+              Factura creada:{' '}
+              <time dateTime={watch('created_at')} suppressHydrationWarning>
+                {new Date(watch('created_at')).toLocaleString()}
+              </time>
+            </div>
+            <div>
+              <Badge variant={watch('is_proforma') ? 'outline' : 'secondary'}>
+                {watch('is_proforma') ? 'Proforma' : 'Factura'}
+              </Badge>
+              <Badge variant={watch('is_proforma') ? 'outline' : 'secondary'}>
+                {getStatusBadge(watch('status'), !!watch('delivered_date'))}
+              </Badge>
+            </div>
+          </CardFooter>
+        </Card>
+      )}
+      {showPdfViewer && invoice && (
+        <div className='p-4 h-full'>
+          <InvoiceViewPdf
+            invoice={invoice}
+            company={companyData || undefined}
+          />
+        </div>
+      )}
     </>
   );
 };
