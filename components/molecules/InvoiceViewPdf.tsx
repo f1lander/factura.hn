@@ -170,6 +170,217 @@ const styles = StyleSheet.create({
   },
 });
 
+// Create styles
+const styles2 = StyleSheet.create({
+  page: {
+    fontFamily: 'Helvetica',
+    fontSize: 10,
+    padding: 30,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 30,
+  },
+  companyInfo: {
+    flex: 1,
+    fontSize: 10,
+  },
+  companyInfoText: {
+    marginBottom: 2,
+    fontSize: 10,
+  },
+  companyInfoTextBold: {
+    marginBottom: 2,
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  companyTitle: {
+    fontSize: 12,
+    marginBottom: 4,
+    fontWeight: 'bold',
+  },
+  logo: {
+    width: 'auto',
+    height: 100,
+    objectFit: 'contain',
+    alignSelf: 'flex-end',
+  },
+  invoiceHeader: {
+    marginTop: 4,
+    textAlign: 'right',
+    fontSize: 10,
+  },
+  invoiceNumber: {
+    marginTop: 4,
+    textAlign: 'right',
+    fontSize: 10,
+  },
+  section: {
+    margin: 8,
+    padding: 8,
+  },
+  container: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  column: {
+    flex: 1,
+  },
+  columnRight: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  companyName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  title: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginVertical: 8,
+  },
+  customerSection: {
+    backgroundColor: '#808080',
+    padding: 8,
+    flexDirection: 'row',
+    marginBottom: 15,
+  },
+  customerInfo: {
+    flex: 1,
+    color: 'white',
+  },
+  customerInfoBold: {
+    // flex: 1,
+    // color: 'white',
+    fontWeight: 'bold',
+  },
+  customerColumn: {
+    flex: 1,
+  },
+  label: {
+    fontWeight: 'bold',
+    marginRight: 5,
+  },
+  value: {
+    maxWidth: '100%',
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    // borderTopWidth: 1,
+    borderColor: '#000',
+    paddingVertical: 5,
+  },
+  tableRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderColor: '#ddd',
+    paddingHorizontal: 2,
+    // paddingVertical: 5,
+  },
+  descriptionCol: { width: '40%', paddingHorizontal: 5 },
+  quantityCol: { width: '15%', textAlign: 'center' },
+  priceCol: { width: '15%', textAlign: 'right' },
+  discountCol: { width: '15%', textAlign: 'right' },
+  totalCol: { width: '15%', textAlign: 'right', paddingHorizontal: 5 },
+  totalsSection: {
+    marginTop: 10,
+    alignItems: 'flex-end',
+  },
+  totalRow: {
+    flexDirection: 'row',
+    paddingVertical: 3,
+    paddingRight: 5,
+  },
+  totalLabel: {
+    width: 200,
+    textAlign: 'right',
+    paddingRight: 10,
+  },
+  totalValue: {
+    width: 100,
+    textAlign: 'right',
+  },
+  tableCol4: {
+    width: '40%',
+  },
+  tableCol1: {
+    width: '10%',
+    textAlign: 'center',
+  },
+  tableCol2: {
+    width: '20%',
+    textAlign: 'center',
+  },
+  tableCol3: {
+    width: '30%',
+    textAlign: 'right',
+  },
+  totalsRow: {
+    flexDirection: 'row',
+    paddingVertical: 3,
+    paddingRight: 5,
+  },
+  totalsLabel: {
+    width: '70%',
+    textAlign: 'right',
+    paddingRight: 10,
+  },
+  totalsValue: {
+    width: '30%',
+    textAlign: 'right',
+  },
+  border: {
+    borderWidth: 1,
+    borderColor: '#000',
+    borderStyle: 'solid',
+    padding: 10,
+    backgroundColor: '#808080',
+    color: 'white',
+    // marginVertical: 10,
+  },
+  notes: {
+    borderWidth: 1,
+    borderColor: '#000',
+    borderStyle: 'solid',
+    padding: 10,
+    backgroundColor: '#fff',
+    marginVertical: 10,
+  },
+  table: {
+    marginTop: 10,
+  },
+  tableRowStriped: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#000',
+    borderStyle: 'solid',
+    paddingHorizontal: 2,
+    // paddingVertical: 5,
+    backgroundColor: '#ddd',
+  },
+  tableCell: {
+    borderWidth: 1,
+    borderColor: '#000',
+    borderStyle: 'solid',
+    padding: 4,
+  },
+  tableCell50: {
+    width: '50%',
+    padding: '0 4px',
+    // borderWidth: 1,
+    // borderColor: '#000',
+    // borderStyle: 'solid',
+  },
+  footer: {
+    fontSize: 8,
+    padding: 0,
+  },
+});
+
 // Format currency
 const formatCurrency = (amount: number) => {
   return amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
@@ -434,6 +645,296 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({
     );
   };
 
+  // Create Invoice Document Component with the logo passed in
+  const InvoicePDF2 = () => {
+    // Get current date
+    const currentDate = format(new Date(), 'dd/MM/yyyy');
+
+    // Check if it's a proforma invoice
+    const isProforma = invoice.is_proforma;
+
+    return (
+      <Document author='factura.hn' title={pdfTitle}>
+        <Page size='A4' style={styles2.page}>
+          <View style={styles2.header}>
+            <View style={styles2.companyInfo}>
+              <Text style={styles2.companyTitle}>{company?.name}</Text>
+              <Text style={styles2.companyInfoText}>
+                <Text style={styles2.companyInfoTextBold}>RTN: </Text>
+                {company?.rtn}
+              </Text>
+              <Text style={styles2.companyInfoText}>
+                <Text style={styles2.companyInfoTextBold}>Email: </Text>
+                {company?.email}
+              </Text>
+              <Text style={styles2.companyInfoTextBold}>Dirección:</Text>
+              <Text style={styles2.companyInfoText}>{company?.address0}</Text>
+              <Text style={styles2.companyInfoText}>
+                <Text style={styles2.companyInfoTextBold}>Teléfono: </Text>
+                {company?.phone}
+              </Text>
+              {!isProforma && (
+                <>
+                  <Text style={styles2.companyInfoText}>
+                    <Text style={styles2.companyInfoTextBold}>CAI: </Text>
+                    {sarCaiData?.cai}
+                  </Text>
+                  <Text style={styles2.companyInfoTextBold}>
+                    RANGO AUTORIZADO
+                  </Text>
+                  <Text style={styles2.companyInfoText}>
+                    <Text style={styles2.companyInfoTextBold}>DEL </Text>
+                    {sarCaiData?.range_invoice1}
+                    <Text style={styles2.companyInfoTextBold}> AL </Text>
+                    {sarCaiData?.range_invoice2}
+                  </Text>
+                  <Text style={styles2.companyInfoText}>
+                    <Text style={styles2.companyInfoTextBold}>
+                      Fecha Límite de Emisión:{' '}
+                    </Text>
+                    {format(sarCaiData?.limit_date ?? new Date(), 'dd/MM/yyyy')}
+                  </Text>
+                </>
+              )}
+            </View>
+            <View>
+              {companyLogo ? (
+                <Image src={companyLogo} style={styles2.logo} />
+              ) : (
+                <Text style={styles2.companyName}>{company?.name}</Text>
+              )}
+              <Text style={styles2.invoiceHeader}>Fecha: {currentDate}</Text>
+              {!isProforma && (
+                <Text style={styles2.invoiceHeader}>
+                  <Text style={styles2.companyInfoTextBold}>FACTURA # </Text>
+                  {invoice.invoice_number}
+                </Text>
+              )}
+            </View>
+          </View>
+
+          {/* Proforma Title if applicable */}
+          {isProforma && (
+            <View>
+              <Text style={styles.title}>
+                FACTURA PROFORMA # {invoice.invoice_number}
+              </Text>
+            </View>
+          )}
+
+          <View style={styles2.customerSection}>
+            <View style={styles2.customerInfo}>
+              <Text style={styles2.customerInfoBold}>Facturar A: </Text>
+              <Text>{invoice.customers?.name}</Text>
+            </View>
+            <View style={styles2.customerInfo}>
+              <Text style={styles2.customerInfoBold}>RTN: </Text>
+              <Text>{invoice.customers?.rtn}</Text>
+            </View>
+            <View style={styles2.customerInfo}>
+              <Text style={styles2.customerInfoBold}>Email: </Text>
+              <Text>{invoice.customers?.email}</Text>
+            </View>
+          </View>
+
+          {/* Items Table */}
+          <View style={styles2.table}>
+            <View style={styles2.tableHeader}>
+              <Text style={styles2.descriptionCol}>Descripción</Text>
+              <Text style={styles2.quantityCol}>Cantidad</Text>
+              <Text style={styles2.priceCol}>Precio</Text>
+              <Text style={styles2.discountCol}>Descuento</Text>
+              <Text style={styles2.totalCol}>Total</Text>
+            </View>
+
+            {invoice.invoice_items?.map((item, index) => (
+              <View
+                key={index}
+                style={
+                  index % 2 === 0 ? styles.tableRow : styles.tableRowStriped
+                }
+              >
+                <Text style={styles2.descriptionCol}>{item.description}</Text>
+                <Text style={styles2.quantityCol}>{item.quantity}</Text>
+                <Text style={styles2.priceCol}>
+                  Lps. {formatCurrency(item.unit_cost)}
+                </Text>
+                <Text style={styles2.discountCol}>
+                  Lps. {formatCurrency(item.discount || 0)}
+                </Text>
+                <Text style={styles2.totalCol}>
+                  Lps. {formatCurrency(item.unit_cost * item.quantity)}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Totals Section */}
+          <View style={styles2.totalsSection}>
+            <View style={styles2.totalRow}>
+              <Text style={styles2.totalLabel}>Sub Total</Text>
+              <Text style={styles2.totalValue}>
+                Lps. {formatCurrency(invoice.subtotal || 0)}
+              </Text>
+            </View>
+            <View style={styles2.totalsRow}>
+              <Text style={styles2.totalsLabel}>Importe Exonerado:</Text>
+              <Text style={styles2.totalsValue}>
+                Lps. {formatCurrency(invoice.tax_exonerado || 0)}
+              </Text>
+            </View>
+            <View style={styles2.totalsRow}>
+              <Text style={styles2.totalsLabel}>Importe Exento:</Text>
+              <Text style={styles2.totalsValue}>
+                Lps. {formatCurrency(invoice.tax_exento || 0)}
+              </Text>
+            </View>
+            <View style={styles2.totalsRow}>
+              <Text style={styles2.totalsLabel}>Importe Gravado 15%:</Text>
+              <Text style={styles2.totalsValue}>
+                Lps. {formatCurrency(invoice.tax_gravado_15 || 0)}
+              </Text>
+            </View>
+            <View style={styles2.totalsRow}>
+              <Text style={styles2.totalsLabel}>Importe Gravado 18%:</Text>
+              <Text style={styles2.totalsValue}>
+                Lps. {formatCurrency(invoice.tax_gravado_18 || 0)}
+              </Text>
+            </View>
+            <View style={styles2.totalsRow}>
+              <Text style={styles2.totalsLabel}>I.S.V 15%:</Text>
+              <Text style={styles2.totalsValue}>
+                Lps. {formatCurrency(invoice.tax || 0)}
+              </Text>
+            </View>
+            <View style={styles2.totalsRow}>
+              <Text style={styles2.totalsLabel}>I.S.V 18%:</Text>
+              <Text style={styles2.totalsValue}>
+                Lps. {formatCurrency(invoice.tax_18 || 0)}
+              </Text>
+            </View>
+            <View style={styles2.totalsRow}>
+              <Text style={styles2.totalsLabel}>Total:</Text>
+              <Text style={styles2.totalsValue}>
+                Lps. {formatCurrency(invoice.total || 0)}
+              </Text>
+            </View>
+          </View>
+
+          {/* Footer Sections */}
+          <View style={{ ...styles2.border, padding: 4, borderRadius: 5 }}>
+            <Text style={{ fontWeight: 'bold' }}>
+              VALOR EN LETRAS: {invoice.numbers_to_letters}
+            </Text>
+          </View>
+
+          <Text
+            style={{
+              ...styles2.footer,
+              marginTop: 4,
+              marginBottom: 2,
+              fontWeight: 'bold',
+            }}
+          >
+            &quot;LA FACTURA ES BENEFICIO DE TODOS EXÍJALA&quot;
+          </Text>
+
+          {/* Table for SAG information */}
+          <View
+            style={{
+              ...styles2.table,
+              marginTop: 0,
+              borderWidth: 1,
+              borderBottom: 0,
+              borderColor: '#000',
+              borderStyle: 'solid',
+            }}
+          >
+            <View
+              style={{
+                ...styles2.tableRow,
+                paddingVertical: 2,
+                borderBottom: 1,
+                borderColor: '#000',
+                borderStyle: 'solid',
+              }}
+            >
+              <Text style={styles2.tableCell50}>
+                N° Correlativo de orden de compra exenta
+              </Text>
+              <Text
+                style={{
+                  ...styles2.tableCell50,
+                  borderLeft: 1,
+                  borderColor: '#000',
+                  borderStyle: 'solid',
+                }}
+              ></Text>
+            </View>
+            <View
+              style={{
+                ...styles2.tableRowStriped,
+                paddingVertical: 2,
+                borderBottom: 1,
+                borderColor: '#000',
+                borderStyle: 'solid',
+              }}
+            >
+              <Text style={styles2.tableCell50}>
+                N° Correlativo de constancia de registro exonerado
+              </Text>
+              <Text
+                style={{
+                  ...styles2.tableCell50,
+                  borderLeft: 1,
+                  borderColor: '#000',
+                  borderStyle: 'solid',
+                }}
+              ></Text>
+            </View>
+            <View
+              style={{
+                ...styles2.tableRow,
+                paddingVertical: 2,
+                borderBottom: 1,
+                borderColor: '#000',
+                borderStyle: 'solid',
+              }}
+            >
+              <Text style={styles2.tableCell50}>
+                N° identificativo del registro de la SAG
+              </Text>
+              <Text
+                style={{
+                  ...styles2.tableCell50,
+                  borderLeft: 1,
+                  borderColor: '#000',
+                  borderStyle: 'solid',
+                }}
+              ></Text>
+            </View>
+          </View>
+
+          <Text
+            style={{
+              ...styles2.footer,
+              marginTop: 10,
+              marginBottom: 2,
+              fontWeight: 'bold',
+            }}
+          >
+            ORIGINAL: CLIENTE COPIA: EMISOR
+          </Text>
+
+          {/* Notes Section */}
+          <View style={{ ...styles2.notes, marginTop: 0 }}>
+            <Text style={{ fontWeight: 'bold' }}>Notas: {invoice.notes}</Text>
+          </View>
+        </Page>
+      </Document>
+    );
+  };
+
   const pdfObject = pdf(<InvoicePDF />);
 
   const handlePrint = async () => {
@@ -484,9 +985,12 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({
   return (
     <div className='flex flex-col gap-4'>
       {/* PDF Viewer */}
-      <div className='h-[calc(100vh-220px)] w-full border border-gray-300 rounded-md relative'>
-        <PDFViewer width='100%' height='100%' className='border-none'>
+      <div className='h-[calc(100vh-220px)] w-full border border-gray-300 rounded-md relative flex flex-row'>
+        {/* <PDFViewer width='100%' height='100%' className='border-none'>
           <InvoicePDF />
+        </PDFViewer> */}
+        <PDFViewer width='100%' height='100%' className='border-none'>
+          <InvoicePDF2 />
         </PDFViewer>
       </div>
 

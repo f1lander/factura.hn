@@ -196,7 +196,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
         console.log('logoUrl:', logoUrl);
         const invoiceDate = format(invoice?.date ?? new Date(), 'dd/MM/yyyy');
         const limitDate = format(
-          company?.limit_date ?? new Date(),
+          sarCaiData?.limit_date ?? new Date(),
           'dd/MM/yyyy'
         );
         const renderResult = await renderPdf({
@@ -226,7 +226,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             address2: company?.address2,
             phone: company?.phone,
             cai: sarCaiData?.cai,
-            limitDate: sarCaiData?.limit_date,
+            limitDate,
             rangeInvoice1: sarCaiData?.range_invoice1,
             rangeInvoice2: sarCaiData?.range_invoice2,
             email: company?.email,
