@@ -55,7 +55,6 @@ import {
 } from '@/components/ui/dialog';
 import { Toggle } from '@/components/ui/toggle';
 import { cn } from '@/lib/utils';
-import InvoiceViewPdf from '@/components/molecules/InvoiceViewPdf';
 import { Company } from '@/lib/supabase/services/company';
 import { companyService } from '@/lib/supabase/services/company';
 import {
@@ -65,6 +64,16 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { DeliveryConfirmDialog } from '../organisms/invoices/DeliveryConfirmDialog';
+import dynamic from 'next/dynamic';
+
+const InvoiceViewPdf = dynamic(
+  () =>
+    import('@/components/molecules/InvoiceViewPdf').then((mod) => mod.default),
+  {
+    loading: () => <div>Loading...</div>,
+    ssr: false,
+  }
+);
 
 const statusMap: { [key: string]: string } = {
   Pagadas: 'paid',

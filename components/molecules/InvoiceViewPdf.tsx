@@ -388,7 +388,7 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({
           </View>
 
           <Text style={styles.footer}>
-            "LA FACTURA ES BENEFICIO DE TODOS EXÍJALA "
+            &quot;LA FACTURA ES BENEFICIO DE TODOS EXÍJALA&quot;
           </Text>
 
           {/* Table for SAG information */}

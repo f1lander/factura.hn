@@ -72,10 +72,19 @@ import { format } from 'date-fns';
 import Image from 'next/image';
 import { sarCaiService } from '@/lib/supabase/services/sar_cai';
 import { useQuery } from '@tanstack/react-query';
-import InvoiceViewPdf from '@/components/molecules/InvoiceViewPdf';
 import { companyService } from '@/lib/supabase/services/company';
 import { Company } from '@/lib/supabase/services/company';
 import { Customer } from '@/lib/supabase/services/customer';
+import dynamic from 'next/dynamic';
+
+const InvoiceViewPdf = dynamic(
+  () =>
+    import('@/components/molecules/InvoiceViewPdf').then((mod) => mod.default),
+  {
+    loading: () => <div>Loading...</div>,
+    ssr: false,
+  }
+);
 
 interface InvoiceViewProps {
   invoice?: Invoice;
