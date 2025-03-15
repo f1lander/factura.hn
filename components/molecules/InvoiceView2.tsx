@@ -111,15 +111,18 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   }, [setLastInvoiceExists, allInvoices]);
 
   const [expandedRows, setExpandedRows] = useState<any>({});
-  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (company?.logo_url) {
-      getSignedLogoUrl(company?.logo_url).then((base64image) => {
-        setCompanyLogo(base64image);
-      });
+  const {
+    data: companyLogo,
+    isLoading,
+    isFetching,
+  } = useQuery(
+    ['companyLogo', company?.logo_url],
+    () => getSignedLogoUrl(company?.logo_url),
+    {
+      enabled: !!company?.logo_url,
     }
-  }, [company]);
+  );
 
   // Query to fetch SAR CAI data
   const { data: sarCaiData, isLoading: isSarCaiLoading } = useQuery({
@@ -136,7 +139,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
         setCompanyData(companyData);
       }
     };
-    
+
     fetchCompanyData();
   }, []);
 
@@ -372,7 +375,9 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   useEffect(() => {
     const customerId = watch('customer_id');
     if (customerId) {
-      const selectedCustomer = customers.find((c) => c.id === customerId);
+      const selectedCustomer = customers.find(
+        (c: Customer) => c.id === customerId
+      );
       if (selectedCustomer) {
         setValue('customers', {
           name: selectedCustomer.name,
@@ -451,7 +456,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
                   <SelectValue placeholder='Seleccione cliente' />
                 </SelectTrigger>
                 <SelectContent>
-                  {customers.map((customer) => (
+                  {customers.map((customer: Customer) => (
                     <SelectItem key={customer.id} value={customer.id}>
                       {customer.name}
                     </SelectItem>
@@ -835,12 +840,12 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
           {watch('numbers_to_letters')}
         </p>
       </div>
-      <div className="flex gap-2">
+      <div className='flex gap-2'>
         <Button
-          type="button"
-          variant="outline"
+          type='button'
+          variant='outline'
           onClick={handleViewPdf}
-          className="flex items-center gap-2"
+          className='flex items-center gap-2'
         >
           <EyeIcon size={16} />
           <span>Ver PDF</span>
@@ -898,7 +903,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             {companyLogo !== null && (
               <div className='relative h-[100px] aspect-video z-0'>
                 <Image
-                  src={companyLogo}
+                  src={companyLogo!}
                   alt='company-logo'
                   fill
                   style={{ objectFit: 'contain' }}
@@ -928,14 +933,17 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
         </CardFooter>
       </Card>
       {showPdfViewer && invoice && (
-        <div className="p-4">
-          <div className="flex justify-between mb-4">
-            <h2 className="text-xl font-bold">Vista previa de Factura</h2>
-            <Button variant="outline" onClick={() => setShowPdfViewer(false)}>
-              <X className="h-4 w-4 mr-2" /> Cerrar
+        <div className='p-4'>
+          <div className='flex justify-between mb-4'>
+            <h2 className='text-xl font-bold'>Vista previa de Factura</h2>
+            <Button variant='outline' onClick={() => setShowPdfViewer(false)}>
+              <X className='h-4 w-4 mr-2' /> Cerrar
             </Button>
           </div>
-          <InvoiceViewPdf invoice={invoice} company={companyData || undefined} />
+          <InvoiceViewPdf
+            invoice={invoice}
+            company={companyData || undefined}
+          />
         </div>
       )}
     </>

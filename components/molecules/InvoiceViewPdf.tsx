@@ -1,12 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Document, Page, Text, View, StyleSheet, Font, Image, PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  Font,
+  Image,
+  PDFViewer,
+  PDFDownloadLink,
+} from '@react-pdf/renderer';
 import { Button } from '@/components/ui/button';
 import { Invoice, InvoiceItem } from '@/lib/supabase/services/invoice';
 import { Company } from '@/lib/supabase/services/company';
 import { PrinterIcon, DownloadIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { getSignedLogoUrl } from '@/lib/utils';
-
+import { useQuery } from '@tanstack/react-query';
+import { sarCaiService } from '@/lib/supabase/services/sar_cai';
 
 // Create styles
 const styles = StyleSheet.create({
@@ -168,32 +179,52 @@ interface InvoiceViewPdfProps {
   company?: Company;
 }
 
-const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({ invoice, company }) => {
-  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (company?.logo_url) {
-      getSignedLogoUrl(company?.logo_url).then((base64image: string | null) => {
-        setCompanyLogo(base64image);
-      });
+const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({
+  invoice,
+  company,
+}) => {
+  const {
+    data: companyLogo,
+    isLoading,
+    isFetching,
+  } = useQuery(
+    ['companyLogo', company?.logo_url],
+    () => getSignedLogoUrl(company?.logo_url),
+    {
+      enabled: !!company?.logo_url,
     }
-  }, [company]);
+  );
+
+  // Query to fetch SAR CAI data
+  const { data: sarCaiData, isLoading: isSarCaiLoading } = useQuery({
+    queryKey: ['sarCai', invoice?.sar_cai_id],
+    queryFn: () => sarCaiService.getSarCaiById(invoice?.sar_cai_id ?? ''),
+    enabled: !!invoice?.sar_cai_id,
+  });
 
   if (!invoice) {
     return <div>No invoice data available</div>;
+  }
+
+  if (isLoading || isFetching || isSarCaiLoading) {
+    return (
+      <div className='flex justify-center items-center h-screen'>
+        <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary' />
+      </div>
+    );
   }
 
   // Create Invoice Document Component with the logo passed in
   const InvoicePDF = () => {
     // Get current date
     const currentDate = format(new Date(), 'dd/MM/yyyy');
-    
+
     // Check if it's a proforma invoice
     const isProforma = invoice.is_proforma;
-    
+
     return (
       <Document>
-        <Page size="A4" style={styles.page}>
+        <Page size='A4' style={styles.page}>
           {/* Header Section */}
           <View style={styles.container}>
             {/* Company Info - Left Column */}
@@ -201,17 +232,24 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({ invoice, company }) => 
               <Text style={styles.companyInfo}>{company?.name}</Text>
               <Text style={styles.companyInfo}>RTN: {company?.rtn}</Text>
               <Text style={styles.companyInfo}>Email: {company?.email}</Text>
-              <Text style={styles.companyInfo}>Dirección: {company?.address0}</Text>
+              <Text style={styles.companyInfo}>
+                Dirección: {company?.address0}
+              </Text>
               <Text style={styles.companyInfo}>Teléfono: {company?.phone}</Text>
               {!isProforma && (
                 <>
-                  <Text style={styles.companyInfo}>CAI: {company?.cai}</Text>
-                  <Text style={styles.companyInfo}>RANGO AUTORIZADO DEL {company?.range_invoice1} AL {company?.range_invoice2}</Text>
-                  <Text style={styles.companyInfo}>Fecha Límite de Emisión: {company?.limit_date}</Text>
+                  <Text style={styles.companyInfo}>CAI: {sarCaiData?.cai}</Text>
+                  <Text style={styles.companyInfo}>
+                    RANGO AUTORIZADO DEL {sarCaiData?.range_invoice1} AL{' '}
+                    {sarCaiData?.range_invoice2}
+                  </Text>
+                  <Text style={styles.companyInfo}>
+                    Fecha Límite de Emisión: {sarCaiData?.limit_date}
+                  </Text>
                 </>
               )}
             </View>
-            
+
             {/* Logo and Invoice Number - Right Column */}
             <View style={styles.columnRight}>
               {companyLogo ? (
@@ -221,23 +259,28 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({ invoice, company }) => 
               )}
               <Text style={styles.companyInfo}>Fecha: {currentDate}</Text>
               {!isProforma && (
-                <Text style={styles.companyInfo}>FACTURA # {invoice.invoice_number}</Text>
+                <Text style={styles.companyInfo}>
+                  FACTURA # {invoice.invoice_number}
+                </Text>
               )}
             </View>
           </View>
-          
+
           {/* Proforma Title if applicable */}
           {isProforma && (
             <View>
-              <Text style={styles.title}>FACTURA PROFORMA # {invoice.invoice_number}</Text>
+              <Text style={styles.title}>
+                FACTURA PROFORMA # {invoice.invoice_number}
+              </Text>
             </View>
           )}
-          
+
           {/* Customer Information */}
           <View style={styles.customerSection}>
             <View style={styles.customerColumn}>
               <Text>
-                <Text style={styles.label}>Facturar A:</Text> {invoice.customers?.name}
+                <Text style={styles.label}>Facturar A:</Text>{' '}
+                {invoice.customers?.name}
               </Text>
             </View>
             <View style={styles.customerColumn}>
@@ -247,11 +290,12 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({ invoice, company }) => 
             </View>
             <View style={styles.customerColumn}>
               <Text>
-                <Text style={styles.label}>Email:</Text> {invoice.customers?.email}
+                <Text style={styles.label}>Email:</Text>{' '}
+                {invoice.customers?.email}
               </Text>
             </View>
           </View>
-          
+
           {/* Items Table */}
           <View>
             {/* Table Header */}
@@ -262,78 +306,115 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({ invoice, company }) => 
               <Text style={styles.tableCol2}>Descuento</Text>
               <Text style={styles.tableCol3}>Total</Text>
             </View>
-            
+
             {/* Table Rows */}
             {invoice.invoice_items?.map((item: InvoiceItem, index: number) => (
-              <View key={index} style={index % 2 === 0 ? styles.tableRow : styles.tableRowStriped}>
+              <View
+                key={index}
+                style={
+                  index % 2 === 0 ? styles.tableRow : styles.tableRowStriped
+                }
+              >
                 <Text style={styles.tableCol4}>{item.description}</Text>
                 <Text style={styles.tableCol1}>{item.quantity}</Text>
-                <Text style={styles.tableCol2}>Lps. {formatCurrency(item.unit_cost)}</Text>
-                <Text style={styles.tableCol2}>Lps. {formatCurrency(item.discount || 0)}</Text>
-                <Text style={styles.tableCol3}>Lps. {formatCurrency(item.unit_cost * item.quantity)}</Text>
+                <Text style={styles.tableCol2}>
+                  Lps. {formatCurrency(item.unit_cost)}
+                </Text>
+                <Text style={styles.tableCol2}>
+                  Lps. {formatCurrency(item.discount || 0)}
+                </Text>
+                <Text style={styles.tableCol3}>
+                  Lps. {formatCurrency(item.unit_cost * item.quantity)}
+                </Text>
               </View>
             ))}
-            
+
             {/* Totals Section */}
             <View style={styles.totalsRow}>
               <Text style={styles.totalsLabel}>Sub Total</Text>
-              <Text style={styles.totalsValue}>Lps. {formatCurrency(invoice.subtotal || 0)}</Text>
+              <Text style={styles.totalsValue}>
+                Lps. {formatCurrency(invoice.subtotal || 0)}
+              </Text>
             </View>
             <View style={styles.totalsRow}>
               <Text style={styles.totalsLabel}>Importe Exonerado:</Text>
-              <Text style={styles.totalsValue}>Lps. {formatCurrency(invoice.tax_exonerado || 0)}</Text>
+              <Text style={styles.totalsValue}>
+                Lps. {formatCurrency(invoice.tax_exonerado || 0)}
+              </Text>
             </View>
             <View style={styles.totalsRow}>
               <Text style={styles.totalsLabel}>Importe Exento:</Text>
-              <Text style={styles.totalsValue}>Lps. {formatCurrency(invoice.tax_exento || 0)}</Text>
+              <Text style={styles.totalsValue}>
+                Lps. {formatCurrency(invoice.tax_exento || 0)}
+              </Text>
             </View>
             <View style={styles.totalsRow}>
               <Text style={styles.totalsLabel}>Importe Gravado 15%:</Text>
-              <Text style={styles.totalsValue}>Lps. {formatCurrency(invoice.tax_gravado_15 || 0)}</Text>
+              <Text style={styles.totalsValue}>
+                Lps. {formatCurrency(invoice.tax_gravado_15 || 0)}
+              </Text>
             </View>
             <View style={styles.totalsRow}>
               <Text style={styles.totalsLabel}>Importe Gravado 18%:</Text>
-              <Text style={styles.totalsValue}>Lps. {formatCurrency(invoice.tax_gravado_18 || 0)}</Text>
+              <Text style={styles.totalsValue}>
+                Lps. {formatCurrency(invoice.tax_gravado_18 || 0)}
+              </Text>
             </View>
             <View style={styles.totalsRow}>
               <Text style={styles.totalsLabel}>I.S.V 15%:</Text>
-              <Text style={styles.totalsValue}>Lps. {formatCurrency(invoice.tax || 0)}</Text>
+              <Text style={styles.totalsValue}>
+                Lps. {formatCurrency(invoice.tax || 0)}
+              </Text>
             </View>
             <View style={styles.totalsRow}>
               <Text style={styles.totalsLabel}>I.S.V 18%:</Text>
-              <Text style={styles.totalsValue}>Lps. {formatCurrency(invoice.tax_18 || 0)}</Text>
+              <Text style={styles.totalsValue}>
+                Lps. {formatCurrency(invoice.tax_18 || 0)}
+              </Text>
             </View>
             <View style={styles.totalsRow}>
               <Text style={styles.totalsLabel}>Total:</Text>
-              <Text style={styles.totalsValue}>Lps. {formatCurrency(invoice.total || 0)}</Text>
+              <Text style={styles.totalsValue}>
+                Lps. {formatCurrency(invoice.total || 0)}
+              </Text>
             </View>
           </View>
-          
+
           {/* Footer Sections */}
           <View style={styles.border}>
-            <Text style={{ fontWeight: 'bold' }}>VALOR EN LETRAS: {invoice.numbers_to_letters}</Text>
+            <Text style={{ fontWeight: 'bold' }}>
+              VALOR EN LETRAS: {invoice.numbers_to_letters}
+            </Text>
           </View>
-          
-          <Text style={styles.footer}>"LA FACTURA ES BENEFICIO DE TODOS EXÍJALA "</Text>
-          
+
+          <Text style={styles.footer}>
+            "LA FACTURA ES BENEFICIO DE TODOS EXÍJALA "
+          </Text>
+
           {/* Table for SAG information */}
           <View style={styles.table}>
             <View style={styles.tableRow}>
-              <Text style={styles.tableCell50}>N° Correlativo de orden de compra exenta</Text>
+              <Text style={styles.tableCell50}>
+                N° Correlativo de orden de compra exenta
+              </Text>
               <Text style={styles.tableCell50}></Text>
             </View>
             <View style={styles.tableRow}>
-              <Text style={styles.tableCell50}>N° Correlativo de constancia de registro exonerado</Text>
+              <Text style={styles.tableCell50}>
+                N° Correlativo de constancia de registro exonerado
+              </Text>
               <Text style={styles.tableCell50}></Text>
             </View>
             <View style={styles.tableRow}>
-              <Text style={styles.tableCell50}>N° identificativo del registro de la SAG</Text>
+              <Text style={styles.tableCell50}>
+                N° identificativo del registro de la SAG
+              </Text>
               <Text style={styles.tableCell50}></Text>
             </View>
           </View>
-          
-          <Text style={styles.footer}>ORIGINAL: CLIENTE   COPIA: EMISOR</Text>
-          
+
+          <Text style={styles.footer}>ORIGINAL: CLIENTE COPIA: EMISOR</Text>
+
           {/* Notes Section */}
           <View style={styles.notes}>
             <Text style={{ fontWeight: 'bold' }}>Notas: {invoice.notes}</Text>
@@ -344,16 +425,16 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({ invoice, company }) => 
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className='flex flex-col gap-4'>
       {/* PDF Viewer */}
-      <div className="h-[calc(100vh-220px)] w-full border border-gray-300 rounded-md">
-        <PDFViewer width="100%" height="100%" className="border-none">
+      <div className='h-[calc(100vh-220px)] w-full border border-gray-300 rounded-md relative'>
+        <PDFViewer width='100%' height='100%' className='border-none'>
           <InvoicePDF />
         </PDFViewer>
       </div>
-      
+
       {/* Action Buttons */}
-      <div className="flex gap-3 justify-end">
+      <div className='flex gap-3 justify-end'>
         {/* Print Button */}
         <Button
           onClick={() => {
@@ -364,23 +445,25 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({ invoice, company }) => 
               iframe.contentWindow.print();
             }
           }}
-          className="flex items-center gap-2"
+          className='flex items-center gap-2'
         >
           <PrinterIcon size={16} />
           <span>Imprimir</span>
         </Button>
-        
+
         {/* Download Button */}
         <PDFDownloadLink
           document={<InvoicePDF />}
           fileName={`factura-${invoice.invoice_number}.pdf`}
-          className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+          className='inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50'
         >
           {({ loading }) => (
             <>
-              {loading ? 'Preparando documento...' : (
+              {loading ? (
+                'Preparando documento...'
+              ) : (
                 <>
-                  <DownloadIcon size={16} className="mr-2" />
+                  <DownloadIcon size={16} className='mr-2' />
                   <span>Descargar PDF</span>
                 </>
               )}
@@ -392,4 +475,4 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({ invoice, company }) => 
   );
 };
 
-export default InvoiceViewPdf; 
+export default InvoiceViewPdf;
