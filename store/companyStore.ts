@@ -1,6 +1,6 @@
-import { Company, companyService } from "@/lib/supabase/services/company";
-import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { Company, companyService } from '@/lib/supabase/services/company';
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 type CompanyStore = {
   company: Company | null;
@@ -20,13 +20,13 @@ export const useCompanyStore = create<CompanyStore>()(
           const company = await companyService.getCompanyById();
           set({ company });
         } catch (error) {
-          console.error("Failed to sync company", error);
+          console.error('Failed to sync company', error);
         }
       },
     }),
     {
-      name: "companyStore",
+      name: 'companyStore',
       storage: createJSONStorage(() => localStorage),
-    },
-  ),
+    }
+  )
 );

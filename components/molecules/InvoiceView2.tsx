@@ -852,6 +852,14 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     </>
   );
 
+  if (isLoading || isFetching || isSarCaiLoading) {
+    return (
+      <div className='flex justify-center items-center h-screen'>
+        <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary' />
+      </div>
+    );
+  }
+
   return (
     <>
       <div className='flex gap-2 w-full justify-end'>

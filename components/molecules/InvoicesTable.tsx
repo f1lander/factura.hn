@@ -746,7 +746,7 @@ const EnhancedInvoiceTable = ({
                 </div>
 
                 {/* Add View PDF Button */}
-                <Button
+                {/* <Button
                   variant='outline'
                   size='sm'
                   className='w-full flex items-center justify-center gap-2'
@@ -757,7 +757,7 @@ const EnhancedInvoiceTable = ({
                 >
                   <FileText className='h-4 w-4' />
                   <span>Ver PDF</span>
-                </Button>
+                </Button> */}
               </div>
             )}
           </div>
