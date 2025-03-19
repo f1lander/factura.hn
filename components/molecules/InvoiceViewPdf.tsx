@@ -16,7 +16,7 @@ import { Invoice, InvoiceItem } from '@/lib/supabase/services/invoice';
 import { Company } from '@/lib/supabase/services/company';
 import { PrinterIcon, DownloadIcon } from 'lucide-react';
 import { format } from 'date-fns';
-import { getSignedLogoUrl } from '@/lib/utils';
+import { getSignedLogoUrl, numberToWords } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { sarCaiService } from '@/lib/supabase/services/sar_cai';
 
@@ -261,6 +261,8 @@ export const InvoicePDF = ({
   // Check if it's a proforma invoice
   const isProforma = invoice.is_proforma;
 
+  const numberInWords = numberToWords(invoice.total);
+
   return (
     <Document author='factura.hn' title={pdfTitle}>
       <Page size='A4' style={styles.page}>
@@ -428,7 +430,7 @@ export const InvoicePDF = ({
         {/* Footer Sections */}
         <View style={{ ...styles.border, padding: 4, borderRadius: 5 }}>
           <Text style={{ fontWeight: 'bold' }}>
-            VALOR EN LETRAS: {invoice.numbers_to_letters}
+            VALOR EN LETRAS: {numberInWords}
           </Text>
         </View>
 
