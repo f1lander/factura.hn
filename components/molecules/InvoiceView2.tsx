@@ -136,7 +136,11 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
   );
 
   // Query to fetch SAR CAI data
-  const { data: sarCaiData, isLoading: isSarCaiLoading } = useQuery({
+  const {
+    data: sarCaiData,
+    isLoading: isSarCaiLoading,
+    isFetching: isSarCaiFetching,
+  } = useQuery({
     queryKey: ['sarCai', invoice?.sar_cai_id],
     queryFn: () => sarCaiService.getSarCaiById(invoice?.sar_cai_id ?? ''),
     enabled: !!invoice?.sar_cai_id,
@@ -854,7 +858,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     </>
   );
 
-  if (isLoading || isFetching || isSarCaiLoading) {
+  if ((isLoading && isFetching) || (isSarCaiLoading && isSarCaiFetching)) {
     return (
       <div className='flex justify-center items-center h-screen'>
         <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary' />
