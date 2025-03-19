@@ -76,6 +76,8 @@ import { companyService } from '@/lib/supabase/services/company';
 import { Company } from '@/lib/supabase/services/company';
 import { Customer } from '@/lib/supabase/services/customer';
 import dynamic from 'next/dynamic';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import { InvoicePDF } from '@/components/molecules/InvoiceViewPdf';
 
 const InvoiceViewPdf = dynamic(
   () =>
@@ -860,6 +862,10 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     );
   }
 
+  const pdfTitle = `factura-${
+    invoice?.invoice_number || invoice?.proforma_number
+  }-${invoice?.customers.name}`;
+
   return (
     <>
       <div className='flex gap-2 w-full justify-end'>
@@ -882,11 +888,41 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
                   variant='outline'
                   onClick={handleViewPdf}
                   size='sm'
-                  className='flex items-center gap-2'
+                  className='hidden sm:flex items-center gap-2'
                 >
                   <EyeIcon />
                   PDF
                 </Button>
+                <PDFDownloadLink
+                  document={
+                    <InvoicePDF
+                      invoice={invoice!}
+                      company={company}
+                      sarCaiData={sarCaiData}
+                      companyLogo={companyLogo!}
+                      pdfTitle={pdfTitle}
+                    />
+                  }
+                  fileName={`${pdfTitle}.pdf`}
+                  className='flex sm:hidden items-center gap-2'
+                >
+                  {({ loading }) => (
+                    <Button
+                      disabled={loading}
+                      className='flex items-center gap-2'
+                      size='sm'
+                    >
+                      {loading ? (
+                        'Preparando documento...'
+                      ) : (
+                        <>
+                          <DownloadIcon size={16} className='mr-2' />
+                          <span>Descargar PDF</span>
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </PDFDownloadLink>
                 {/* <Button
                   className='bg-slate-800'
                   onClick={handleDownloadPdf}

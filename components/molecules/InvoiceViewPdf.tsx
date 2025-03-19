@@ -241,6 +241,304 @@ interface InvoiceViewPdfProps {
   company?: Company;
 }
 
+// Create Invoice Document Component with the logo passed in
+export const InvoicePDF = ({
+  invoice,
+  company,
+  sarCaiData,
+  companyLogo,
+  pdfTitle,
+}: {
+  invoice: Invoice;
+  company?: Company;
+  sarCaiData: any;
+  companyLogo: string;
+  pdfTitle: string;
+}) => {
+  // Get current date
+  const currentDate = format(new Date(), 'dd/MM/yyyy');
+
+  // Check if it's a proforma invoice
+  const isProforma = invoice.is_proforma;
+
+  return (
+    <Document author='factura.hn' title={pdfTitle}>
+      <Page size='A4' style={styles.page}>
+        <View style={styles.header}>
+          <View style={styles.companyInfo}>
+            <Text style={styles.companyTitle}>{company?.name}</Text>
+            <Text style={styles.companyInfoText}>
+              <Text style={styles.companyInfoTextBold}>RTN: </Text>
+              {company?.rtn}
+            </Text>
+            <Text style={styles.companyInfoText}>
+              <Text style={styles.companyInfoTextBold}>Email: </Text>
+              {company?.email}
+            </Text>
+            <Text style={styles.companyInfoTextBold}>Dirección:</Text>
+            <Text style={styles.companyInfoText}>{company?.address0}</Text>
+            <Text style={styles.companyInfoText}>
+              <Text style={styles.companyInfoTextBold}>Teléfono: </Text>
+              {company?.phone}
+            </Text>
+            {!isProforma && (
+              <>
+                <Text style={styles.companyInfoText}>
+                  <Text style={styles.companyInfoTextBold}>CAI: </Text>
+                  {sarCaiData?.cai}
+                </Text>
+                <Text style={styles.companyInfoTextBold}>RANGO AUTORIZADO</Text>
+                <Text style={styles.companyInfoText}>
+                  <Text style={styles.companyInfoTextBold}>DEL </Text>
+                  {sarCaiData?.range_invoice1}
+                  <Text style={styles.companyInfoTextBold}> AL </Text>
+                  {sarCaiData?.range_invoice2}
+                </Text>
+                <Text style={styles.companyInfoText}>
+                  <Text style={styles.companyInfoTextBold}>
+                    Fecha Límite de Emisión:{' '}
+                  </Text>
+                  {format(sarCaiData?.limit_date ?? new Date(), 'dd/MM/yyyy')}
+                </Text>
+              </>
+            )}
+          </View>
+          <View>
+            {companyLogo ? (
+              <Image src={companyLogo} style={styles.logo} />
+            ) : (
+              <Text style={styles.companyName}>{company?.name}</Text>
+            )}
+            <Text style={styles.invoiceHeader}>Fecha: {currentDate}</Text>
+            {!isProforma && (
+              <Text style={styles.invoiceHeader}>
+                <Text style={styles.companyInfoTextBold}>FACTURA # </Text>
+                {invoice.invoice_number}
+              </Text>
+            )}
+          </View>
+        </View>
+
+        {/* Proforma Title if applicable */}
+        {isProforma && (
+          <View>
+            <Text style={styles.title}>
+              FACTURA PROFORMA # {invoice.invoice_number}
+            </Text>
+          </View>
+        )}
+
+        <View style={styles.customerSection}>
+          <View style={styles.customerInfo}>
+            <Text style={styles.customerInfoBold}>Facturar A: </Text>
+            <Text>{invoice.customers?.name}</Text>
+          </View>
+          <View style={styles.customerInfo}>
+            <Text style={styles.customerInfoBold}>RTN: </Text>
+            <Text>{invoice.customers?.rtn}</Text>
+          </View>
+          <View style={styles.customerInfo}>
+            <Text style={styles.customerInfoBold}>Email: </Text>
+            <Text>{invoice.customers?.email}</Text>
+          </View>
+        </View>
+
+        {/* Items Table */}
+        <View style={styles.table}>
+          <View style={styles.tableHeader}>
+            <Text style={styles.descriptionCol}>Descripción</Text>
+            <Text style={styles.quantityCol}>Cantidad</Text>
+            <Text style={styles.priceCol}>Precio</Text>
+            <Text style={styles.discountCol}>Descuento</Text>
+            <Text style={styles.totalCol}>Total</Text>
+          </View>
+
+          {invoice.invoice_items?.map((item, index) => (
+            <View
+              key={index}
+              style={index % 2 === 0 ? styles.tableRow : styles.tableRowStriped}
+            >
+              <Text style={styles.descriptionCol}>{item.description}</Text>
+              <Text style={styles.quantityCol}>{item.quantity}</Text>
+              <Text style={styles.priceCol}>
+                Lps. {formatCurrency(item.unit_cost)}
+              </Text>
+              <Text style={styles.discountCol}>
+                Lps. {formatCurrency(item.discount || 0)}
+              </Text>
+              <Text style={styles.totalCol}>
+                Lps. {formatCurrency(item.unit_cost * item.quantity)}
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Totals Section */}
+        <View style={styles.totalsSection}>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Sub Total</Text>
+            <Text style={styles.totalValue}>
+              Lps. {formatCurrency(invoice.subtotal || 0)}
+            </Text>
+          </View>
+          <View style={styles.totalsRow}>
+            <Text style={styles.totalsLabel}>Importe Exonerado:</Text>
+            <Text style={styles.totalsValue}>
+              Lps. {formatCurrency(invoice.tax_exonerado || 0)}
+            </Text>
+          </View>
+          <View style={styles.totalsRow}>
+            <Text style={styles.totalsLabel}>Importe Exento:</Text>
+            <Text style={styles.totalsValue}>
+              Lps. {formatCurrency(invoice.tax_exento || 0)}
+            </Text>
+          </View>
+          <View style={styles.totalsRow}>
+            <Text style={styles.totalsLabel}>Importe Gravado 15%:</Text>
+            <Text style={styles.totalsValue}>
+              Lps. {formatCurrency(invoice.tax_gravado_15 || 0)}
+            </Text>
+          </View>
+          <View style={styles.totalsRow}>
+            <Text style={styles.totalsLabel}>Importe Gravado 18%:</Text>
+            <Text style={styles.totalsValue}>
+              Lps. {formatCurrency(invoice.tax_gravado_18 || 0)}
+            </Text>
+          </View>
+          <View style={styles.totalsRow}>
+            <Text style={styles.totalsLabel}>I.S.V 15%:</Text>
+            <Text style={styles.totalsValue}>
+              Lps. {formatCurrency(invoice.tax || 0)}
+            </Text>
+          </View>
+          <View style={styles.totalsRow}>
+            <Text style={styles.totalsLabel}>I.S.V 18%:</Text>
+            <Text style={styles.totalsValue}>
+              Lps. {formatCurrency(invoice.tax_18 || 0)}
+            </Text>
+          </View>
+          <View style={styles.totalsRow}>
+            <Text style={styles.totalsLabel}>Total:</Text>
+            <Text style={styles.totalsValue}>
+              Lps. {formatCurrency(invoice.total || 0)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Footer Sections */}
+        <View style={{ ...styles.border, padding: 4, borderRadius: 5 }}>
+          <Text style={{ fontWeight: 'bold' }}>
+            VALOR EN LETRAS: {invoice.numbers_to_letters}
+          </Text>
+        </View>
+
+        <Text
+          style={{
+            ...styles.footer,
+            marginTop: 4,
+            marginBottom: 2,
+            fontWeight: 'bold',
+          }}
+        >
+          &quot;LA FACTURA ES BENEFICIO DE TODOS EXÍJALA&quot;
+        </Text>
+
+        {/* Table for SAG information */}
+        <View
+          style={{
+            ...styles.table,
+            marginTop: 0,
+            borderWidth: 1,
+            borderBottom: 0,
+            borderColor: '#000',
+            borderStyle: 'solid',
+          }}
+        >
+          <View
+            style={{
+              ...styles.tableRow,
+              paddingVertical: 2,
+              borderBottom: 1,
+              borderColor: '#000',
+              borderStyle: 'solid',
+            }}
+          >
+            <Text style={styles.tableCell50}>
+              N° Correlativo de orden de compra exenta
+            </Text>
+            <Text
+              style={{
+                ...styles.tableCell50,
+                borderLeft: 1,
+                borderColor: '#000',
+                borderStyle: 'solid',
+              }}
+            ></Text>
+          </View>
+          <View
+            style={{
+              ...styles.tableRowStriped,
+              paddingVertical: 2,
+              borderBottom: 1,
+              borderColor: '#000',
+              borderStyle: 'solid',
+            }}
+          >
+            <Text style={styles.tableCell50}>
+              N° Correlativo de constancia de registro exonerado
+            </Text>
+            <Text
+              style={{
+                ...styles.tableCell50,
+                borderLeft: 1,
+                borderColor: '#000',
+                borderStyle: 'solid',
+              }}
+            ></Text>
+          </View>
+          <View
+            style={{
+              ...styles.tableRow,
+              paddingVertical: 2,
+              borderBottom: 1,
+              borderColor: '#000',
+              borderStyle: 'solid',
+            }}
+          >
+            <Text style={styles.tableCell50}>
+              N° identificativo del registro de la SAG
+            </Text>
+            <Text
+              style={{
+                ...styles.tableCell50,
+                borderLeft: 1,
+                borderColor: '#000',
+                borderStyle: 'solid',
+              }}
+            ></Text>
+          </View>
+        </View>
+
+        <Text
+          style={{
+            ...styles.footer,
+            marginTop: 10,
+            marginBottom: 2,
+            fontWeight: 'bold',
+          }}
+        >
+          ORIGINAL: CLIENTE COPIA: EMISOR
+        </Text>
+
+        {/* Notes Section */}
+        <View style={{ ...styles.notes, marginTop: 0 }}>
+          <Text style={{ fontWeight: 'bold' }}>Notas: {invoice.notes}</Text>
+        </View>
+      </Page>
+    </Document>
+  );
+};
+
 const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({
   invoice,
   company,
@@ -285,297 +583,15 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({
     );
   }
 
-  // Create Invoice Document Component with the logo passed in
-  const InvoicePDF = () => {
-    // Get current date
-    const currentDate = format(new Date(), 'dd/MM/yyyy');
-
-    // Check if it's a proforma invoice
-    const isProforma = invoice.is_proforma;
-
-    return (
-      <Document author='factura.hn' title={pdfTitle}>
-        <Page size='A4' style={styles.page}>
-          <View style={styles.header}>
-            <View style={styles.companyInfo}>
-              <Text style={styles.companyTitle}>{company?.name}</Text>
-              <Text style={styles.companyInfoText}>
-                <Text style={styles.companyInfoTextBold}>RTN: </Text>
-                {company?.rtn}
-              </Text>
-              <Text style={styles.companyInfoText}>
-                <Text style={styles.companyInfoTextBold}>Email: </Text>
-                {company?.email}
-              </Text>
-              <Text style={styles.companyInfoTextBold}>Dirección:</Text>
-              <Text style={styles.companyInfoText}>{company?.address0}</Text>
-              <Text style={styles.companyInfoText}>
-                <Text style={styles.companyInfoTextBold}>Teléfono: </Text>
-                {company?.phone}
-              </Text>
-              {!isProforma && (
-                <>
-                  <Text style={styles.companyInfoText}>
-                    <Text style={styles.companyInfoTextBold}>CAI: </Text>
-                    {sarCaiData?.cai}
-                  </Text>
-                  <Text style={styles.companyInfoTextBold}>
-                    RANGO AUTORIZADO
-                  </Text>
-                  <Text style={styles.companyInfoText}>
-                    <Text style={styles.companyInfoTextBold}>DEL </Text>
-                    {sarCaiData?.range_invoice1}
-                    <Text style={styles.companyInfoTextBold}> AL </Text>
-                    {sarCaiData?.range_invoice2}
-                  </Text>
-                  <Text style={styles.companyInfoText}>
-                    <Text style={styles.companyInfoTextBold}>
-                      Fecha Límite de Emisión:{' '}
-                    </Text>
-                    {format(sarCaiData?.limit_date ?? new Date(), 'dd/MM/yyyy')}
-                  </Text>
-                </>
-              )}
-            </View>
-            <View>
-              {companyLogo ? (
-                <Image src={companyLogo} style={styles.logo} />
-              ) : (
-                <Text style={styles.companyName}>{company?.name}</Text>
-              )}
-              <Text style={styles.invoiceHeader}>Fecha: {currentDate}</Text>
-              {!isProforma && (
-                <Text style={styles.invoiceHeader}>
-                  <Text style={styles.companyInfoTextBold}>FACTURA # </Text>
-                  {invoice.invoice_number}
-                </Text>
-              )}
-            </View>
-          </View>
-
-          {/* Proforma Title if applicable */}
-          {isProforma && (
-            <View>
-              <Text style={styles.title}>
-                FACTURA PROFORMA # {invoice.invoice_number}
-              </Text>
-            </View>
-          )}
-
-          <View style={styles.customerSection}>
-            <View style={styles.customerInfo}>
-              <Text style={styles.customerInfoBold}>Facturar A: </Text>
-              <Text>{invoice.customers?.name}</Text>
-            </View>
-            <View style={styles.customerInfo}>
-              <Text style={styles.customerInfoBold}>RTN: </Text>
-              <Text>{invoice.customers?.rtn}</Text>
-            </View>
-            <View style={styles.customerInfo}>
-              <Text style={styles.customerInfoBold}>Email: </Text>
-              <Text>{invoice.customers?.email}</Text>
-            </View>
-          </View>
-
-          {/* Items Table */}
-          <View style={styles.table}>
-            <View style={styles.tableHeader}>
-              <Text style={styles.descriptionCol}>Descripción</Text>
-              <Text style={styles.quantityCol}>Cantidad</Text>
-              <Text style={styles.priceCol}>Precio</Text>
-              <Text style={styles.discountCol}>Descuento</Text>
-              <Text style={styles.totalCol}>Total</Text>
-            </View>
-
-            {invoice.invoice_items?.map((item, index) => (
-              <View
-                key={index}
-                style={
-                  index % 2 === 0 ? styles.tableRow : styles.tableRowStriped
-                }
-              >
-                <Text style={styles.descriptionCol}>{item.description}</Text>
-                <Text style={styles.quantityCol}>{item.quantity}</Text>
-                <Text style={styles.priceCol}>
-                  Lps. {formatCurrency(item.unit_cost)}
-                </Text>
-                <Text style={styles.discountCol}>
-                  Lps. {formatCurrency(item.discount || 0)}
-                </Text>
-                <Text style={styles.totalCol}>
-                  Lps. {formatCurrency(item.unit_cost * item.quantity)}
-                </Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Totals Section */}
-          <View style={styles.totalsSection}>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Sub Total</Text>
-              <Text style={styles.totalValue}>
-                Lps. {formatCurrency(invoice.subtotal || 0)}
-              </Text>
-            </View>
-            <View style={styles.totalsRow}>
-              <Text style={styles.totalsLabel}>Importe Exonerado:</Text>
-              <Text style={styles.totalsValue}>
-                Lps. {formatCurrency(invoice.tax_exonerado || 0)}
-              </Text>
-            </View>
-            <View style={styles.totalsRow}>
-              <Text style={styles.totalsLabel}>Importe Exento:</Text>
-              <Text style={styles.totalsValue}>
-                Lps. {formatCurrency(invoice.tax_exento || 0)}
-              </Text>
-            </View>
-            <View style={styles.totalsRow}>
-              <Text style={styles.totalsLabel}>Importe Gravado 15%:</Text>
-              <Text style={styles.totalsValue}>
-                Lps. {formatCurrency(invoice.tax_gravado_15 || 0)}
-              </Text>
-            </View>
-            <View style={styles.totalsRow}>
-              <Text style={styles.totalsLabel}>Importe Gravado 18%:</Text>
-              <Text style={styles.totalsValue}>
-                Lps. {formatCurrency(invoice.tax_gravado_18 || 0)}
-              </Text>
-            </View>
-            <View style={styles.totalsRow}>
-              <Text style={styles.totalsLabel}>I.S.V 15%:</Text>
-              <Text style={styles.totalsValue}>
-                Lps. {formatCurrency(invoice.tax || 0)}
-              </Text>
-            </View>
-            <View style={styles.totalsRow}>
-              <Text style={styles.totalsLabel}>I.S.V 18%:</Text>
-              <Text style={styles.totalsValue}>
-                Lps. {formatCurrency(invoice.tax_18 || 0)}
-              </Text>
-            </View>
-            <View style={styles.totalsRow}>
-              <Text style={styles.totalsLabel}>Total:</Text>
-              <Text style={styles.totalsValue}>
-                Lps. {formatCurrency(invoice.total || 0)}
-              </Text>
-            </View>
-          </View>
-
-          {/* Footer Sections */}
-          <View style={{ ...styles.border, padding: 4, borderRadius: 5 }}>
-            <Text style={{ fontWeight: 'bold' }}>
-              VALOR EN LETRAS: {invoice.numbers_to_letters}
-            </Text>
-          </View>
-
-          <Text
-            style={{
-              ...styles.footer,
-              marginTop: 4,
-              marginBottom: 2,
-              fontWeight: 'bold',
-            }}
-          >
-            &quot;LA FACTURA ES BENEFICIO DE TODOS EXÍJALA&quot;
-          </Text>
-
-          {/* Table for SAG information */}
-          <View
-            style={{
-              ...styles.table,
-              marginTop: 0,
-              borderWidth: 1,
-              borderBottom: 0,
-              borderColor: '#000',
-              borderStyle: 'solid',
-            }}
-          >
-            <View
-              style={{
-                ...styles.tableRow,
-                paddingVertical: 2,
-                borderBottom: 1,
-                borderColor: '#000',
-                borderStyle: 'solid',
-              }}
-            >
-              <Text style={styles.tableCell50}>
-                N° Correlativo de orden de compra exenta
-              </Text>
-              <Text
-                style={{
-                  ...styles.tableCell50,
-                  borderLeft: 1,
-                  borderColor: '#000',
-                  borderStyle: 'solid',
-                }}
-              ></Text>
-            </View>
-            <View
-              style={{
-                ...styles.tableRowStriped,
-                paddingVertical: 2,
-                borderBottom: 1,
-                borderColor: '#000',
-                borderStyle: 'solid',
-              }}
-            >
-              <Text style={styles.tableCell50}>
-                N° Correlativo de constancia de registro exonerado
-              </Text>
-              <Text
-                style={{
-                  ...styles.tableCell50,
-                  borderLeft: 1,
-                  borderColor: '#000',
-                  borderStyle: 'solid',
-                }}
-              ></Text>
-            </View>
-            <View
-              style={{
-                ...styles.tableRow,
-                paddingVertical: 2,
-                borderBottom: 1,
-                borderColor: '#000',
-                borderStyle: 'solid',
-              }}
-            >
-              <Text style={styles.tableCell50}>
-                N° identificativo del registro de la SAG
-              </Text>
-              <Text
-                style={{
-                  ...styles.tableCell50,
-                  borderLeft: 1,
-                  borderColor: '#000',
-                  borderStyle: 'solid',
-                }}
-              ></Text>
-            </View>
-          </View>
-
-          <Text
-            style={{
-              ...styles.footer,
-              marginTop: 10,
-              marginBottom: 2,
-              fontWeight: 'bold',
-            }}
-          >
-            ORIGINAL: CLIENTE COPIA: EMISOR
-          </Text>
-
-          {/* Notes Section */}
-          <View style={{ ...styles.notes, marginTop: 0 }}>
-            <Text style={{ fontWeight: 'bold' }}>Notas: {invoice.notes}</Text>
-          </View>
-        </Page>
-      </Document>
-    );
-  };
-
-  const pdfObject = pdf(<InvoicePDF />);
+  const pdfObject = pdf(
+    <InvoicePDF
+      invoice={invoice}
+      company={company}
+      sarCaiData={sarCaiData}
+      companyLogo={companyLogo!}
+      pdfTitle={pdfTitle}
+    />
+  );
 
   const handlePrint = async () => {
     try {
@@ -630,7 +646,13 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({
           <InvoicePDF />
         </PDFViewer> */}
         <PDFViewer width='100%' height='100%' className='border-none'>
-          <InvoicePDF />
+          <InvoicePDF
+            invoice={invoice}
+            company={company}
+            sarCaiData={sarCaiData}
+            companyLogo={companyLogo!}
+            pdfTitle={pdfTitle}
+          />
         </PDFViewer>
       </div>
 
@@ -648,7 +670,15 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({
 
         {/* Download Button */}
         <PDFDownloadLink
-          document={<InvoicePDF />}
+          document={
+            <InvoicePDF
+              invoice={invoice}
+              company={company}
+              sarCaiData={sarCaiData}
+              companyLogo={companyLogo!}
+              pdfTitle={pdfTitle}
+            />
+          }
           fileName={`${pdfTitle}.pdf`}
           // className='inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50'
         >
