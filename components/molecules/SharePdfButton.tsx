@@ -39,18 +39,32 @@ const SharePdfButton = ({
     try {
       setIsSharing(true);
       const blob = await pdfObject.toBlob();
-      const file = new File([blob], `${pdfTitle}.pdf`, {
-        type: 'application/pdf',
-      });
 
-      if (navigator.share) {
+      // Check if the browser supports sharing files specifically
+      if (
+        navigator.share &&
+        navigator.canShare &&
+        navigator.canShare({
+          files: [new File([blob], 'test.pdf', { type: 'application/pdf' })],
+        })
+      ) {
+        const file = new File([blob], `${pdfTitle}.pdf`, {
+          type: 'application/pdf',
+          lastModified: new Date().getTime(),
+        });
+
         await navigator.share({
           files: [file],
           title: pdfTitle,
           text: 'Compartir factura',
         });
       } else {
-        throw new Error('Web Share API not supported');
+        // Fallback for browsers that don't support file sharing
+        await navigator.share({
+          title: pdfTitle,
+          text: 'Compartir factura',
+          url: URL.createObjectURL(blob),
+        });
       }
     } catch (error) {
       console.error('Error sharing:', error);
