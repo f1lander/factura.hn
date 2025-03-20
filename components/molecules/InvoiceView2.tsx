@@ -916,13 +916,13 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
                   <EyeIcon />
                   PDF
                 </Button>
-                <SharePdfButton
+                {/* <SharePdfButton
                   invoice={invoice!}
                   company={company}
                   sarCaiData={sarCaiData}
                   companyLogo={companyLogo!}
                   pdfTitle={pdfTitle}
-                />
+                /> */}
                 <PDFDownloadLink
                   document={
                     <InvoicePDF

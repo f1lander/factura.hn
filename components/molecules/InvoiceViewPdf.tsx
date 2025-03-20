@@ -270,7 +270,7 @@ export const InvoicePDF = ({
 
   return (
     <Document author='factura.hn' title={pdfTitle}>
-      <Page size='A4' style={styles.page}>
+      <Page size='A4' style={styles.page} wrap={false}>
         <View style={styles.header}>
           <View style={styles.companyInfo}>
             <Text style={styles.companyTitle}>{company?.name}</Text>
