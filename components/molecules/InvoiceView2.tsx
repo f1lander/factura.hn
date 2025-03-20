@@ -77,6 +77,7 @@ import { Company } from '@/lib/supabase/services/company';
 import { Customer } from '@/lib/supabase/services/customer';
 import dynamic from 'next/dynamic';
 import { InvoicePDF } from '@/components/molecules/InvoiceViewPdf';
+import SharePdfButton from './SharePdfButton';
 
 const PDFDownloadLink = dynamic(
   () => import('@react-pdf/renderer').then((mod) => mod.PDFDownloadLink),
@@ -915,6 +916,13 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
                   <EyeIcon />
                   PDF
                 </Button>
+                <SharePdfButton
+                  invoice={invoice!}
+                  company={company}
+                  sarCaiData={sarCaiData}
+                  companyLogo={companyLogo!}
+                  pdfTitle={pdfTitle}
+                />
                 <PDFDownloadLink
                   document={
                     <InvoicePDF
