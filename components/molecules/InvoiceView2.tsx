@@ -77,11 +77,21 @@ import { Company } from '@/lib/supabase/services/company';
 import { Customer } from '@/lib/supabase/services/customer';
 import dynamic from 'next/dynamic';
 import { PDFDownloadLink } from '@react-pdf/renderer';
-import { InvoicePDF } from '@/components/molecules/InvoiceViewPdf';
 
 const InvoiceViewPdf = dynamic(
   () =>
     import('@/components/molecules/InvoiceViewPdf').then((mod) => mod.default),
+  {
+    loading: () => <div>Loading...</div>,
+    ssr: false,
+  }
+);
+
+const InvoicePDF = dynamic(
+  () =>
+    import('@/components/molecules/InvoiceViewPdf').then(
+      (mod) => mod.InvoicePDF
+    ),
   {
     loading: () => <div>Loading...</div>,
     ssr: false,
