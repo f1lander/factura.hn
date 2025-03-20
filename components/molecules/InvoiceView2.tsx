@@ -1022,10 +1022,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
       )}
       {showPdfViewer && invoice && (
         <div className='p-4 h-full'>
-          <InvoiceViewPdf
-            invoice={invoice}
-            company={companyData || undefined}
-          />
+          <InvoiceViewPdf invoice={invoice} company={companyData} />
         </div>
       )}
     </>

@@ -482,7 +482,7 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
               {selectedInvoice && (
                 <InvoiceViewPdf
                   invoice={selectedInvoice}
-                  company={companyData || undefined}
+                  company={companyData}
                 />
               )}
             </div>

@@ -9,7 +9,6 @@ import {
   StyleSheet,
   Font,
   Image,
-  PDFViewer,
   PDFDownloadLink,
   pdf,
 } from '@react-pdf/renderer';
@@ -21,6 +20,10 @@ import { format } from 'date-fns';
 import { getSignedLogoUrl, numberToWords } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { sarCaiService } from '@/lib/supabase/services/sar_cai';
+import dynamic from 'next/dynamic';
+
+// Remove the PDFViewer dynamic import
+const PdfViewer = dynamic(() => import('./PdfViewer'), { ssr: false });
 
 // Create styles
 const styles = StyleSheet.create({
@@ -240,7 +243,7 @@ const formatCurrency = (amount: number) => {
 
 interface InvoiceViewPdfProps {
   invoice: Invoice;
-  company?: Company;
+  company: Company | null;
 }
 
 // Create Invoice Document Component with the logo passed in
@@ -252,7 +255,7 @@ export const InvoicePDF = ({
   pdfTitle,
 }: {
   invoice: Invoice;
-  company?: Company;
+  company: Company | null;
   sarCaiData: any;
   companyLogo: string;
   pdfTitle: string;
@@ -646,10 +649,7 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({
     <div className='flex flex-col gap-4'>
       {/* PDF Viewer */}
       <div className='h-[calc(100vh-220px)] w-full border border-gray-300 rounded-md relative flex flex-row'>
-        {/* <PDFViewer width='100%' height='100%' className='border-none'>
-          <InvoicePDF />
-        </PDFViewer> */}
-        <PDFViewer width='100%' height='100%' className='border-none'>
+        <PdfViewer>
           <InvoicePDF
             invoice={invoice}
             company={company}
@@ -657,7 +657,7 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({
             companyLogo={companyLogo!}
             pdfTitle={pdfTitle}
           />
-        </PDFViewer>
+        </PdfViewer>
       </div>
 
       {/* Action Buttons */}
