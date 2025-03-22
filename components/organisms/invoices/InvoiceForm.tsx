@@ -88,8 +88,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
     null
   );
 
-  console.log({ errors, payment: watch('payment_method') });
-
   /** Here we retrieve the list of customers */
   const loadOptions = async (inputValue: string) => {
     if (!inputValue) return [];
@@ -259,7 +257,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   }, [watchInvoiceItems, setValue, isExento]);
 
   const onSubmit = (data: Invoice) => {
-    console.log('data', data);
     if (data.invoice_items.length < 1)
       setError('invoice_items', {
         type: 'required',
