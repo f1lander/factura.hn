@@ -41,6 +41,7 @@ interface DeliveryConfirmDialogProps {
   onOpenChange?: (open: boolean) => void;
   onConfirm: (processableInvoiceIds?: string[]) => Promise<void>;
   onCancel: () => void;
+  onContinueEditing?: () => void;
   invoice?: Invoice | null;
   invoiceIds?: string[];
 }
@@ -92,6 +93,7 @@ export function DeliveryConfirmDialog({
   onOpenChange,
   onConfirm,
   onCancel,
+  onContinueEditing,
   invoice,
   invoiceIds = [],
 }: DeliveryConfirmDialogProps) {
@@ -259,15 +261,24 @@ export function DeliveryConfirmDialog({
   );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open}>
       <DialogContent className='max-w-2xl max-h-[85vh] overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle>Confirmar Entrega</DialogTitle>
+          <DialogTitle>
+            {hasNonProcessableInvoices && onContinueEditing
+              ? 'Factura generada sin suficiente inventario'
+              : 'Confirmar Entrega'}
+          </DialogTitle>
           <DialogDescription>
-            {invoiceIds.length > 0
-              ? `Estás a punto de marcar ${processableInvoiceIds.length} de ${invoiceIds.length} facturas como entregadas.`
-              : '¿Estás seguro que deseas marcar esta factura como entregada?'}{' '}
-            Esta acción reducirá el inventario de los productos.
+            {hasNonProcessableInvoices &&
+              onContinueEditing &&
+              'Tu factura fue generada pero necesitas actualizar tu inventario para confirmar la entrega'}
+            {hasProcessableInvoices &&
+              invoiceIds.length > 0 &&
+              `Estás a punto de marcar ${processableInvoiceIds.length} de ${invoiceIds.length} facturas como entregadas.`}
+            {hasProcessableInvoices &&
+              invoiceIds.length > 0 &&
+              '¿Estás seguro que deseas marcar esta factura como entregada? Esta acción reducirá el inventario de los productos.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -375,14 +386,28 @@ export function DeliveryConfirmDialog({
         )}
 
         <DialogFooter>
-          <Button variant='outline' onClick={onCancel}>
-            Cancelar
+          <Button
+            variant='outline'
+            onClick={
+              hasNonProcessableInvoices && onContinueEditing
+                ? onContinueEditing
+                : onCancel
+            }
+          >
+            {!hasNonProcessableInvoices
+              ? 'No Entregado'
+              : `Editar Factura${invoiceIds.length > 1 ? 's' : ''}`}
           </Button>
           <Button
-            onClick={handleConfirm}
-            disabled={isLoading || !hasProcessableInvoices || isValidating}
+            onClick={hasProcessableInvoices ? handleConfirm : onCancel}
+            disabled={isLoading || isValidating}
           >
-            {isLoading ? 'Procesando...' : 'Confirmar Entrega'}
+            {isLoading && 'Procesando...'}
+            {!isLoading && hasProcessableInvoices && 'Confirmar Entrega'}
+            {!isLoading &&
+              hasNonProcessableInvoices &&
+              !hasProcessableInvoices &&
+              '¡Entendido!'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -310,6 +310,8 @@ export default function CreateInvoicePage() {
         throw new Error('Failed to save invoice');
       }
 
+      methods.setValue('id', savedInvoice.id);
+
       // Verify if there's at least one non-service item before proceeding
       const hasPhysicalItems = savedInvoice.invoice_items.some(
         (item) => !item.is_service
@@ -368,6 +370,12 @@ export default function CreateInvoicePage() {
     router.push('/home/invoices');
   };
 
+  const savedInvoiceId = methods.watch('id');
+  const handleDeliveryDialogClose = () => {
+    setIsDeliveryDialogOpen(false);
+    router.push('/home/invoices/create-invoice?invoice_id=' + savedInvoiceId);
+  };
+
   return (
     <FormProvider {...methods}>
       <section className='sm:px-2 lg:px-7 xl:px-10 flex gap-5 w-full pt-4'>
@@ -407,11 +415,12 @@ export default function CreateInvoicePage() {
       </section>
       <DeliveryConfirmDialog
         open={isDeliveryDialogOpen}
-        // onOpenChange={setIsDeliveryDialogOpen}
-        // onOpenChange={handleDeliveryCancel}
+        onOpenChange={setIsDeliveryDialogOpen}
+        // onOpenChange={handleDeliveryDialogClose}
         invoice={pendingInvoice}
         onConfirm={handleDeliveryConfirm}
         onCancel={handleDeliveryCancel}
+        onContinueEditing={handleDeliveryDialogClose}
       />
     </FormProvider>
   );
