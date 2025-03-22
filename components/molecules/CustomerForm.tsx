@@ -197,17 +197,25 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
                       </div>
                     ) : (
                       <div className='relative grid grid-cols-2 gap-2 text-sm pt-2'>
-                        <div>
+                        <div className='flex flex-row'>
                           <span className='text-gray-500'>Email:</span>
-                          <span className='ml-2'>
+                          <a
+                            href={`mailto:${field.email}`}
+                            className='ml-2 truncate hover:underline'
+                            title={field.email}
+                          >
                             {field.email || 'No disponible'}
-                          </span>
+                          </a>
                         </div>
-                        <div>
+                        <div className='flex flex-row'>
                           <span className='text-gray-500'>Teléfono:</span>
-                          <span className='ml-2'>
+                          <a
+                            href={`tel:${field.phone}`}
+                            className='ml-2 truncate hover:underline'
+                            title={field.phone}
+                          >
                             {field.phone || 'No disponible'}
-                          </span>
+                          </a>
                         </div>
                         <div className='absolute right-0'>
                           <Button
