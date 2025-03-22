@@ -9,7 +9,8 @@ export type Table =
   | 'invoices'
   | 'invoice_items'
   | 'product_register_orders'
-  | 'sar_cai';
+  | 'sar_cai'
+  | 'payment_methods';
 
 export interface PaginatedResponse<T> {
   data: T[];

@@ -1,3 +1,4 @@
+import { queryClient } from '@/utils/providers/ReactQueryProvider';
 import supabase from '../client';
 import { BaseService, Table } from './BaseService';
 
@@ -14,6 +15,13 @@ export interface SarCai {
 
 class SarCaiService extends BaseService {
   private tableName: Table = 'sar_cai';
+
+  private invalidateSarCaiQueries(companyId: string) {
+    queryClient.invalidateQueries(['latestSarCai', companyId]);
+    queryClient.invalidateQueries(['sar_cai', companyId]);
+    queryClient.invalidateQueries(['latestInvoiceNumberInRange', companyId]);
+  }
+
   /**
    * Create a new SAR CAI record
    */
@@ -51,6 +59,10 @@ class SarCaiService extends BaseService {
       console.error('Error updating company current SAR CAI:', updateError);
       // Consider rolling back the SAR CAI creation here if needed
       return null;
+    }
+
+    if (data) {
+      this.invalidateSarCaiQueries(sarCaiData.company_id);
     }
 
     return data;

@@ -717,6 +717,10 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
             <dt className='text-muted-foreground'>Correo:</dt>
             <dd>{watch('customers.email')}</dd>
           </div>
+          <div className='flex items-center gap-4'>
+            <dt className='text-muted-foreground'>Metodo de Pago:</dt>
+            <dd>{watch('payment_method.name') || 'No especificado'}</dd>
+          </div>
         </dl>
       </div>
       <Separator className='my-4' />
