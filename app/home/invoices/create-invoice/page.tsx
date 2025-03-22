@@ -17,11 +17,19 @@ import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/lib/supabase/services/company';
+import { PaymentMethod } from '@/lib/supabase/services/paymentMethod';
 
 const invoiceSchema = yup.object().shape({
   id: yup.string().optional(),
   company_id: yup.string(),
   customer_id: yup.string().required('El ID del cliente es requerido'),
+  payment_method: yup
+    .object<PaymentMethod | null>()
+    .shape({
+      id: yup.string().required('El método de pago es requerido'),
+      name: yup.string().required('El nombre del método de pago es requerido'),
+    })
+    .nullable(),
   invoice_number: yup
     .string()
     .nullable()
@@ -220,6 +228,7 @@ export default function CreateInvoicePage() {
     defaultValues: {
       company_id: '',
       customer_id: '',
+      payment_method: null,
       invoice_number: '',
       proforma_number: null,
       is_proforma: false,

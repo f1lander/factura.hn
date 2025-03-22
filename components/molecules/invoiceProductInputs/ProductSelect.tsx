@@ -44,6 +44,7 @@ const ProductSelect = ({
         className='w-full'
         loadOptions={loadOptions}
         noOptionsMessage={noOptionsMessage}
+        autoFocus
         placeholder={placeholder || 'Buscar un producto'}
         onChange={(value) => {
           if (value !== null) {

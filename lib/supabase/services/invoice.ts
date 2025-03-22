@@ -1,10 +1,12 @@
 import { BaseService, Table } from './BaseService';
 import { PostgrestError } from '@supabase/supabase-js';
+import { PaymentMethod } from './paymentMethod';
 
 export interface Invoice {
   id: string;
   company_id: string;
   customer_id: string;
+  payment_method: PaymentMethod | null;
   invoice_number: string;
   date: string;
   subtotal: number;

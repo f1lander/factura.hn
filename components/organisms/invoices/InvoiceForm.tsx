@@ -52,6 +52,7 @@ import { productService } from '@/lib/supabase/services/product';
 import { Checkbox } from '@/components/ui/checkbox';
 import { companyService } from '@/lib/supabase/services/company';
 import { differenceInCalendarDays } from 'date-fns';
+import { PaymentMethodSelect } from '@/components/molecules/PaymentMethodSelect';
 
 interface InvoiceFormProps {
   onSave: (invoice: Invoice) => void;
@@ -86,6 +87,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const [expandedCardIndex, setExpandedCardIndex] = useState<number | null>(
     null
   );
+
+  console.log({ errors, payment: watch('payment_method') });
 
   /** Here we retrieve the list of customers */
   const loadOptions = async (inputValue: string) => {
@@ -295,6 +298,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
             </Button>
             <Button
               variant='outline'
+              type='button'
               size='sm'
               className='bg-slate-600 text-white'
               onClick={() => {
@@ -438,6 +442,27 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     defaultValue={watch('invoice_number') || ''}
                   />
                 </div>
+              )}
+              {companyId && (
+                <Controller
+                  name='payment_method'
+                  control={control}
+                  render={({ field }) => (
+                    <div className='flex flex-col gap-2'>
+                      <Label className='whitespace-nowrap'>
+                        Metodo de Pago
+                      </Label>
+                      <PaymentMethodSelect
+                        key={field.value?.id}
+                        companyId={companyId}
+                        value={field.value}
+                        onChange={(value) => {
+                          field.onChange(value);
+                        }}
+                      />
+                    </div>
+                  )}
+                />
               )}
             </div>
           </div>

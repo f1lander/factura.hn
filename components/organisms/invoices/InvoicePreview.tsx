@@ -65,6 +65,10 @@ const InvoicePreview: React.FC = () => {
             <dt className='text-muted-foreground'>Correo:</dt>
             <dd>{values.customers?.email}</dd>
           </div>
+          <div className='flex items-center gap-4'>
+            <dt className='text-muted-foreground'>Metodo de Pago:</dt>
+            <dd>{values.payment_method?.name || 'No especificado'}</dd>
+          </div>
         </dl>
       </div>
       <Separator className='my-4' />

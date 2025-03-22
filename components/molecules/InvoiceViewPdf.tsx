@@ -335,6 +335,10 @@ export const InvoicePDF = ({
           </View>
         )}
 
+        <Text style={styles.companyInfoText}>
+          <Text style={styles.companyInfoTextBold}>Metodo de Paggo: </Text>
+          {invoice?.payment_method?.name || 'No especificado'}
+        </Text>
         <View style={styles.customerSection}>
           <View style={styles.customerInfo}>
             <Text style={styles.customerInfoBold}>Facturar A: </Text>
