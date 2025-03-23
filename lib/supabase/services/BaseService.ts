@@ -183,12 +183,16 @@ export class BaseService {
     const companyId = await this.ensureCompanyId();
     if (!companyId) return null;
 
-    const { data, error } = await this.supabase
-      .from(table)
-      .select('*')
-      .eq('id', id)
-      .eq('company_id', companyId)
-      .single();
+    const query = this.supabase.from(table).select('*').eq('id', id);
+
+    if (table === 'customers') {
+      query.or(`company_id.eq.${companyId},is_universal.eq.true`);
+      // query.or(`archived.eq.false,archived.is.null`);
+    } else {
+      query.eq('company_id', companyId);
+    }
+
+    const { data, error } = await query.single();
 
     if (error) {
       console.error(`Error fetching ${table} by id:`, error);

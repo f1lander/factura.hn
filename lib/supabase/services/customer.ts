@@ -60,6 +60,12 @@ class CustomerService extends BaseService {
     return this.getAll<Customer>(this.tableName);
   }
 
+  async getUniversalCustomers(): Promise<Customer[]> {
+    const companyId = await this.ensureCompanyIdForCustomer();
+    if (!companyId) return [];
+    return this.getAll<Customer>(this.tableName, { is_universal: true });
+  }
+
   async getCustomersByCompanyAndCustomerName(customerName: string): Promise<
     // { id: string | number; name: string; email: string; rtn: string }[]
     Pick<Customer, 'id' | 'name' | 'rtn' | 'email'>[]

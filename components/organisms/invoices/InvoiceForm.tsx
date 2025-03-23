@@ -53,6 +53,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { companyService } from '@/lib/supabase/services/company';
 import { differenceInCalendarDays } from 'date-fns';
 import { PaymentMethodSelect } from '@/components/molecules/PaymentMethodSelect';
+import * as R from 'ramda';
 
 interface InvoiceFormProps {
   onSave: (invoice: Invoice) => void;
@@ -88,9 +89,23 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
     null
   );
 
+  const { data: universalcustomer } = useQuery(
+    ['universalcustomers'],
+    async () => {
+      const customers = await customerService.getUniversalCustomers();
+      return R.head(customers);
+      // return customers.map((retrievedCustomer) => ({
+      //   value: retrievedCustomer.id,
+      //   label: retrievedCustomer.name,
+      //   ...retrievedCustomer,
+      // }));
+    }
+  );
+
   /** Here we retrieve the list of customers */
   const loadOptions = async (inputValue: string) => {
     if (!inputValue) return [];
+
     const retrievedCustomers =
       await customerService.getCustomersByCompanyAndCustomerName(inputValue);
     return retrievedCustomers.map((retrievedCustomer) => ({
@@ -181,6 +196,15 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
   const customerId = watch('customer_id');
   const isExento = watch('exento');
+
+  const { data: selectedCustomer } = useQuery(
+    ['customer', customerId],
+    () => customerService.getCustomerById(customerId as string),
+    {
+      enabled: !!customerId,
+      placeholderData: universalcustomer,
+    }
+  );
 
   // Add effect to handle invoice_number when isProforma changes
   useEffect(() => {
@@ -337,12 +361,17 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   loadOptions={loadOptions}
                   noOptionsMessage={noOptionsMessage}
                   placeholder='Buscar cliente'
+                  value={{
+                    value: selectedCustomer?.id,
+                    label: selectedCustomer?.name,
+                    ...selectedCustomer,
+                  }}
                   onChange={(value) => {
-                    if (value !== null)
+                    if (value !== null && value !== undefined)
                       setValue('customers', {
-                        name: value.name,
-                        rtn: value.rtn,
-                        email: value.email,
+                        name: value.name!,
+                        rtn: value.rtn!,
+                        email: value.email!,
                       });
                     field.onChange(value?.id);
                   }}
