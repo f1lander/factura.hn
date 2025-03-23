@@ -197,14 +197,40 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const customerId = watch('customer_id');
   const isExento = watch('exento');
 
-  const { data: selectedCustomer } = useQuery(
+  const {
+    data: selectedCustomer,
+    isLoading: isLoadingCustomer,
+    isFetching: isFetchingCustomer,
+  } = useQuery(
     ['customer', customerId],
-    () => customerService.getCustomerById(customerId as string),
+    async () => {
+      const customer = await customerService.getCustomerById(
+        customerId as string
+      );
+
+      return customer;
+    },
     {
       enabled: !!customerId,
       placeholderData: universalcustomer,
     }
   );
+
+  useEffect(() => {
+    if (
+      !isLoadingCustomer &&
+      !isFetchingCustomer &&
+      selectedCustomer &&
+      customerId !== selectedCustomer?.id
+    ) {
+      setValue('customer_id', selectedCustomer?.id);
+      setValue('customers', {
+        name: selectedCustomer?.name!,
+        rtn: selectedCustomer?.rtn!,
+        email: selectedCustomer?.email!,
+      });
+    }
+  }, [isLoadingCustomer, isFetchingCustomer, selectedCustomer, setValue]);
 
   // Add effect to handle invoice_number when isProforma changes
   useEffect(() => {
