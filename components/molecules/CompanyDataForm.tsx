@@ -143,7 +143,7 @@ export default function CompanyDataForm({
     sarCaiData: sarCaiDataUpdate,
     ...data
   }: CompanyFormData) => {
-    data.logo_url = '';
+    delete data.logo_url;
 
     try {
       const {
@@ -167,7 +167,7 @@ export default function CompanyDataForm({
         };
 
         // Handle logo update if photo changed
-        if (photo) {
+        if (photo && photo.includes('data:image')) {
           const logoPath = await handleLogoUpload(initialCompany.id, photo);
           if (logoPath) {
             updates.logo_url = logoPath;
@@ -234,7 +234,7 @@ export default function CompanyDataForm({
           });
         }
 
-        if (photo) {
+        if (photo && photo.includes('data:image')) {
           const logoPath = await handleLogoUpload(result[0].id, photo);
           if (logoPath) {
             await companyService.updateCompany(result[0].id, {
