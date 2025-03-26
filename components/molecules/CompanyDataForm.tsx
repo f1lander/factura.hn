@@ -396,7 +396,7 @@ export default function CompanyDataForm({
                 <Label htmlFor='phone'>
                   Teléfono de la empresa{' '}
                   <Tooltip>
-                    <TooltipTrigger>
+                    <TooltipTrigger type='button'>
                       <svg
                         xmlns='http://www.w3.org/2000/svg'
                         width='16'
@@ -437,7 +437,7 @@ export default function CompanyDataForm({
                 <Label htmlFor='email'>
                   Correo Eléctronico de la Empresa{' '}
                   <Tooltip>
-                    <TooltipTrigger>
+                    <TooltipTrigger type='button'>
                       <svg
                         xmlns='http://www.w3.org/2000/svg'
                         width='16'
