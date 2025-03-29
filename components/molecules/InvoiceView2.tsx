@@ -1021,13 +1021,11 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
                 {new Date(watch('created_at')).toLocaleString()}
               </time>
             </div>
-            <div>
+            <div className='flex gap-4'>
               <Badge variant={watch('is_proforma') ? 'outline' : 'secondary'}>
                 {watch('is_proforma') ? 'Proforma' : 'Factura'}
               </Badge>
-              <Badge variant={watch('is_proforma') ? 'outline' : 'secondary'}>
-                {getStatusBadge(watch('status'), !!watch('delivered_date'))}
-              </Badge>
+              {getStatusBadge(watch('status'), !!watch('delivered_date'))}
             </div>
           </CardFooter>
         </Card>

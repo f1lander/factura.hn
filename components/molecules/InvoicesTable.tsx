@@ -88,21 +88,30 @@ export const getStatusBadge = (status: string, delivered?: boolean) => {
     case 'pagadas':
     case 'paid':
       return (
-        <Badge className='bg-green-500 text-white'>
+        <Badge
+          variant='secondary'
+          className='bg-green-500 text-white hover:bg-green-500'
+        >
           Pagada{deliveredMessage}
         </Badge>
       );
     case 'pendientes':
     case 'pending':
       return (
-        <Badge className='bg-yellow-500 text-white'>
+        <Badge
+          variant='secondary'
+          className='bg-yellow-500 text-white hover:bg-yellow-500'
+        >
           Pendiente{deliveredMessage}
         </Badge>
       );
     case 'anuladas':
     case 'cancelled':
       return (
-        <Badge className='bg-red-500 text-white'>
+        <Badge
+          variant='secondary'
+          className='bg-red-500 text-white hover:bg-red-500'
+        >
           Anulada{deliveredMessage}
         </Badge>
       );
