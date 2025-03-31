@@ -26,13 +26,31 @@ import { useQuery } from '@tanstack/react-query';
 import { companyService } from '@/lib/supabase/services/company';
 
 export default function Invoices() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const { data: companyId } = useQuery(['companyId'], () =>
     companyService.getCompanyId()
   );
+  const [dateRange, setDateRange] = useState<{
+    start: Date | undefined;
+    end: Date | undefined;
+  }>({ start: undefined, end: undefined });
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
 
   const { data: allInvoices, isLoading: areInvoicesLoading } = useQuery(
-    ['allInvoices', companyId],
-    () => invoiceService.getInvoices(),
+    [
+      'allInvoices',
+      companyId,
+      dateRange,
+      selectedStatuses,
+      debouncedSearchTerm,
+    ],
+    () =>
+      invoiceService.getInvoices({
+        dateRange: dateRange,
+        statuses: selectedStatuses,
+        searchTerm: debouncedSearchTerm,
+      }),
     { placeholderData: [], enabled: !!companyId }
   );
 
@@ -42,12 +60,6 @@ export default function Invoices() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | undefined>();
   const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [dateRange, setDateRange] = useState<{
-    start: Date | undefined;
-    end: Date | undefined;
-  }>({ start: undefined, end: undefined });
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const { company } = useCompanyStore();
   const [isInvoiceContentReady, setIsInvoiceContentReady] = useState(false);
 
@@ -58,12 +70,11 @@ export default function Invoices() {
       setIsInvoiceContentReady(false);
     }
   }, [isOpen, company]);
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   useEffect(() => {
     const initializeData = async () => {
       try {
-        if (allInvoices) setFilteredInvoices(allInvoices);
+        // if (allInvoices) setFilteredInvoices(allInvoices);
         await fetchRevenue();
       } catch (error) {
         console.error('Error initializing data:', error);
@@ -72,38 +83,45 @@ export default function Invoices() {
 
     initializeData();
   }, [allInvoices]);
-  const applyFilters = useCallback(() => {
-    let filtered: Invoice[] = [];
-    if (!areInvoicesLoading && allInvoices) filtered = allInvoices;
 
-    if (debouncedSearchTerm) {
-      const lowerSearchTerm = debouncedSearchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (invoice) =>
-          invoice.invoice_number.toLowerCase().includes(lowerSearchTerm) ||
-          invoice.customers.name.toLowerCase().includes(lowerSearchTerm) ||
-          invoice.total.toString().includes(lowerSearchTerm) ||
-          invoice.invoice_items.some((item) =>
-            item.description.toLowerCase().includes(lowerSearchTerm)
-          )
-      );
-    }
+  // const applyFilters = useCallback(() => {
+  //   let filtered: Invoice[] = [];
+  //   if (!areInvoicesLoading && allInvoices) filtered = allInvoices;
 
-    if (selectedStatuses.length > 0) {
-      filtered = filtered.filter((invoice) => {
-        const invoiceStatus = invoice.status?.toLowerCase() || 'pending'; // Default to 'pending' if status is undefined
-        return selectedStatuses.some(
-          (status) => status.toLowerCase() === invoiceStatus
-        );
-      });
-    }
+  //   if (debouncedSearchTerm) {
+  //     const lowerSearchTerm = debouncedSearchTerm.toLowerCase();
+  //     filtered = filtered.filter(
+  //       (invoice) =>
+  //         invoice.invoice_number.toLowerCase().includes(lowerSearchTerm) ||
+  //         invoice.customers.name.toLowerCase().includes(lowerSearchTerm) ||
+  //         invoice.total.toString().includes(lowerSearchTerm) ||
+  //         invoice.invoice_items.some((item) =>
+  //           item.description.toLowerCase().includes(lowerSearchTerm)
+  //         )
+  //     );
+  //   }
 
-    setFilteredInvoices(filtered);
-  }, [allInvoices, debouncedSearchTerm, selectedStatuses, areInvoicesLoading]);
+  //   if (selectedStatuses.length > 0) {
+  //     filtered = filtered.filter((invoice) => {
+  //       const invoiceStatus = invoice.status?.toLowerCase() || 'pending'; // Default to 'pending' if status is undefined
+  //       return selectedStatuses.some(
+  //         (status) => status.toLowerCase() === invoiceStatus
+  //       );
+  //     });
+  //   }
 
-  useEffect(() => {
-    applyFilters();
-  }, [allInvoices, debouncedSearchTerm, selectedStatuses, applyFilters]);
+  //   setFilteredInvoices(filtered);
+  // }, [allInvoices, debouncedSearchTerm, selectedStatuses, areInvoicesLoading]);
+
+  // useEffect(() => {
+  //   applyFilters();
+  // }, [
+  //   allInvoices,
+  //   debouncedSearchTerm,
+  //   selectedStatuses,
+  //   dateRange,
+  //   applyFilters,
+  // ]);
 
   // STARTS HERE
 
@@ -164,15 +182,15 @@ export default function Invoices() {
   const handleStatusFilterChange = (statuses: string[]) => {
     setSelectedStatuses(statuses);
   };
-  const handleDateSearch = () => {
-    if (dateRange.start && dateRange.end) {
-      const filtered = filteredInvoices.filter((invoice) => {
-        const invoiceDate = new Date(invoice.date);
-        return invoiceDate >= dateRange.start! && invoiceDate <= dateRange.end!;
-      });
-      setFilteredInvoices(filtered);
-    }
-  };
+  // const handleDateSearch = () => {
+  //   if (dateRange.start && dateRange.end) {
+  //     const filtered = filteredInvoices.filter((invoice) => {
+  //       const invoiceDate = new Date(invoice.date);
+  //       return invoiceDate >= dateRange.start! && invoiceDate <= dateRange.end!;
+  //     });
+  //     setFilteredInvoices(filtered);
+  //   }
+  // };
 
   const handleExport = async () => {
     try {
@@ -325,7 +343,7 @@ export default function Invoices() {
             onDateRangeChange={handleDateRangeChange}
             onStatusFilterChange={handleStatusFilterChange}
             selectedStatuses={selectedStatuses}
-            onDateSearch={handleDateSearch}
+            // onDateSearch={handleDateSearch}
             onUpdateStatus={handleUpdateStatus}
           />
         </main>

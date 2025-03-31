@@ -530,11 +530,18 @@ class InvoiceService extends BaseService {
     }
   }
 
-  async getInvoices(): Promise<Invoice[]> {
+  async getInvoices(filters?: {
+    dateRange: {
+      start?: Date;
+      end?: Date;
+    };
+    statuses?: string[];
+    searchTerm?: string;
+  }): Promise<Invoice[]> {
     const companyId = await this.ensureCompanyIdForInvoice();
     if (!companyId) return [];
 
-    const { data, error } = await this.supabase
+    const query = this.supabase
       .from(this.tableName)
       .select(
         `
@@ -552,12 +559,74 @@ class InvoiceService extends BaseService {
         )
       `
       )
-      .eq('company_id', companyId)
-      .order('date', { ascending: false });
+      .eq('company_id', companyId);
+
+    if (filters?.dateRange.start) {
+      query.gte('date', filters.dateRange.start.toISOString());
+    }
+
+    if (filters?.dateRange.end) {
+      query.lte('date', filters.dateRange.end.toISOString());
+    }
+
+    if (filters?.statuses && filters.statuses.length > 0) {
+      query.in('status', filters.statuses);
+    }
+
+    const lowerCaseSearchTerm = filters?.searchTerm?.toLowerCase();
+
+    // if (lowerCaseSearchTerm) {
+    //   // query.or(
+    //   //   `invoice_number.ilike.%${lowerCaseSearchTerm}%,customers.name.ilike.%${lowerCaseSearchTerm}%,invoice_items.description.ilike.%${lowerCaseSearchTerm}%`,
+    //   //   {
+    //   //     foreignTable: 'invoice_items',
+    //   //   }
+    //   // );
+    //   // query.ilike('invoice_number', `%${lowerCaseSearchTerm}%`);
+    //   // query.contains('invoice_items', {
+    //   //   description: lowerCaseSearchTerm,
+    //   // });
+    //   // query.ilike('customers.name', `%${lowerCaseSearchTerm}%`);
+    //   // query.or(`description.ilike.%${lowerCaseSearchTerm}%`, {
+    //   //   referencedTable: 'invoice_items',
+    //   // });
+    //   // query.or(`invoice_number.ilike.%${lowerCaseSearchTerm}%`);
+    //   // query.or(`customers.name.ilike.%${lowerCaseSearchTerm}%`);
+    //   // invoice_items.description.ilike.%${filters.searchTerm}%
+    //   // customers.name.ilike.%${filters.searchTerm}%
+    // }
+
+    query.order('date', { ascending: false });
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching invoices:', error);
       return [];
+    }
+
+    if (filters?.searchTerm) {
+      return data.filter((invoice: any) => {
+        const invoiceNumberMatch = invoice.invoice_number
+          .toLowerCase()
+          .includes(lowerCaseSearchTerm);
+        const customerNameMatch = invoice.customers.name
+          .toLowerCase()
+          .includes(lowerCaseSearchTerm);
+        const itemDescriptionMatch = invoice.invoice_items.some((item: any) =>
+          item.description.toLowerCase().includes(lowerCaseSearchTerm)
+        );
+        const totalCost = invoice.total
+          .toString()
+          .includes(lowerCaseSearchTerm);
+
+        return (
+          invoiceNumberMatch ||
+          customerNameMatch ||
+          itemDescriptionMatch ||
+          totalCost
+        );
+      });
     }
 
     return data;
