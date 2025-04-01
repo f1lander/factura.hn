@@ -269,7 +269,7 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
   onUpdateStatus,
   selectedStatuses,
 }) => {
-  const [isTransitioning, setTransition] = useTransition();
+  const [isTransitioning, startTransition] = useTransition();
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(
     startOfMonth(new Date())
@@ -320,7 +320,7 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
   };
 
   const handleOnClearDates = () => {
-    setTransition(() => {
+    startTransition(() => {
       setStartDate(undefined);
       setEndDate(undefined);
       onDateRangeChange(undefined, undefined);
