@@ -605,7 +605,7 @@ class InvoiceService extends BaseService {
       return [];
     }
 
-    if (filters?.searchTerm) {
+    if (lowerCaseSearchTerm) {
       return data.filter((invoice: any) => {
         const invoiceNumberMatch = invoice.invoice_number
           .toLowerCase()

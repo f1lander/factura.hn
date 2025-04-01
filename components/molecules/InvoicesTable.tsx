@@ -18,7 +18,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-
+import { Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -147,6 +147,7 @@ export interface InvoicesTableProps {
   ) => void;
   onStatusFilterChange: (statuses: string[]) => void;
   selectedStatuses: string[];
+  handleExportCSV?: () => void;
   onDateSearch?: () => void;
   onUpdateStatus: (invoiceIds: string[], newStatus: string) => void;
 }
@@ -265,6 +266,7 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
   onSearch,
   onDateRangeChange,
   onStatusFilterChange,
+  handleExportCSV,
   onDateSearch,
   onUpdateStatus,
   selectedStatuses,
@@ -406,6 +408,16 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
               Limpiar Filtros
               <FilterXIcon className='h-4 w-4' />
             </Button>
+            {handleExportCSV && (
+              <Button
+                variant='outline'
+                onClick={handleExportCSV}
+                className='flex items-center gap-2'
+              >
+                <Download className='h-4 w-4' />
+                Exportar CSV
+              </Button>
+            )}
             {/* <Button
               size='sm'
               className='w-1/2 gap-2 bg-white text-foreground border-2 border-violet-300 hover:bg-violet-50'

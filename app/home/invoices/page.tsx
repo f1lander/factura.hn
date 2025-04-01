@@ -25,6 +25,54 @@ import { useCompanyStore } from '@/store/companyStore';
 import { useQuery } from '@tanstack/react-query';
 import { companyService } from '@/lib/supabase/services/company';
 
+const convertInvoicesToCSV = (invoices: Invoice[]) => {
+  const headers = [
+    'ID',
+    'Fecha de Emisión',
+    'Status',
+    'Total de Productos (Sin ISV)',
+    'Total de Servicios (Sin ISV)',
+    'ISV 15%',
+    'ISV 18%',
+    'Total',
+    'Método de Pago',
+  ].join(',');
+
+  const rows = invoices.map((invoice) => {
+    // Calculate totals for products and services
+    const productsTotal = invoice.invoice_items
+      .filter((item) => !item.is_service)
+      .reduce((sum, item) => sum + item.unit_cost * item.quantity, 0);
+
+    const servicesTotal = invoice.invoice_items
+      .filter((item) => item.is_service)
+      .reduce((sum, item) => sum + item.unit_cost * item.quantity, 0);
+
+    // Calculate ISV by rate
+    const isv15Total = invoice.tax_gravado_15 || 0;
+    // .filter((item) => item. === 15)
+    // .reduce((sum, item) => sum + item.unit_cost * item.quantity * 0.15, 0);
+
+    const isv18Total = invoice.tax_gravado_18 || 0;
+    // .filter((item) => item.tax_rate === 18)
+    // .reduce((sum, item) => sum + item.unit_cost * item.quantity * 0.18, 0);
+
+    return [
+      invoice.proforma_number || invoice.invoice_number,
+      new Date(invoice.date).toLocaleDateString('es-HN'),
+      invoice.status,
+      productsTotal.toFixed(2),
+      servicesTotal.toFixed(2),
+      isv15Total.toFixed(2),
+      isv18Total.toFixed(2),
+      invoice.total.toFixed(2),
+      invoice.payment_method?.name || 'N/A',
+    ].join(',');
+  });
+
+  return [headers, ...rows].join('\n');
+};
+
 export default function Invoices() {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -74,7 +122,7 @@ export default function Invoices() {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        // if (allInvoices) setFilteredInvoices(allInvoices);
+        if (allInvoices) setFilteredInvoices(allInvoices);
         await fetchRevenue();
       } catch (error) {
         console.error('Error initializing data:', error);
@@ -191,6 +239,46 @@ export default function Invoices() {
   //     setFilteredInvoices(filtered);
   //   }
   // };
+
+  const handleExportCSV = () => {
+    try {
+      if (!allInvoices?.length) {
+        return toast({
+          title: 'No hay facturas',
+          description: 'No hay facturas para exportar',
+          variant: 'destructive',
+        });
+      }
+
+      const csvContent = convertInvoicesToCSV(allInvoices);
+      const blob = new Blob([csvContent], {
+        type: 'text/csv;charset=utf-8;',
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const currentDate = new Date().toISOString().split('T')[0];
+
+      link.href = url;
+      link.setAttribute('download', `facturas-${currentDate}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Exportación exitosa',
+        description: 'Las facturas han sido exportadas correctamente',
+      });
+    } catch (error) {
+      console.error('Error exporting invoices:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo exportar las facturas',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleExport = async () => {
     try {
@@ -343,6 +431,9 @@ export default function Invoices() {
             onDateRangeChange={handleDateRangeChange}
             onStatusFilterChange={handleStatusFilterChange}
             selectedStatuses={selectedStatuses}
+            handleExportCSV={
+              filteredInvoices.length > 0 ? handleExportCSV : undefined
+            }
             // onDateSearch={handleDateSearch}
             onUpdateStatus={handleUpdateStatus}
           />
