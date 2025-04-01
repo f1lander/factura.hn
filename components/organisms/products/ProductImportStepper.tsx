@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/card';
 import { useMediaQuery } from '@/lib/hooks';
 import { Switch } from '@/components/ui/switch';
-import { Product } from '@/lib/supabase/services/product';
+import { Product, TaxType } from '@/lib/supabase/services/product';
 import { useQuery } from '@tanstack/react-query';
 import { productService } from '@/lib/supabase/services/product';
 import * as XLSX from 'xlsx';
@@ -44,6 +44,7 @@ const defaultFieldNames = {
   description: 'description',
   unit_cost: 'unit_cost',
   is_service: 'is_service',
+  tax_type: 'tax_type',
 };
 
 const stepIconMap = [
@@ -177,12 +178,31 @@ export function ProductImportStepper({
   const handleFieldMapping = (data: any) => {
     if (!xlsFile) return;
 
-    const transformedRows = xlsFile.map((row) => ({
-      sku: row[data.sku] || '',
-      description: row[data.description] || '',
-      unit_cost: row[data.unit_cost] || 0,
-      is_service: Boolean(row[data.is_service]),
-    }));
+    const transformedRows = xlsFile.map((row) => {
+      // Map tax_type string to enum value or default to 15%
+      let taxType = TaxType.GRAVADO_15; // Default
+      const taxTypeValue = row[data.tax_type];
+      
+      if (taxTypeValue) {
+        if (taxTypeValue.includes('Exento') || taxTypeValue === TaxType.EXENTO) {
+          taxType = TaxType.EXENTO;
+        } else if (taxTypeValue.includes('Exonerado') || taxTypeValue === TaxType.EXONERADO) {
+          taxType = TaxType.EXONERADO;
+        } else if (taxTypeValue.includes('18%') || taxTypeValue === TaxType.GRAVADO_18) {
+          taxType = TaxType.GRAVADO_18;
+        } else if (taxTypeValue.includes('15%') || taxTypeValue === TaxType.GRAVADO_15) {
+          taxType = TaxType.GRAVADO_15;
+        }
+      }
+
+      return {
+        sku: row[data.sku] || '',
+        description: row[data.description] || '',
+        unit_cost: row[data.unit_cost] || 0,
+        is_service: Boolean(row[data.is_service]),
+        tax_type: taxType,
+      };
+    });
 
     setMappedData(transformedRows);
     setCurrentStep(STEPS.REVIEW_DATA);
@@ -320,6 +340,7 @@ export function ProductImportStepper({
                 { key: 'description', label: 'Descripción' },
                 { key: 'unit_cost', label: 'Precio Unitario' },
                 { key: 'is_service', label: 'Tipo de Producto' },
+                { key: 'tax_type', label: 'Tipo de Impuesto' },
               ].map(({ key, label }) => (
                 <div
                   key={key}
@@ -418,7 +439,9 @@ export function ProductImportStepper({
                               ? 'Descripción'
                               : key === 'unit_cost'
                               ? 'Precio Unitario'
-                              : 'Es Servicio'}
+                              : key === 'is_service'
+                              ? 'Es Servicio'
+                              : 'Tipo de Impuesto'}
                           </span>
                           {key === 'is_service' ? (
                             <div className='flex items-center justify-between space-x-2'>
@@ -442,6 +465,28 @@ export function ProductImportStepper({
                                 {value ? 'Servicio' : 'Producto'}
                               </label>
                             </div>
+                          ) : key === 'tax_type' ? (
+                            <Select
+                              value={value as string}
+                              onValueChange={(newValue) => {
+                                const newData = [...mappedData];
+                                newData[index] = {
+                                  ...newData[index],
+                                  [key]: newValue,
+                                };
+                                setMappedData(newData);
+                              }}
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Tipo de impuesto" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value={TaxType.EXENTO}>0% (Exento)</SelectItem>
+                                <SelectItem value={TaxType.EXONERADO}>0% (Exonerado)</SelectItem>
+                                <SelectItem value={TaxType.GRAVADO_15}>15%</SelectItem>
+                                <SelectItem value={TaxType.GRAVADO_18}>18%</SelectItem>
+                              </SelectContent>
+                            </Select>
                           ) : (
                             <Input
                               value={value as string}
@@ -507,6 +552,20 @@ export function ProductImportStepper({
                     field: 'is_service',
                     headerName: 'Es Servicio',
                     editable: true,
+                  },
+                  {
+                    field: 'tax_type',
+                    headerName: 'Tipo de Impuesto',
+                    editable: true,
+                    cellRenderer: (params: { value: TaxType }) => {
+                      switch(params.value) {
+                        case TaxType.EXENTO: return '0% (Exento)';
+                        case TaxType.EXONERADO: return '0% (Exonerado)';
+                        case TaxType.GRAVADO_15: return '15%';
+                        case TaxType.GRAVADO_18: return '18%';
+                        default: return params.value;
+                      }
+                    }
                   },
                 ]}
                 onRowUpdate={handleRowUpdate}
