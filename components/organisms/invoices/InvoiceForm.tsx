@@ -61,6 +61,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import * as R from 'ramda';
 
 interface InvoiceFormProps {
   onSave: (invoice: Invoice) => void;
@@ -96,9 +97,23 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
     null
   );
 
+  const { data: universalcustomer } = useQuery(
+    ['universalcustomers'],
+    async () => {
+      const customers = await customerService.getUniversalCustomers();
+      return R.head(customers);
+      // return customers.map((retrievedCustomer) => ({
+      //   value: retrievedCustomer.id,
+      //   label: retrievedCustomer.name,
+      //   ...retrievedCustomer,
+      // }));
+    }
+  );
+
   /** Here we retrieve the list of customers */
   const loadOptions = async (inputValue: string) => {
     if (!inputValue) return [];
+
     const retrievedCustomers =
       await customerService.getCustomersByCompanyAndCustomerName(inputValue);
     return retrievedCustomers.map((retrievedCustomer) => ({
@@ -189,6 +204,41 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
   const customerId = watch('customer_id');
   const isExento = watch('exento');
+
+  const {
+    data: selectedCustomer,
+    isLoading: isLoadingCustomer,
+    isFetching: isFetchingCustomer,
+  } = useQuery(
+    ['customer', customerId],
+    async () => {
+      const customer = await customerService.getCustomerById(
+        customerId as string
+      );
+
+      return customer;
+    },
+    {
+      enabled: !!customerId,
+      placeholderData: universalcustomer,
+    }
+  );
+
+  useEffect(() => {
+    if (
+      !isLoadingCustomer &&
+      !isFetchingCustomer &&
+      selectedCustomer &&
+      customerId !== selectedCustomer?.id
+    ) {
+      setValue('customer_id', selectedCustomer?.id);
+      setValue('customers', {
+        name: selectedCustomer?.name!,
+        rtn: selectedCustomer?.rtn!,
+        email: selectedCustomer?.email!,
+      });
+    }
+  }, [isLoadingCustomer, isFetchingCustomer, selectedCustomer, setValue]);
 
   // Add effect to handle invoice_number when isProforma changes
   useEffect(() => {
@@ -378,12 +428,17 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   loadOptions={loadOptions}
                   noOptionsMessage={noOptionsMessage}
                   placeholder='Buscar cliente'
+                  value={{
+                    value: selectedCustomer?.id,
+                    label: selectedCustomer?.name,
+                    ...selectedCustomer,
+                  }}
                   onChange={(value) => {
-                    if (value !== null)
+                    if (value !== null && value !== undefined)
                       setValue('customers', {
-                        name: value.name,
-                        rtn: value.rtn,
-                        email: value.email,
+                        name: value.name!,
+                        rtn: value.rtn!,
+                        email: value.email!,
                       });
                     field.onChange(value?.id);
                   }}
@@ -453,32 +508,36 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   </div>
                 </>
               ) : (
-                <div className='flex flex-col gap-2'>
-                  <Label className='whitespace-nowrap flex items-center gap-2'>
-                    Número de Proforma
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <HelpCircle className='h-4 w-4 text-muted-foreground cursor-help' />
-                        </TooltipTrigger>
-                        <TooltipContent className='w-80'>
-                          <p>El formato por defecto es PROFORM-YYYYMMDD-XXX:</p>
-                          <ul className='list-disc list-inside'>
-                            <li>YYYY: año actual</li>
-                            <li>MM: mes (01-12)</li>
-                            <li>DD: día (01-31)</li>
-                            <li>XXX: número único (000-999)</li>
-                          </ul>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </Label>
-                  <Input
-                    className='w-[300px]'
-                    {...register('proforma_number')}
-                    placeholder='PROFORM-YYYYMMDD-XXX'
-                    defaultValue={watch('invoice_number') || ''}
-                  />
+                <div className='flex-1'>
+                  <div className='flex flex-col gap-2'>
+                    <Label className='whitespace-nowrap flex items-center gap-2'>
+                      Número de Proforma
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className='h-4 w-4 text-muted-foreground cursor-help' />
+                          </TooltipTrigger>
+                          <TooltipContent className='w-80'>
+                            <p>
+                              El formato por defecto es PROFORM-YYYYMMDD-XXX:
+                            </p>
+                            <ul className='list-disc list-inside'>
+                              <li>YYYY: año actual</li>
+                              <li>MM: mes (01-12)</li>
+                              <li>DD: día (01-31)</li>
+                              <li>XXX: número único (000-999)</li>
+                            </ul>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </Label>
+                    <Input
+                      className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+                      {...register('proforma_number')}
+                      placeholder='PROFORM-YYYYMMDD-XXX'
+                      defaultValue={watch('invoice_number') || ''}
+                    />
+                  </div>
                 </div>
               )}
               {companyId && (
@@ -681,61 +740,73 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   }
 
   return (
-    <Card className='card-invoice border-none shadow-none rounded-sm flex flex-col h-[90vh]'>
-      <CardHeader className='flex flex-row items-start justify-between bg-muted/50 shrink-0'>
-        <div className='grid gap-0.5'>
-          <CardTitle className='group flex items-center gap-2 text-lg'>
-            {isEditing ? 'Editar Factura' : 'Crear Factura'}
+    <Card className='card-invoice border-none shadow-none rounded-sm flex flex-col min-h-[90vh]'>
+      <CardHeader className='flex flex-col items-end justify-between bg-muted/50 shrink-0 gap-2'>
+        <div className='flex items-start w-full justify-between bg-muted/50 shrink-0 gap-3'>
+          <div className='grid gap-0.5'>
+            <CardTitle className='group flex items-center gap-2 text-lg'>
+              {isEditing ? 'Editar Factura' : 'Crear Factura'}
+              {(isProforma || isExento) && (
+                <div className='hidden sm:flex flex-1 items-end gap-2'>
+                  {isProforma && <Badge variant='default'>Proforma</Badge>}
+                  {isExento && <Badge className='bg-rose-700'>Exenta</Badge>}
+                </div>
+              )}
+            </CardTitle>
+            <CardDescription>
+              {isEditing
+                ? `Editando factura: ${invoice?.invoice_number}`
+                : `Fecha: ${new Date(watch('date')).toLocaleDateString()}`}
+            </CardDescription>
+          </div>
+          <div className='grid gap-4'>
+            <div className='flex items-center space-x-2'>
+              <Controller
+                name='is_proforma'
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    id='is_proforma'
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={isEditing}
+                  />
+                )}
+              />
+              <label
+                htmlFor='is_proforma'
+                className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+              >
+                Factura Proforma
+              </label>
+            </div>
+            <div className='flex items-center space-x-2'>
+              <Controller
+                name='exento'
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    id='is_exento'
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                )}
+              />
+              <label
+                htmlFor='is_exento'
+                className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+              >
+                Exenta
+              </label>
+            </div>
+          </div>
+        </div>
+        {(isProforma || isExento) && (
+          <div className='flex sm:hidden flex-1 items-end gap-2'>
             {isProforma && <Badge variant='default'>Proforma</Badge>}
             {isExento && <Badge className='bg-rose-700'>Exenta</Badge>}
-          </CardTitle>
-          <CardDescription>
-            {isEditing
-              ? `Editando factura: ${invoice?.invoice_number}`
-              : `Fecha: ${new Date(watch('date')).toLocaleDateString()}`}
-          </CardDescription>
-        </div>
-        <div className='grid gap-4'>
-          <div className='flex items-center space-x-2'>
-            <Controller
-              name='is_proforma'
-              control={control}
-              render={({ field }) => (
-                <Checkbox
-                  id='is_proforma'
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                  disabled={isEditing}
-                />
-              )}
-            />
-            <label
-              htmlFor='is_proforma'
-              className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
-            >
-              Factura Proforma
-            </label>
           </div>
-          <div className='flex items-center space-x-2'>
-            <Controller
-              name='exento'
-              control={control}
-              render={({ field }) => (
-                <Checkbox
-                  id='is_exento'
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              )}
-            />
-            <label
-              htmlFor='is_exento'
-              className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
-            >
-              Exenta
-            </label>
-          </div>
-        </div>
+        )}
       </CardHeader>
       <CardContent className='p-6 text-sm flex-1'>
         {renderEditableContent()}
@@ -762,7 +833,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
           <Badge variant={watch('is_proforma') ? 'outline' : 'secondary'}>
             {watch('is_proforma') ? 'Proforma' : 'Factura'}
           </Badge>
-
           {getStatusBadge(watch('status'))}
         </div>
       </CardFooter>

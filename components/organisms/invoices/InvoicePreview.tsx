@@ -242,20 +242,18 @@ const InvoicePreview: React.FC = () => {
       <CardContent className='p-6 text-sm'>
         {renderReadOnlyContent()}
       </CardContent>
-      <CardFooter className='flex flex-row items-center justify-between border-t bg-muted/50 px-6 py-3'>
+      <CardFooter className='flex flex-row items-center justify-between border-t bg-muted/50 px-6 py-3 shrink-0'>
         <div className='text-xs text-muted-foreground'>
           Factura creada:{' '}
           <time dateTime={watch('created_at')} suppressHydrationWarning>
             {new Date(watch('created_at')).toLocaleString()}
           </time>
         </div>
-        <div>
+        <div className='flex gap-4'>
           <Badge variant={watch('is_proforma') ? 'outline' : 'secondary'}>
             {watch('is_proforma') ? 'Proforma' : 'Factura'}
           </Badge>
-          <Badge variant={watch('is_proforma') ? 'outline' : 'secondary'}>
-            {getStatusBadge(watch('status'))}
-          </Badge>
+          {getStatusBadge(watch('status'))}
         </div>
       </CardFooter>
     </Card>
