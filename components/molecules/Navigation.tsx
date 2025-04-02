@@ -22,12 +22,12 @@ import {
 import supabaseClient from "@/lib/supabase/client";
 import { User } from "@supabase/auth-js";
 import { logout } from "@/lib/supabase/auth";
-// import Banner from "./Banner";
 import { useIsLoadedStore } from "@/store/isLoadedStore";
 import { useCompanyStore } from "@/store/companyStore";
 import { useCustomersStore } from "@/store/customersStore";
 import { useInvoicesStore } from "@/store/invoicesStore";
 import { useProductsStore } from "@/store/productsStore";
+import { FacturaLogo } from "../atoms/FacturaLogo";
 
 const navItems = [
   { href: "/home/", label: "Dashboard" },

@@ -7,13 +7,12 @@ import {
   Text,
   View,
   StyleSheet,
-  Font,
   Image,
   PDFDownloadLink,
   pdf,
 } from '@react-pdf/renderer';
 import { Button } from '@/components/ui/button';
-import { Invoice, InvoiceItem } from '@/lib/supabase/services/invoice';
+import { Invoice } from '@/lib/supabase/services/invoice';
 import { Company } from '@/lib/supabase/services/company';
 import { PrinterIcon, DownloadIcon } from 'lucide-react';
 import { format } from 'date-fns';
