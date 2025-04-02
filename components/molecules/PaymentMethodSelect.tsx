@@ -11,7 +11,7 @@ import {
   paymentMethodService,
 } from '@/lib/supabase/services/paymentMethod';
 import * as R from 'ramda';
-import { X } from 'lucide-react';
+import { X, CreditCard, Wallet, Building2, Receipt, Coins } from 'lucide-react';
 
 interface PaymentMethodSelectProps {
   companyId: string;
@@ -19,6 +19,23 @@ interface PaymentMethodSelectProps {
   onChange: (value?: PaymentMethod) => void;
   // onChange: (value: string) => void;
 }
+
+const getPaymentMethodIcon = (name: string) => {
+  const lowerName = name.toLowerCase();
+  if (lowerName.includes('tarjeta') || lowerName.includes('card')) {
+    return <CreditCard className="h-4 w-4 mr-2" />;
+  }
+  if (lowerName.includes('efectivo') || lowerName.includes('cash')) {
+    return <Coins className="h-4 w-4 mr-2" />;
+  }
+  if (lowerName.includes('transferencia') || lowerName.includes('bank')) {
+    return <Building2 className="h-4 w-4 mr-2" />;
+  }
+  if (lowerName.includes('cheque')) {
+    return <Receipt className="h-4 w-4 mr-2" />;
+  }
+  return <Wallet className="h-4 w-4 mr-2" />;
+};
 
 export function PaymentMethodSelect({
   companyId,
@@ -60,7 +77,14 @@ export function PaymentMethodSelect({
         onValueChange={(id) => onChange(methods.find((m) => m.id === id))}
       >
         <SelectTrigger>
-          <SelectValue placeholder='Seleccionar método de pago' />
+          <SelectValue placeholder='Seleccionar método de pago'>
+            {selectedMethod && (
+              <div className="flex items-center">
+                {getPaymentMethodIcon(selectedMethod.name)}
+                {selectedMethod.name}
+              </div>
+            )}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {defaultMethods.length > 0 && (
@@ -70,7 +94,10 @@ export function PaymentMethodSelect({
               </SelectItem>
               {defaultMethods.map((method) => (
                 <SelectItem key={method.id} value={method.id}>
-                  {method.name}
+                  <div className="flex items-center">
+                    {getPaymentMethodIcon(method.name)}
+                    {method.name}
+                  </div>
                 </SelectItem>
               ))}
             </>
@@ -82,7 +109,10 @@ export function PaymentMethodSelect({
               </SelectItem>
               {companyMethods.map((method) => (
                 <SelectItem key={method.id} value={method.id}>
-                  {method.name}
+                  <div className="flex items-center">
+                    {getPaymentMethodIcon(method.name)}
+                    {method.name}
+                  </div>
                 </SelectItem>
               ))}
             </>

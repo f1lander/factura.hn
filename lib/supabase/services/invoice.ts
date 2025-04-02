@@ -1,6 +1,7 @@
 import { BaseService, Table } from './BaseService';
 import { PostgrestError } from '@supabase/supabase-js';
 import { PaymentMethod } from './paymentMethod';
+import { TaxType } from './product';
 
 export interface Invoice {
   id: string;
@@ -50,6 +51,7 @@ export interface InvoiceItem {
   updated_at: string;
   created_at: string;
   is_service?: boolean;
+  tax_type?: TaxType;
 }
 
 interface CustomerInfo {
@@ -193,20 +195,63 @@ class InvoiceService extends BaseService {
 
   computeInvoiceData(invoiceItems: InvoiceItem[]): {
     subtotal: number;
+    tax_exonerado: number;
+    tax_exento: number;
+    tax_gravado_15: number;
+    tax_gravado_18: number;
     tax: number;
+    tax_18: number;
     total: number;
   } {
+    // Initialize all values
     let subtotal = 0;
+    let tax_exonerado = 0;
+    let tax_exento = 0;
+    let tax_gravado_15 = 0;
+    let tax_gravado_18 = 0;
     let tax = 0;
+    let tax_18 = 0;
+
+    // Calculate subtotals by tax type
     invoiceItems.forEach((invoiceItem) => {
-      subtotal = subtotal + invoiceItem.quantity * invoiceItem.unit_cost;
-      tax = tax + subtotal * 0.15;
+      const itemTotal = invoiceItem.quantity * invoiceItem.unit_cost;
+      subtotal += itemTotal;
+
+      // Categorize by tax type and calculate respective tax amounts
+      switch (invoiceItem.tax_type) {
+        case TaxType.EXENTO:
+          tax_exento += itemTotal;
+          break;
+        case TaxType.EXONERADO:
+          tax_exonerado += itemTotal;
+          break;
+        case TaxType.GRAVADO_15:
+          tax_gravado_15 += itemTotal;
+          tax += itemTotal * 0.15; // 15% tax
+          break;
+        case TaxType.GRAVADO_18:
+          tax_gravado_18 += itemTotal;
+          tax_18 += itemTotal * 0.18; // 18% tax
+          break;
+        default:
+          // Default to 15% tax if tax_type is not specified
+          tax_gravado_15 += itemTotal;
+          tax += itemTotal * 0.15;
+          break;
+      }
     });
-    const total = subtotal + tax;
+
+    // Calculate total (subtotal + all taxes)
+    const total = subtotal + tax + tax_18;
 
     return {
       subtotal,
+      tax_exonerado,
+      tax_exento,
+      tax_gravado_15,
+      tax_gravado_18,
       tax,
+      tax_18,
       total,
     };
   }

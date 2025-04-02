@@ -21,14 +21,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { productColumns } from '@/utils/tableColumns';
 import { useRouter } from 'next/navigation';
 import { ProductImportStepper } from '@/components/organisms/products/ProductImportStepper';
-
-interface ProductKeyMappings {
-  sku: string;
-  description: string;
-  unit_cost: string;
-  is_service: string;
-  quantity_in_stock: string;
-}
+import { TaxType } from '@/lib/supabase/services/product';
 
 export default function ProductsPage() {
   const { push } = useRouter();
@@ -77,14 +70,21 @@ export default function ProductsPage() {
   };
 
   const handleImportComplete = async (mappedData: any[]) => {
+    // Ensure all products have a tax_type, defaulting to GRAVADO_15 if not specified
+    const productsWithDefaultTax = mappedData.map(product => ({
+      ...product,
+      tax_type: product.tax_type || TaxType.GRAVADO_15
+    }));
+
     const { success, message } = await productService.createMultipleProducts(
-      mappedData
+      productsWithDefaultTax
     );
 
     if (!success) {
       toast({
         title: 'No se pudieron subir los productos',
         description: message,
+        variant: 'destructive',
       });
     } else {
       toast({
@@ -124,10 +124,15 @@ export default function ProductsPage() {
 
   const handleFormSubmit = async (data: any) => {
     try {
+      const productData = {
+        ...data,
+        tax_type: data.tax_type || TaxType.GRAVADO_15,
+      };
+
       if (selectedProduct) {
-        await productService.updateProduct(selectedProduct.id, data);
+        await productService.updateProduct(selectedProduct.id, productData);
       } else {
-        await productService.createProduct(data);
+        await productService.createProduct(productData);
       }
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setIsFormVisible(false);
@@ -150,10 +155,6 @@ export default function ProductsPage() {
     loadProducts(currentPage, pageSize);
   }, [currentPage, pageSize, loadProducts]);
 
-  const handlePageChange = (params: any) => {
-    setCurrentPage(params.page);
-    setPageSize(params.pageSize);
-  };
 
   if (areProductsFromDBLoading) {
     return (
@@ -164,16 +165,33 @@ export default function ProductsPage() {
   }
 
   const handleOnUpdateRows = async (rows: Product[]) => {
-    const { success } = await productService.updateMultipleProducts(rows);
-    if (!success)
+    try {
+      const updatedRows = rows.map(row => ({
+        ...row,
+        tax_type: row.tax_type || TaxType.GRAVADO_15,
+      }));
+
+      const { success } = await productService.updateMultipleProducts(updatedRows);
+      if (!success) {
+        toast({
+          title: 'Actualización de productos fallido',
+          description: 'Revisa si algún dato que ingresaste fue inválido',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Actualización de productos exitosa',
+          description: 'Tus productos se han actualizado en la base de datos',
+        });
+      }
+    } catch (error) {
+      console.error('Error updating products:', error);
       toast({
-        title: 'Actualización de productos fallido',
-        description: 'Revisa si algún dato que ingresaste fue inválido',
+        title: 'Error',
+        description: 'No se pudieron actualizar los productos. Por favor, intente de nuevo.',
+        variant: 'destructive',
       });
-    toast({
-      title: 'Actualización de productos exitosa',
-      description: 'Tus productos se han actualizado en la base de datos',
-    });
+    }
   };
 
   if (isImporting) {
