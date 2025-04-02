@@ -181,16 +181,30 @@ export function ProductImportStepper({
     const transformedRows = xlsFile.map((row) => {
       // Map tax_type string to enum value or default to 15%
       let taxType = TaxType.GRAVADO_15; // Default
-      const taxTypeValue = row[data.tax_type];
-      
+      const taxTypeValue = String(row[data.tax_type]);
+
       if (taxTypeValue) {
-        if (taxTypeValue.includes('Exento') || taxTypeValue === TaxType.EXENTO) {
+        if (
+          taxTypeValue.includes('Exento') ||
+          taxTypeValue === TaxType.EXENTO
+        ) {
           taxType = TaxType.EXENTO;
-        } else if (taxTypeValue.includes('Exonerado') || taxTypeValue === TaxType.EXONERADO) {
+        } else if (
+          taxTypeValue.includes('Exonerado') ||
+          taxTypeValue === TaxType.EXONERADO
+        ) {
           taxType = TaxType.EXONERADO;
-        } else if (taxTypeValue.includes('18%') || taxTypeValue === TaxType.GRAVADO_18) {
+        } else if (
+          taxTypeValue.includes('18%') ||
+          taxTypeValue.includes('0.18') ||
+          taxTypeValue === TaxType.GRAVADO_18
+        ) {
           taxType = TaxType.GRAVADO_18;
-        } else if (taxTypeValue.includes('15%') || taxTypeValue === TaxType.GRAVADO_15) {
+        } else if (
+          taxTypeValue.includes('15%') ||
+          taxTypeValue.includes('0.15') ||
+          taxTypeValue === TaxType.GRAVADO_15
+        ) {
           taxType = TaxType.GRAVADO_15;
         }
       }
@@ -477,14 +491,22 @@ export function ProductImportStepper({
                                 setMappedData(newData);
                               }}
                             >
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Tipo de impuesto" />
+                              <SelectTrigger className='w-full'>
+                                <SelectValue placeholder='Tipo de impuesto' />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value={TaxType.EXENTO}>0% (Exento)</SelectItem>
-                                <SelectItem value={TaxType.EXONERADO}>0% (Exonerado)</SelectItem>
-                                <SelectItem value={TaxType.GRAVADO_15}>15%</SelectItem>
-                                <SelectItem value={TaxType.GRAVADO_18}>18%</SelectItem>
+                                <SelectItem value={TaxType.EXENTO}>
+                                  0% (Exento)
+                                </SelectItem>
+                                <SelectItem value={TaxType.EXONERADO}>
+                                  0% (Exonerado)
+                                </SelectItem>
+                                <SelectItem value={TaxType.GRAVADO_15}>
+                                  15%
+                                </SelectItem>
+                                <SelectItem value={TaxType.GRAVADO_18}>
+                                  18%
+                                </SelectItem>
                               </SelectContent>
                             </Select>
                           ) : (
@@ -558,14 +580,19 @@ export function ProductImportStepper({
                     headerName: 'Tipo de Impuesto',
                     editable: true,
                     cellRenderer: (params: { value: TaxType }) => {
-                      switch(params.value) {
-                        case TaxType.EXENTO: return '0% (Exento)';
-                        case TaxType.EXONERADO: return '0% (Exonerado)';
-                        case TaxType.GRAVADO_15: return '15%';
-                        case TaxType.GRAVADO_18: return '18%';
-                        default: return params.value;
+                      switch (params.value) {
+                        case TaxType.EXENTO:
+                          return '0% (Exento)';
+                        case TaxType.EXONERADO:
+                          return '0% (Exonerado)';
+                        case TaxType.GRAVADO_15:
+                          return '15%';
+                        case TaxType.GRAVADO_18:
+                          return '18%';
+                        default:
+                          return params.value;
                       }
-                    }
+                    },
                   },
                 ]}
                 onRowUpdate={handleRowUpdate}
