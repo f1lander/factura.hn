@@ -17,7 +17,7 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { InvoiceQuote } from '@/components/invoice-quote';
 import Image from 'next/image';
-import { FacturaLogo } from '@/components/molecules/Navigation';
+import { FacturaLogo } from '@/components/atoms/FacturaLogo';
 
 export interface SignupForm {
   company_name: string;

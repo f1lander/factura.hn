@@ -3,7 +3,7 @@
 import AsyncSelect from 'react-select/async';
 import React, { useState, useEffect } from 'react';
 import { InputMask } from '@react-input/mask';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import {
   useFieldArray,
   Controller,
@@ -143,8 +143,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
           const nextInvoiceNumber = data?.error
             ? data?.latest_invoice_number
             : invoiceService.generateNextInvoiceNumber(
-                data?.latest_invoice_number
-              );
+              data?.latest_invoice_number
+            );
           setValue('invoice_number', nextInvoiceNumber);
         }
       },
@@ -259,8 +259,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
         latestInvoiceNumber?.error
           ? latestInvoiceNumber?.latest_invoice_number
           : invoiceService.generateNextInvoiceNumber(
-              latestInvoiceNumber?.latest_invoice_number
-            )
+            latestInvoiceNumber?.latest_invoice_number
+          )
       );
     }
   }, [isProforma, setValue, latestInvoiceNumber]);
@@ -371,50 +371,32 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
     setExpandedCardIndex(fields.length); // Set the new card as expanded
   };
 
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+
   const renderEditableContent = () => (
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className='grid gap-4'>
-          <div className='flex items-center justify-between gap-4 py-4'>
+          <div className='flex items-center justify-end lg:justify-between gap-4'>
             <Button
-              className='bg-[#00A1D4] text-white'
+              className='items-center gap-2 hidden lg:flex bg-facturaBlue text-white'
               type='submit'
               disabled={isGenerateInvoiceButtonDisabled}
             >
-              {isEditing ? 'Actualizar Factura' : 'Generar Factura'}{' '}
+              {isEditing ? 'Actualizar Factura' : 'Generar Factura'}
               <CheckIcon className='ml-2' />
             </Button>
             <Button
-              variant='outline'
+              variant='default'
               type='button'
               size='sm'
-              className='bg-slate-600 text-white'
+              className='bg-facturaBlue text-white w-full lg:w-auto'
               onClick={() => {
-                reset();
-                if (isProforma) {
-                  const date = new Date();
-                  const year = date.getFullYear();
-                  const month = String(date.getMonth() + 1).padStart(2, '0');
-                  const day = String(date.getDate()).padStart(2, '0');
-                  const random = Math.floor(Math.random() * 1000)
-                    .toString()
-                    .padStart(3, '0');
-                  const proformaNumber = `PROFORM-${year}${month}${day}-${random}`;
-                  setValue('invoice_number', proformaNumber);
-                  setValue('proforma_number', proformaNumber);
-                } else if (latestInvoiceNumber) {
-                  setValue(
-                    'invoice_number',
-                    latestInvoiceNumber?.error
-                      ? (latestInvoiceNumber?.latest_invoice_number as string)
-                      : invoiceService.generateNextInvoiceNumber(
-                          latestInvoiceNumber?.latest_invoice_number as string
-                        )
-                  );
-                }
+                setIsResetDialogOpen(true);
               }}
             >
-              Limpiar
+              <PlusCircleIcon className="h-4 w-4 mr-2" />
+              Nueva Factura
             </Button>
           </div>
           <div className='flex gap-4'>
@@ -587,45 +569,48 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     expandedCardIndex === index ? null : index
                   );
                 }}
-                className='p-4 flex flex-row items-center justify-between space-y-0 cursor-pointer'
+                className='p-4 flex flex-row items-center justify-between cursor-pointer'
               >
-                <div className='flex items-center gap-2'>
-                  <CardTitle className='text-sm font-medium'>
-                    Producto #{index + 1}
+                <div className='flex flex-col gap-2'>
+                  <CardTitle className='flex items-center text-sm font-medium gap-2'>
+                    {watchInvoiceItems[index]?.is_service ? 'Servicio' : 'Producto'} #{index + 1}
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        remove(index);
+                      }}
+                      className='text-rose-700 hover:text-rose-800 hover:bg-rose-50'
+                    >
+                      <Trash2 className='h-4 w-4' />
+                    </Button>
                   </CardTitle>
                   {expandedCardIndex !== index && (
                     <div className='flex items-center gap-2 flex-wrap'>
                       <Badge
                         variant='outline'
-                        className='text-slate-700 truncate max-w-[200px]'
+                        className='text-slate-700 truncate w-full'
                       >
                         {watchInvoiceItems[index].description ||
                           'Sin descripción'}
                       </Badge>
-                      <Badge variant='secondary' className='text-slate-600'>
-                        Cantidad: {watchInvoiceItems[index].quantity}
-                      </Badge>
-                      <Badge
-                        variant='default'
-                        className='bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                      >
-                        L. {calculateItemTotal(index, watchInvoiceItems)}
-                      </Badge>
+                      <div className='flex gap-2'>
+                        <Badge variant='secondary' className='text-slate-600'>
+                          Cantidad: {watchInvoiceItems[index].quantity}
+                        </Badge>
+                        <Badge
+                          variant='default'
+                          className='bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                        >
+                          L. {calculateItemTotal(index, watchInvoiceItems)}
+                        </Badge>
+                      </div>
                     </div>
                   )}
                 </div>
-                <Button
-                  type='button'
-                  variant='ghost'
-                  size='sm'
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    remove(index);
-                  }}
-                  className='text-rose-700 hover:text-rose-800 hover:bg-rose-50'
-                >
-                  <Trash2 className='h-4 w-4' />
-                </Button>
+
               </CardHeader>
               {expandedCardIndex === index && (
                 <>
@@ -732,6 +717,51 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
           </div>
         </DialogContent>
       </Dialog>
+      <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+        <DialogContent className="w-[90%] lg:w-[425px]">
+          <DialogHeader>
+            <DialogTitle>¿Crear nueva factura?</DialogTitle>
+            <DialogDescription>
+              Esta acción limpiará todos los datos de la factura actual. Los cambios no guardados se perderán.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="outline" onClick={() => setIsResetDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                reset();
+                if (isProforma) {
+                  const date = new Date();
+                  const year = date.getFullYear();
+                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                  const day = String(date.getDate()).padStart(2, '0');
+                  const random = Math.floor(Math.random() * 1000)
+                    .toString()
+                    .padStart(3, '0');
+                  const proformaNumber = `PROFORM-${year}${month}${day}-${random}`;
+                  setValue('invoice_number', proformaNumber);
+                  setValue('proforma_number', proformaNumber);
+                } else if (latestInvoiceNumber) {
+                  setValue(
+                    'invoice_number',
+                    latestInvoiceNumber?.error
+                      ? (latestInvoiceNumber?.latest_invoice_number as string)
+                      : invoiceService.generateNextInvoiceNumber(
+                        latestInvoiceNumber?.latest_invoice_number as string
+                      )
+                  );
+                }
+                setIsResetDialogOpen(false);
+              }}
+            >
+              Confirmar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 
@@ -741,25 +771,25 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
   return (
     <Card className='card-invoice border-none shadow-none rounded-sm flex flex-col min-h-[90vh]'>
-      <CardHeader className='flex flex-col items-end justify-between bg-muted/50 shrink-0 gap-2'>
-        <div className='flex items-start w-full justify-between bg-muted/50 shrink-0 gap-3'>
+      <CardHeader className='flex border flex-col items-end justify-between bg-muted/50 shrink-0 gap-2'>
+        <div className='flex flex-col lg:flex-row items-start w-full justify-between bg-muted/50 shrink-0 gap-3'>
           <div className='grid gap-0.5'>
-            <CardTitle className='group flex items-center gap-2 text-lg'>
+            <CardTitle className='hidden lg:flex group items-center gap-2 text-lg'>
               {isEditing ? 'Editar Factura' : 'Crear Factura'}
-              {(isProforma || isExento) && (
+              {/* {(isProforma || isExento) && (
                 <div className='hidden sm:flex flex-1 items-end gap-2'>
-                  {isProforma && <Badge variant='default'>Proforma</Badge>}
+                  {isProforma && <Badge variant='default'>Proforsma s</Badge>}
                   {isExento && <Badge className='bg-rose-700'>Exenta</Badge>}
                 </div>
-              )}
+              )} */}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className='text-base font-semibold'>
               {isEditing
                 ? `Editando factura: ${invoice?.invoice_number}`
                 : `Fecha: ${new Date(watch('date')).toLocaleDateString()}`}
             </CardDescription>
           </div>
-          <div className='grid gap-4'>
+          <div className='flex lg:flex-col gap-4'>
             <div className='flex items-center space-x-2'>
               <Controller
                 name='is_proforma'
@@ -801,12 +831,12 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
             </div>
           </div>
         </div>
-        {(isProforma || isExento) && (
+        {/* {(isProforma || isExento) && (
           <div className='flex sm:hidden flex-1 items-end gap-2'>
             {isProforma && <Badge variant='default'>Proforma</Badge>}
             {isExento && <Badge className='bg-rose-700'>Exenta</Badge>}
           </div>
-        )}
+        )} */}
       </CardHeader>
       <CardContent className='p-6 text-sm flex-1'>
         {renderEditableContent()}
