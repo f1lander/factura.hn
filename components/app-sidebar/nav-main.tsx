@@ -1,10 +1,10 @@
-"use client"
+'use client';
 
-import * as React from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { useSidebar } from "@/components/ui/sidebar";
+import * as React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { useSidebar } from '@/components/ui/sidebar';
 import {
   FileText,
   Users,
@@ -12,27 +12,27 @@ import {
   Settings,
   Home,
   Receipt,
-} from "lucide-react";
+} from 'lucide-react';
 
 const items = [
   {
-    title: "Dashboard",
-    href: "/home",
+    title: 'Dashboard',
+    href: '/home',
     icon: Home,
   },
   {
-    title: "Facturas",
-    href: "/home/invoices",
+    title: 'Facturas',
+    href: '/home/invoices',
     icon: Receipt,
   },
   {
-    title: "Clientes",
-    href: "/home/customers",
+    title: 'Clientes',
+    href: '/home/customers',
     icon: Users,
   },
   {
-    title: "Productos",
-    href: "/home/products",
+    title: 'Productos',
+    href: '/home/products-v2',
     icon: Package,
   },
   // {
@@ -41,8 +41,8 @@ const items = [
   //   icon: FileText,
   // },
   {
-    title: "Configuración",
-    href: "/home/settings",
+    title: 'Configuración',
+    href: '/home/settings',
     icon: Settings,
   },
 ];
@@ -52,7 +52,7 @@ export function NavMain() {
   const { state } = useSidebar();
 
   return (
-    <nav className="space-y-1 px-2">
+    <nav className='space-y-1 px-2'>
       {items.map((item) => {
         const Icon = item.icon;
         return (
@@ -60,15 +60,15 @@ export function NavMain() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
               pathname === item.href
-                ? "bg-facturaBlue text-white"
-                : "hover:bg-muted",
-              state === "collapsed" && "justify-center"
+                ? 'bg-facturaBlue text-white'
+                : 'hover:bg-muted',
+              state === 'collapsed' && 'justify-center'
             )}
           >
-            <Icon className="h-4 w-4" />
-            {state !== "collapsed" && <span>{item.title}</span>}
+            <Icon className='h-4 w-4' />
+            {state !== 'collapsed' && <span>{item.title}</span>}
           </Link>
         );
       })}
