@@ -11,7 +11,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Product } from "@/lib/supabase/services/product";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Product, TaxType } from "@/lib/supabase/services/product";
 
 interface ProductFormProps {
   product?: Product;
@@ -34,6 +41,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     defaultValues: product || {
       is_service: false,
       quantity_in_stock: 0,
+      tax_type: TaxType.GRAVADO_15, // Default to 15% tax
     },
   });
 
@@ -109,6 +117,34 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             />
             {errors.unit_cost && (
               <p className="text-red-500 text-sm">{errors.unit_cost.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="tax_type">Tipo de Impuesto *</label>
+            <Controller
+              name="tax_type"
+              control={control}
+              rules={{ required: "Tipo de impuesto es requerido" }}
+              render={({ field }) => (
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecciona el tipo de impuesto" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={TaxType.EXENTO}>0% (Exento)</SelectItem>
+                    <SelectItem value={TaxType.EXONERADO}>0% (Exonerado)</SelectItem>
+                    <SelectItem value={TaxType.GRAVADO_15}>15%</SelectItem>
+                    <SelectItem value={TaxType.GRAVADO_18}>18%</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.tax_type && (
+              <p className="text-red-500 text-sm">{errors.tax_type.message}</p>
             )}
           </div>
 

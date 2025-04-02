@@ -1,15 +1,12 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
 import InvoiceForm from '@/components/organisms/invoices/InvoiceForm';
 import InvoicePreview from '@/components/organisms/invoices/InvoicePreview';
 import { Invoice, invoiceService } from '@/lib/supabase/services/invoice';
-import { useInvoicesStore } from '@/store/invoicesStore';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FormProvider, Resolver, useForm } from 'react-hook-form';
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DeliveryConfirmDialog } from '@/components/organisms/invoices/DeliveryConfirmDialog';
 import { productService } from '@/lib/supabase/services/product';
@@ -151,6 +148,7 @@ const invoiceSchema = yup.object().shape({
           .min(0, 'El descuento debe ser positivo')
           .default(0),
         is_service: yup.boolean().optional(),
+        tax_type: yup.string().oneOf(['EXENTO', 'EXONERADO', 'GRAVADO_15', 'GRAVADO_18']).optional(),
         created_at: yup.string().optional(),
         updated_at: yup.string().optional(),
       })
@@ -203,14 +201,6 @@ export default function CreateInvoicePage() {
     () => invoiceService.getLatestInvoiceNumberInSarCaiRange(),
     {
       enabled: !!companyId,
-      // onSuccess: (data) => {
-      //   if (data && !isEditing) {
-      //     // setLastInvoiceNumber(data);
-      //     const nextInvoiceNumber =
-      //       invoiceService.generateNextInvoiceNumber(data);
-      //     setValue('invoice_number', nextInvoiceNumber);
-      //   }
-      // },
     }
   );
 

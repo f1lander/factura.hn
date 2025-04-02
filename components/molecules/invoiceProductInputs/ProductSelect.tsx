@@ -1,8 +1,19 @@
-import { Product, productService } from '@/lib/supabase/services/product';
+import { Product, productService, TaxType } from '@/lib/supabase/services/product';
 import { Controller, Control, UseFormSetValue } from 'react-hook-form';
 import AsyncSelect from 'react-select/async';
 import { Invoice } from '@/lib/supabase/services/invoice';
 // import { set } from "date-fns";
+
+// Update the return type to include tax_type
+type ProductOption = {
+  value: string;
+  label: string;
+  id: string;
+  description: string;
+  unit_cost: number;
+  is_service: boolean;
+  tax_type: TaxType;
+};
 
 const loadOptions = async (inputValue: string) => {
   if (!inputValue) return [];
@@ -13,7 +24,7 @@ const loadOptions = async (inputValue: string) => {
     value: retrievedProduct.id,
     label: retrievedProduct.description,
     ...retrievedProduct,
-  }));
+  })) as ProductOption[];
 };
 
 const noOptionsMessage = (inputValue: { inputValue: string }) => {
@@ -46,11 +57,12 @@ const ProductSelect = ({
         noOptionsMessage={noOptionsMessage}
         autoFocus
         placeholder={placeholder || 'Buscar un producto'}
-        onChange={(value) => {
+        onChange={(value: ProductOption | null) => {
           if (value !== null) {
             setValue(`invoice_items.${index}.unit_cost`, value.unit_cost);
             setValue(`invoice_items.${index}.description`, value.description);
             setValue(`invoice_items.${index}.is_service`, value.is_service);
+            setValue(`invoice_items.${index}.tax_type`, value.tax_type || TaxType.GRAVADO_15);
           }
           field.onChange(value?.id);
         }}

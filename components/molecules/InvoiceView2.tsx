@@ -994,9 +994,15 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
                 </CardTitle>
                 <CardDescription>
                   Fecha:{' '}
-                  {isEditable
-                    ? new Date().toLocaleDateString()
-                    : new Date(invoice?.date || '').toLocaleDateString()}
+                  {isEditable ? (
+                    <time suppressHydrationWarning>
+                      {new Date().toLocaleDateString()}
+                    </time>
+                  ) : (
+                    <time suppressHydrationWarning>
+                      {new Date(invoice?.date || '').toLocaleDateString()}
+                    </time>
+                  )}
                 </CardDescription>
               </div>
               {companyLogo !== null && (
