@@ -257,10 +257,16 @@ export default function Invoices() {
 
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      const currentDate = new Date().toISOString().split('T')[0];
+      const startDate = dateRange.start?.toISOString().split('T')[0];
+      const endDate = dateRange.end?.toISOString().split('T')[0];
 
       link.href = url;
-      link.setAttribute('download', `facturas-${currentDate}.csv`);
+      link.setAttribute(
+        'download',
+        `${!startDate && !endDate ? 'todas-las-' : ''}facturas${
+          startDate ? `-desde-${startDate}` : ''
+        }${endDate ? `-hasta-${endDate}` : ''}.csv`
+      );
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
