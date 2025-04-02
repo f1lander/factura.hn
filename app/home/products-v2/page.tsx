@@ -71,9 +71,9 @@ export default function ProductsPage() {
 
   const handleImportComplete = async (mappedData: any[]) => {
     // Ensure all products have a tax_type, defaulting to GRAVADO_15 if not specified
-    const productsWithDefaultTax = mappedData.map(product => ({
+    const productsWithDefaultTax = mappedData.map((product) => ({
       ...product,
-      tax_type: product.tax_type || TaxType.GRAVADO_15
+      tax_type: product.tax_type || TaxType.GRAVADO_15,
     }));
 
     const { success, message } = await productService.createMultipleProducts(
@@ -155,7 +155,6 @@ export default function ProductsPage() {
     loadProducts(currentPage, pageSize);
   }, [currentPage, pageSize, loadProducts]);
 
-
   if (areProductsFromDBLoading) {
     return (
       <div className='p-10 text-center'>
@@ -166,12 +165,14 @@ export default function ProductsPage() {
 
   const handleOnUpdateRows = async (rows: Product[]) => {
     try {
-      const updatedRows = rows.map(row => ({
+      const updatedRows = rows.map((row) => ({
         ...row,
         tax_type: row.tax_type || TaxType.GRAVADO_15,
       }));
 
-      const { success } = await productService.updateMultipleProducts(updatedRows);
+      const { success } = await productService.updateMultipleProducts(
+        updatedRows
+      );
       if (!success) {
         toast({
           title: 'Actualización de productos fallido',
@@ -188,7 +189,8 @@ export default function ProductsPage() {
       console.error('Error updating products:', error);
       toast({
         title: 'Error',
-        description: 'No se pudieron actualizar los productos. Por favor, intente de nuevo.',
+        description:
+          'No se pudieron actualizar los productos. Por favor, intente de nuevo.',
         variant: 'destructive',
       });
     }
@@ -216,7 +218,7 @@ export default function ProductsPage() {
 
   return (
     <div className='flex min-h-screen w-full flex-col bg-muted/40'>
-      <div className='flex flex-col sm:gap-4 p-12'>
+      <div className='flex flex-col'>
         <main className='flex flex-col-reverse xl:flex-row items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8'>
           <div
             className={`w-full ${
