@@ -4,6 +4,13 @@ import {
   PaginatedResponse,
 } from '@/lib/supabase/services/BaseService';
 
+export enum TaxType {
+  EXENTO = 'EXENTO',      // 0% (Exento)
+  EXONERADO = 'EXONERADO', // 0% (Exonerado) 
+  GRAVADO_15 = 'GRAVADO_15', // 15%
+  GRAVADO_18 = 'GRAVADO_18', // 18%
+}
+
 export interface Product {
   id: string;
   company_id: string;
@@ -11,6 +18,7 @@ export interface Product {
   description: string;
   unit_cost: number;
   is_service: boolean;
+  tax_type: TaxType;
   quantity_in_stock?: number;
   created_at?: string;
   updated_at?: string;

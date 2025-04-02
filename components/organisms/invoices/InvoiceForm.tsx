@@ -53,6 +53,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { companyService } from '@/lib/supabase/services/company';
 import { differenceInCalendarDays } from 'date-fns';
 import { PaymentMethodSelect } from '@/components/molecules/PaymentMethodSelect';
+import { TaxType } from '@/lib/supabase/services/product';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import * as R from 'ramda';
 
 interface InvoiceFormProps {
@@ -296,15 +304,48 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
       (sum, item) => sum + (item.quantity * item.unit_cost - item.discount),
       0
     );
-    const tax = isExento ? 0 : subtotal * 0.15; // Modified this line
+
+    // Calculate taxes based on individual product tax types
+    const taxExento = watchInvoiceItems.reduce((sum, item) => {
+      if (item.tax_type === TaxType.EXENTO) {
+        return sum + (item.quantity * item.unit_cost - item.discount);
+      }
+      return sum;
+    }, 0);
+
+    const taxExonerado = watchInvoiceItems.reduce((sum, item) => {
+      if (item.tax_type === TaxType.EXONERADO) {
+        return sum + (item.quantity * item.unit_cost - item.discount);
+      }
+      return sum;
+    }, 0);
+
+    const taxGravado15 = watchInvoiceItems.reduce((sum, item) => {
+      if (item.tax_type === TaxType.GRAVADO_15) {
+        return sum + (item.quantity * item.unit_cost - item.discount);
+      }
+      return sum;
+    }, 0);
+
+    const taxGravado18 = watchInvoiceItems.reduce((sum, item) => {
+      if (item.tax_type === TaxType.GRAVADO_18) {
+        return sum + (item.quantity * item.unit_cost - item.discount);
+      }
+      return sum;
+    }, 0);
+
+    const tax = (taxGravado15 * 0.15) + (taxGravado18 * 0.18);
     const total = subtotal + tax;
 
     setValue('subtotal', subtotal);
     setValue('tax', tax);
+    setValue('tax_exento', taxExento);
+    setValue('tax_exonerado', taxExonerado);
+    setValue('tax_gravado_15', taxGravado15);
+    setValue('tax_gravado_18', taxGravado18);
     setValue('total', total);
     setValue('numbers_to_letters', numberToWords(total));
-    setValue('tax_exento', isExento ? subtotal : 0);
-  }, [watchInvoiceItems, setValue, isExento]);
+  }, [watchInvoiceItems, setValue]);
 
   const onSubmit = (data: Invoice) => {
     if (data.invoice_items.length < 1)
@@ -618,6 +659,31 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                         <Label>Descuento</Label>
                         <DiscountInput index={index} control={control} />
                       </div>
+
+                      <div className='space-y-2'>
+                        <Label>Tipo de Impuesto</Label>
+                        <Controller
+                          name={`invoice_items.${index}.tax_type`}
+                          control={control}
+                          defaultValue={TaxType.GRAVADO_15}
+                          render={({ field }) => (
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Selecciona el tipo de impuesto" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value={TaxType.EXENTO}>0% (Exento)</SelectItem>
+                                <SelectItem value={TaxType.EXONERADO}>0% (Exonerado)</SelectItem>
+                                <SelectItem value={TaxType.GRAVADO_15}>15%</SelectItem>
+                                <SelectItem value={TaxType.GRAVADO_18}>18%</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                      </div>
                     </div>
                   </CardContent>
                   <CardFooter className='p-4 bg-muted/50'>
@@ -781,14 +847,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
             <>
               Última modificación:{' '}
               <time dateTime={watch('updated_at')} suppressHydrationWarning>
-                {new Date(watch('updated_at')).toLocaleString()}
+                {new Date(watch('updated_at')).toLocaleString('es-HN')}
               </time>
             </>
           ) : (
             <>
               Factura creada:{' '}
               <time dateTime={watch('created_at')} suppressHydrationWarning>
-                {new Date(watch('created_at')).toLocaleString()}
+                {new Date(watch('created_at')).toLocaleString('es-HN')}
               </time>
             </>
           )}

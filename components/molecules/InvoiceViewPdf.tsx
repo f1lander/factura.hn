@@ -384,7 +384,8 @@ export const InvoicePDF = ({
           ))}
         </View>
 
-        {/* Totals Section */}
+        {/* Totals Section and Tax Summary */}
+
         <View style={styles.totalsSection}>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Sub Total</Text>
