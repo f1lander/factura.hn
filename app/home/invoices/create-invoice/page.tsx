@@ -7,9 +7,6 @@ import { useInvoicesStore } from '@/store/invoicesStore';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FormProvider, Resolver, useForm } from 'react-hook-form';
 import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DeliveryConfirmDialog } from '@/components/organisms/invoices/DeliveryConfirmDialog';
 import { productService } from '@/lib/supabase/services/product';
@@ -18,6 +15,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/lib/supabase/services/company';
 import { PaymentMethod } from '@/lib/supabase/services/paymentMethod';
+import { EyeIcon, PlusCircleIcon } from 'lucide-react';
 
 const invoiceSchema = yup.object().shape({
   id: yup.string().optional(),
@@ -390,10 +388,12 @@ export default function CreateInvoicePage() {
       <section className='sm:px-2 lg:px-7 xl:px-10 flex gap-5 w-full pt-4'>
         <div className='w-full xl:hidden'>
           <Tabs defaultValue='invoiceForm' className='px-auto w-full' id='tabs'>
-            <TabsList id='tabslist'>
-              <TabsTrigger value='invoiceForm'>Crear factura</TabsTrigger>
-              <TabsTrigger value='invoicePreview'>
-                Previsualizar factura
+            <TabsList id='tabslist' className='w-full'>
+              <TabsTrigger value='invoiceForm' className='w-full'>
+                <PlusCircleIcon className='h-4 w-4 mr-2' /> Crear factura
+              </TabsTrigger>
+              <TabsTrigger value='invoicePreview' className='w-full'>
+                <EyeIcon className='h-4 w-4 mr-2' /> Previsualizar factura
               </TabsTrigger>
             </TabsList>
             <TabsContent value='invoiceForm'>
@@ -409,15 +409,15 @@ export default function CreateInvoicePage() {
           </Tabs>
         </div>
 
-        <div className='hidden xl:flex xl:w-full xl:gap-5'>
-          <div className='w-1/2'>
+        <div className='hidden xl:flex xl:w-full xl:gap-5 mb-2'>
+          <div className='w-1/2 border'>
             <InvoiceForm
               onSave={handleSaveInvoice}
               isEditing={!!invoiceId}
               invoice={currentInvoice}
             />
           </div>
-          <div className='w-1/2'>
+          <div className='w-1/2 border'>
             <InvoicePreview />
           </div>
         </div>

@@ -242,8 +242,8 @@ export default function Invoices() {
           }
         }
         return toast({
-          title: 'Status Updated',
-          description: `Successfully updated ${invoiceIds.length} invoice(s) to ${newStatus}`,
+          title: 'Estado Actualizado',
+          description: `Se actualizaron correctamente ${invoiceIds.length} factura(s) a ${newStatus}`,
         });
       }
 
@@ -252,14 +252,14 @@ export default function Invoices() {
         // Refresh the invoices list after updating
         // fetchInvoices();
         toast({
-          title: 'Status Updated',
-          description: `Successfully updated ${invoiceIds.length} invoice(s) to ${newStatus}`,
+          title: 'Estado Actualizado',
+          description: `Se actualizaron correctamente ${invoiceIds.length} factura(s) a ${newStatus}`,
         });
       } catch (error) {
         console.error('Error updating invoice statuses:', error);
         toast({
           title: 'Error',
-          description: 'Failed to update invoice statuses. Please try again.',
+          description: 'No se pudieron actualizar los estados de las facturas. Por favor, inténtalo de nuevo.',
           variant: 'destructive',
         });
       }

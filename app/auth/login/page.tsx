@@ -4,7 +4,7 @@ import React from 'react';
 import { LoginForm } from '@/components/login-form';
 import { InvoiceQuote } from '@/components/invoice-quote';
 import Image from 'next/image';
-import { FacturaLogo } from '@/components/molecules/Navigation';
+import { FacturaLogo } from '@/components/atoms/FacturaLogo';
 const LoginPage: React.FC = () => {
   return (
     <div className="flex h-screen">
