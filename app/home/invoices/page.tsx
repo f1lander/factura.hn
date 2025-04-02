@@ -25,14 +25,80 @@ import { useCompanyStore } from '@/store/companyStore';
 import { useQuery } from '@tanstack/react-query';
 import { companyService } from '@/lib/supabase/services/company';
 
+const convertInvoicesToCSV = (invoices: Invoice[]) => {
+  const headers = [
+    'ID',
+    'Fecha de Emisión',
+    'Status',
+    'Total de Productos (Sin ISV)',
+    'Total de Servicios (Sin ISV)',
+    'ISV 15%',
+    'ISV 18%',
+    'Total',
+    'Método de Pago',
+  ].join(',');
+
+  const rows = invoices.map((invoice) => {
+    // Calculate totals for products and services
+    const productsTotal = invoice.invoice_items
+      .filter((item) => !item.is_service)
+      .reduce((sum, item) => sum + item.unit_cost * item.quantity, 0);
+
+    const servicesTotal = invoice.invoice_items
+      .filter((item) => item.is_service)
+      .reduce((sum, item) => sum + item.unit_cost * item.quantity, 0);
+
+    // Calculate ISV by rate
+    const isv15Total = invoice.tax_gravado_15 || 0;
+    // .filter((item) => item. === 15)
+    // .reduce((sum, item) => sum + item.unit_cost * item.quantity * 0.15, 0);
+
+    const isv18Total = invoice.tax_gravado_18 || 0;
+    // .filter((item) => item.tax_rate === 18)
+    // .reduce((sum, item) => sum + item.unit_cost * item.quantity * 0.18, 0);
+
+    return [
+      invoice.proforma_number || invoice.invoice_number,
+      new Date(invoice.date).toLocaleDateString('es-HN'),
+      invoice.status,
+      productsTotal.toFixed(2),
+      servicesTotal.toFixed(2),
+      isv15Total.toFixed(2),
+      isv18Total.toFixed(2),
+      invoice.total.toFixed(2),
+      invoice.payment_method?.name || 'N/A',
+    ].join(',');
+  });
+
+  return [headers, ...rows].join('\n');
+};
+
 export default function Invoices() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const { data: companyId } = useQuery(['companyId'], () =>
     companyService.getCompanyId()
   );
+  const [dateRange, setDateRange] = useState<{
+    start: Date | undefined;
+    end: Date | undefined;
+  }>({ start: undefined, end: undefined });
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
 
   const { data: allInvoices, isLoading: areInvoicesLoading } = useQuery(
-    ['allInvoices', companyId],
-    () => invoiceService.getInvoices(),
+    [
+      'allInvoices',
+      companyId,
+      dateRange,
+      selectedStatuses,
+      debouncedSearchTerm,
+    ],
+    () =>
+      invoiceService.getInvoices({
+        dateRange: dateRange,
+        statuses: selectedStatuses,
+        searchTerm: debouncedSearchTerm,
+      }),
     { placeholderData: [], enabled: !!companyId }
   );
 
@@ -42,12 +108,6 @@ export default function Invoices() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | undefined>();
   const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [dateRange, setDateRange] = useState<{
-    start: Date | undefined;
-    end: Date | undefined;
-  }>({ start: undefined, end: undefined });
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const { company } = useCompanyStore();
   const [isInvoiceContentReady, setIsInvoiceContentReady] = useState(false);
 
@@ -58,7 +118,6 @@ export default function Invoices() {
       setIsInvoiceContentReady(false);
     }
   }, [isOpen, company]);
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   useEffect(() => {
     const initializeData = async () => {
@@ -72,38 +131,45 @@ export default function Invoices() {
 
     initializeData();
   }, [allInvoices]);
-  const applyFilters = useCallback(() => {
-    let filtered: Invoice[] = [];
-    if (!areInvoicesLoading && allInvoices) filtered = allInvoices;
 
-    if (debouncedSearchTerm) {
-      const lowerSearchTerm = debouncedSearchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (invoice) =>
-          invoice.invoice_number.toLowerCase().includes(lowerSearchTerm) ||
-          invoice.customers.name.toLowerCase().includes(lowerSearchTerm) ||
-          invoice.total.toString().includes(lowerSearchTerm) ||
-          invoice.invoice_items.some((item) =>
-            item.description.toLowerCase().includes(lowerSearchTerm)
-          )
-      );
-    }
+  // const applyFilters = useCallback(() => {
+  //   let filtered: Invoice[] = [];
+  //   if (!areInvoicesLoading && allInvoices) filtered = allInvoices;
 
-    if (selectedStatuses.length > 0) {
-      filtered = filtered.filter((invoice) => {
-        const invoiceStatus = invoice.status?.toLowerCase() || 'pending'; // Default to 'pending' if status is undefined
-        return selectedStatuses.some(
-          (status) => status.toLowerCase() === invoiceStatus
-        );
-      });
-    }
+  //   if (debouncedSearchTerm) {
+  //     const lowerSearchTerm = debouncedSearchTerm.toLowerCase();
+  //     filtered = filtered.filter(
+  //       (invoice) =>
+  //         invoice.invoice_number.toLowerCase().includes(lowerSearchTerm) ||
+  //         invoice.customers.name.toLowerCase().includes(lowerSearchTerm) ||
+  //         invoice.total.toString().includes(lowerSearchTerm) ||
+  //         invoice.invoice_items.some((item) =>
+  //           item.description.toLowerCase().includes(lowerSearchTerm)
+  //         )
+  //     );
+  //   }
 
-    setFilteredInvoices(filtered);
-  }, [allInvoices, debouncedSearchTerm, selectedStatuses, areInvoicesLoading]);
+  //   if (selectedStatuses.length > 0) {
+  //     filtered = filtered.filter((invoice) => {
+  //       const invoiceStatus = invoice.status?.toLowerCase() || 'pending'; // Default to 'pending' if status is undefined
+  //       return selectedStatuses.some(
+  //         (status) => status.toLowerCase() === invoiceStatus
+  //       );
+  //     });
+  //   }
 
-  useEffect(() => {
-    applyFilters();
-  }, [allInvoices, debouncedSearchTerm, selectedStatuses, applyFilters]);
+  //   setFilteredInvoices(filtered);
+  // }, [allInvoices, debouncedSearchTerm, selectedStatuses, areInvoicesLoading]);
+
+  // useEffect(() => {
+  //   applyFilters();
+  // }, [
+  //   allInvoices,
+  //   debouncedSearchTerm,
+  //   selectedStatuses,
+  //   dateRange,
+  //   applyFilters,
+  // ]);
 
   // STARTS HERE
 
@@ -164,13 +230,59 @@ export default function Invoices() {
   const handleStatusFilterChange = (statuses: string[]) => {
     setSelectedStatuses(statuses);
   };
-  const handleDateSearch = () => {
-    if (dateRange.start && dateRange.end) {
-      const filtered = filteredInvoices.filter((invoice) => {
-        const invoiceDate = new Date(invoice.date);
-        return invoiceDate >= dateRange.start! && invoiceDate <= dateRange.end!;
+  // const handleDateSearch = () => {
+  //   if (dateRange.start && dateRange.end) {
+  //     const filtered = filteredInvoices.filter((invoice) => {
+  //       const invoiceDate = new Date(invoice.date);
+  //       return invoiceDate >= dateRange.start! && invoiceDate <= dateRange.end!;
+  //     });
+  //     setFilteredInvoices(filtered);
+  //   }
+  // };
+
+  const handleExportCSV = () => {
+    try {
+      if (!allInvoices?.length) {
+        return toast({
+          title: 'No hay facturas',
+          description: 'No hay facturas para exportar',
+          variant: 'destructive',
+        });
+      }
+
+      const csvContent = convertInvoicesToCSV(allInvoices);
+      const blob = new Blob([csvContent], {
+        type: 'text/csv;charset=utf-8;',
       });
-      setFilteredInvoices(filtered);
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const startDate = dateRange.start?.toISOString().split('T')[0];
+      const endDate = dateRange.end?.toISOString().split('T')[0];
+
+      link.href = url;
+      link.setAttribute(
+        'download',
+        `${!startDate && !endDate ? 'todas-las-' : ''}facturas${
+          startDate ? `-desde-${startDate}` : ''
+        }${endDate ? `-hasta-${endDate}` : ''}.csv`
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Exportación exitosa',
+        description: 'Las facturas han sido exportadas correctamente',
+      });
+    } catch (error) {
+      console.error('Error exporting invoices:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo exportar las facturas',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -325,7 +437,10 @@ export default function Invoices() {
             onDateRangeChange={handleDateRangeChange}
             onStatusFilterChange={handleStatusFilterChange}
             selectedStatuses={selectedStatuses}
-            onDateSearch={handleDateSearch}
+            handleExportCSV={
+              filteredInvoices.length > 0 ? handleExportCSV : undefined
+            }
+            // onDateSearch={handleDateSearch}
             onUpdateStatus={handleUpdateStatus}
           />
         </main>
