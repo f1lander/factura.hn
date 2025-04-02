@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import {
   CheckCircle,
   ChevronLeft,
@@ -18,7 +18,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-
+import { Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -65,6 +65,7 @@ import {
 } from '@/components/ui/tooltip';
 import { DeliveryConfirmDialog } from '../organisms/invoices/DeliveryConfirmDialog';
 import dynamic from 'next/dynamic';
+import { startOfMonth } from 'date-fns';
 
 const InvoiceViewPdf = dynamic(
   () =>
@@ -146,7 +147,8 @@ export interface InvoicesTableProps {
   ) => void;
   onStatusFilterChange: (statuses: string[]) => void;
   selectedStatuses: string[];
-  onDateSearch: () => void;
+  handleExportCSV?: () => void;
+  onDateSearch?: () => void;
   onUpdateStatus: (invoiceIds: string[], newStatus: string) => void;
 }
 
@@ -264,17 +266,25 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
   onSearch,
   onDateRangeChange,
   onStatusFilterChange,
+  handleExportCSV,
   onDateSearch,
   onUpdateStatus,
   selectedStatuses,
 }) => {
+  const [isTransitioning, startTransition] = useTransition();
   const [searchTerm, setSearchTerm] = useState('');
-  const [startDate, setStartDate] = useState<Date | undefined>();
-  const [endDate, setEndDate] = useState<Date | undefined>();
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    startOfMonth(new Date())
+  );
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [companyData, setCompanyData] = useState<Company | null>(null);
+
+  useEffect(() => {
+    onDateRangeChange(startDate, endDate);
+  }, [startDate, endDate]);
 
   useEffect(() => {
     const fetchCompanyData = async () => {
@@ -312,9 +322,12 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
   };
 
   const handleOnClearDates = () => {
-    setStartDate(undefined);
-    setEndDate(undefined);
-    onDateRangeChange(undefined, undefined);
+    startTransition(() => {
+      setStartDate(undefined);
+      setEndDate(undefined);
+      onDateRangeChange(undefined, undefined);
+      onStatusFilterChange([]);
+    });
   };
 
   const handleSelectAllChange = (checked: boolean) => {
@@ -373,10 +386,20 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
         </div>
         <div className='flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 w-full lg:w-2/3'>
           <div className='flex flex-row space-x-2 w-full md:w-3/5'>
-            <DatePicker onChange={handleStartDateChange} className='w-1/2' />
-            <DatePicker onChange={handleEndDateChange} className='w-1/2' />
+            <DatePicker
+              value={startDate}
+              onChange={handleStartDateChange}
+              className='w-1/2'
+              placeholder='Fecha de inicio'
+            />
+            <DatePicker
+              value={endDate}
+              onChange={handleEndDateChange}
+              className='w-1/2'
+              placeholder='Fecha de fin'
+            />
           </div>
-          <div className='flex flex-row space-x-2 w-full md:w-2/5 items-center'>
+          <div className='flex flex-row space-x-2 w-full md:w-2/5 items-center justify-end'>
             <Button
               size='sm'
               className='w-1/2 gap-2 bg-white text-foreground border-2 border-blue-300 hover:bg-blue-50'
@@ -385,14 +408,24 @@ export const InvoicesTable: React.FC<InvoicesTableProps> = ({
               Limpiar Filtros
               <FilterXIcon className='h-4 w-4' />
             </Button>
-            <Button
+            {handleExportCSV && (
+              <Button
+                variant='outline'
+                onClick={handleExportCSV}
+                className='flex items-center gap-2'
+              >
+                <Download className='h-4 w-4' />
+                Exportar CSV
+              </Button>
+            )}
+            {/* <Button
               size='sm'
               className='w-1/2 gap-2 bg-white text-foreground border-2 border-violet-300 hover:bg-violet-50'
               onClick={onDateSearch}
             >
               Buscar
               <Search className='h-4 w-4' />
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>
