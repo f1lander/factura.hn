@@ -35,7 +35,7 @@ export default function Dashboard() {
   const applyFilters = useCallback(() => {
     let filtered = allInvoices;
     if (areInvoicesLoading) filtered = [];
-    
+
     // Apply search filter
     if (debouncedSearchTerm && filtered) {
       const lowerSearchTerm = debouncedSearchTerm.toLowerCase();
@@ -70,17 +70,15 @@ export default function Dashboard() {
 
   if (areInvoicesLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-pulse flex flex-col items-center space-y-4">
-          <div className="h-12 w-32 bg-gray-200 rounded"></div>
-          <div className="h-64 w-full max-w-4xl bg-gray-200 rounded"></div>
-          <div className="h-12 w-64 bg-gray-200 rounded"></div>
+      <div className='flex justify-center items-center min-h-screen'>
+        <div className='animate-pulse flex flex-col items-center space-y-4'>
+          <div className='h-12 w-32 bg-gray-200 rounded'></div>
+          <div className='h-64 w-full max-w-4xl bg-gray-200 rounded'></div>
+          <div className='h-12 w-64 bg-gray-200 rounded'></div>
         </div>
       </div>
     );
   }
-
-  console.log(filteredInvoices);
 
   return (
     <div className='flex min-h-screen w-full flex-col bg-muted/40'>
