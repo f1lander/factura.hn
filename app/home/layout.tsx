@@ -23,6 +23,7 @@ import {
   FilePlus,
   FileEdit,
 } from 'lucide-react';
+import { NavUser } from '@/components/app-sidebar/nav-user';
 
 // Enhanced function to get page title and corresponding icon
 const getPageInfo = (pathname: string) => {
@@ -320,14 +321,22 @@ function MainContent({
       </div>
 
       <SidebarInset className='flex w-full flex-col overflow-hidden'>
-        <header className='flex h-[56px] shrink-0 items-center gap-4 border-b px-4'>
+        <header className='flex h-[56px] shrink-0 items-center justify-between gap-4 border-b px-4'>
           {/* Only show sidebar trigger on desktop */}
-          <div className='hidden md:block'>
-            <SidebarTrigger className='-ml-1' onClick={() => toggleSidebar()} />
+          <div className='flex flex-row gap-4'>
+            <div id='left-items' className='hidden md:block'>
+              <SidebarTrigger
+                className='-ml-1'
+                onClick={() => toggleSidebar()}
+              />
+            </div>
+            <div className='flex items-center gap-2'>
+              <PageIcon className='h-5 w-5 text-primary' aria-hidden='true' />
+              <h1 className='text-lg font-semibold'>{pageTitle}</h1>
+            </div>
           </div>
-          <div className='flex items-center gap-2'>
-            <PageIcon className='h-5 w-5 text-primary' aria-hidden='true' />
-            <h1 className='text-lg font-semibold'>{pageTitle}</h1>
+          <div id='right-items' className='md:hidden'>
+            <NavUser className='p-0' triggerClassName='pr-0' />
           </div>
         </header>
 
