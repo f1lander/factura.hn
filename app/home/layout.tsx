@@ -22,6 +22,7 @@ import {
   PlusCircle,
   FilePlus,
   FileEdit,
+  PlusIcon,
 } from 'lucide-react';
 import { NavUser } from '@/components/app-sidebar/nav-user';
 
@@ -304,6 +305,7 @@ function MainContent({
   pageTitle: string;
   pageIcon: React.ElementType;
 }) {
+  const pathname = usePathname();
   const { isMobile, setOpen, toggleSidebar } = useSidebar();
 
   // Auto-collapse sidebar on mobile
@@ -334,6 +336,22 @@ function MainContent({
               <PageIcon className='h-5 w-5 text-primary' aria-hidden='true' />
               <h1 className='text-lg font-semibold'>{pageTitle}</h1>
             </div>
+            {pathname !== '/home/invoices/create-invoice' && (
+              <Link
+                key='/home/invoices/create-invoice'
+                href='/home/invoices/create-invoice'
+                className='hidden md:flex flex-row items-center justify-center'
+              >
+                <div className='flex items-center justify-center w-7 h-7 z-10 bg-facturaBlue text-primary-foreground rounded-full shadow-lg'>
+                  <span className='text-2xl font-bold'>
+                    <PlusIcon />
+                  </span>
+                </div>
+                <span className='relative text-xs pl-5 pr-4 -left-4 text-muted-foreground bg-facturaBlue text-primary-foreground rounded-full shadow-lg'>
+                  Crear Factura
+                </span>
+              </Link>
+            )}
           </div>
           <div id='right-items' className='md:hidden'>
             <NavUser className='p-0' triggerClassName='pr-0' />

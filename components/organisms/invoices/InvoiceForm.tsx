@@ -3,7 +3,14 @@
 import AsyncSelect from 'react-select/async';
 import React, { useState, useEffect } from 'react';
 import { InputMask } from '@react-input/mask';
-import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import {
   useFieldArray,
   Controller,
@@ -143,8 +150,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
           const nextInvoiceNumber = data?.error
             ? data?.latest_invoice_number
             : invoiceService.generateNextInvoiceNumber(
-              data?.latest_invoice_number
-            );
+                data?.latest_invoice_number
+              );
           setValue('invoice_number', nextInvoiceNumber);
         }
       },
@@ -259,8 +266,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
         latestInvoiceNumber?.error
           ? latestInvoiceNumber?.latest_invoice_number
           : invoiceService.generateNextInvoiceNumber(
-            latestInvoiceNumber?.latest_invoice_number
-          )
+              latestInvoiceNumber?.latest_invoice_number
+            )
       );
     }
   }, [isProforma, setValue, latestInvoiceNumber]);
@@ -334,7 +341,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
       return sum;
     }, 0);
 
-    const tax = (taxGravado15 * 0.15) + (taxGravado18 * 0.18);
+    const tax = taxGravado15 * 0.15 + taxGravado18 * 0.18;
     const total = subtotal + tax;
 
     setValue('subtotal', subtotal);
@@ -395,7 +402,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 setIsResetDialogOpen(true);
               }}
             >
-              <PlusCircleIcon className="h-4 w-4 mr-2" />
+              <PlusCircleIcon className='h-4 w-4 mr-2' />
               Nueva Factura
             </Button>
           </div>
@@ -573,7 +580,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
               >
                 <div className='flex flex-col gap-2'>
                   <CardTitle className='flex items-center text-sm font-medium gap-2'>
-                    {watchInvoiceItems[index]?.is_service ? 'Servicio' : 'Producto'} #{index + 1}
+                    {watchInvoiceItems[index]?.is_service
+                      ? 'Servicio'
+                      : 'Producto'}{' '}
+                    #{index + 1}
                     <Button
                       type='button'
                       variant='ghost'
@@ -610,7 +620,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     </div>
                   )}
                 </div>
-
               </CardHeader>
               {expandedCardIndex === index && (
                 <>
@@ -671,14 +680,22 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                               onValueChange={field.onChange}
                               defaultValue={field.value}
                             >
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Selecciona el tipo de impuesto" />
+                              <SelectTrigger className='w-full'>
+                                <SelectValue placeholder='Selecciona el tipo de impuesto' />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value={TaxType.EXENTO}>0% (Exento)</SelectItem>
-                                <SelectItem value={TaxType.EXONERADO}>0% (Exonerado)</SelectItem>
-                                <SelectItem value={TaxType.GRAVADO_15}>15%</SelectItem>
-                                <SelectItem value={TaxType.GRAVADO_18}>18%</SelectItem>
+                                <SelectItem value={TaxType.EXENTO}>
+                                  0% (Exento)
+                                </SelectItem>
+                                <SelectItem value={TaxType.EXONERADO}>
+                                  0% (Exonerado)
+                                </SelectItem>
+                                <SelectItem value={TaxType.GRAVADO_15}>
+                                  15%
+                                </SelectItem>
+                                <SelectItem value={TaxType.GRAVADO_18}>
+                                  18%
+                                </SelectItem>
                               </SelectContent>
                             </Select>
                           )}
@@ -718,19 +735,23 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
         </DialogContent>
       </Dialog>
       <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
-        <DialogContent className="w-[90%] lg:w-[425px]">
+        <DialogContent className='w-[90%] lg:w-[425px]'>
           <DialogHeader>
             <DialogTitle>¿Crear nueva factura?</DialogTitle>
             <DialogDescription>
-              Esta acción limpiará todos los datos de la factura actual. Los cambios no guardados se perderán.
+              Esta acción limpiará todos los datos de la factura actual. Los
+              cambios no guardados se perderán.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end gap-3 mt-4">
-            <Button variant="outline" onClick={() => setIsResetDialogOpen(false)}>
+          <div className='flex justify-end gap-3 mt-4'>
+            <Button
+              variant='outline'
+              onClick={() => setIsResetDialogOpen(false)}
+            >
               Cancelar
             </Button>
             <Button
-              variant="destructive"
+              variant='destructive'
               onClick={() => {
                 reset();
                 if (isProforma) {
@@ -750,8 +771,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     latestInvoiceNumber?.error
                       ? (latestInvoiceNumber?.latest_invoice_number as string)
                       : invoiceService.generateNextInvoiceNumber(
-                        latestInvoiceNumber?.latest_invoice_number as string
-                      )
+                          latestInvoiceNumber?.latest_invoice_number as string
+                        )
                   );
                 }
                 setIsResetDialogOpen(false);
@@ -810,7 +831,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 Factura Proforma
               </label>
             </div>
-            <div className='flex items-center space-x-2'>
+            {/* <div className='flex items-center space-x-2'>
               <Controller
                 name='exento'
                 control={control}
@@ -828,7 +849,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
               >
                 Exenta
               </label>
-            </div>
+            </div> */}
           </div>
         </div>
         {/* {(isProforma || isExento) && (
