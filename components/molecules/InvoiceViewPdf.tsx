@@ -335,7 +335,7 @@ export const InvoicePDF = ({
         )}
 
         <Text style={styles.companyInfoText}>
-          <Text style={styles.companyInfoTextBold}>Metodo de Paggo: </Text>
+          <Text style={styles.companyInfoTextBold}>Metodo de Pago: </Text>
           {invoice?.payment_method?.name || 'No especificado'}
         </Text>
         <View style={styles.customerSection}>
