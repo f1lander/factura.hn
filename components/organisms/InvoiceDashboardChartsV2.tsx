@@ -1,5 +1,5 @@
-"use client";
-import React, { useState } from 'react';
+'use client';
+import React, { useCallback, useState, useTransition } from 'react';
 import {
   Card,
   CardContent,
@@ -20,9 +20,9 @@ import {
   Line,
   LineChart,
   ResponsiveContainer,
-  LabelList
+  LabelList,
 } from 'recharts';
-  import {
+import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
@@ -33,8 +33,10 @@ import { Button } from '@/components/ui/button';
 import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { DatePicker } from '@/components/ui/date-picker';
-import { TrendingUp, TrendingDown, CalendarIcon } from 'lucide-react';
+import { TrendingUp, TrendingDown, CalendarIcon, FileText } from 'lucide-react';
+import GenericEmptyState from '../molecules/GenericEmptyState';
 
+type ActiveInvoiceType = '' | 'total' | 'paid' | 'pending' | 'cancelled';
 
 const SkeletonLoader = () => (
   <div className='space-y-2'>
@@ -51,97 +53,117 @@ const ChartSkeleton = () => (
 
 // Define chart colors using CSS variables
 const COLORS = {
-  paid: "var(--color-paid)",          // Primary blue
-  pending: "var(--color-pending)",    // Light blue
-  cancelled: "var(--color-cancelled)",// Medium blue
-  product: "var(--color-product)",    // Primary blue
-  service: "var(--color-service)",    // Light blue
-  revenue: "var(--color-revenue)"     // Primary blue
+  paid: 'var(--color-paid)', // Primary blue
+  pending: 'var(--color-pending)', // Light blue
+  cancelled: 'var(--color-cancelled)', // Medium blue
+  product: 'var(--color-product)', // Primary blue
+  service: 'var(--color-service)', // Light blue
+  revenue: 'var(--color-revenue)', // Primary blue
 };
 
 // Define chart configs
 const invoiceStatusChartConfig = {
   pending: {
-    label: "Pendiente",
-    color: "hsl(var(--chart-2))",
+    label: 'Pendiente',
+    color: 'hsl(var(--chart-2))',
   },
   paid: {
-    label: "Pagada",
-    color: "hsl(var(--chart-1))",
+    label: 'Pagada',
+    color: 'hsl(var(--chart-1))',
   },
   cancelled: {
-    label: "Cancelada",
-    color: "hsl(var(--chart-3))",
+    label: 'Cancelada',
+    color: 'hsl(var(--chart-3))',
   },
 };
 
 const productServiceChartConfig = {
   product: {
-    label: "Productos",
-    color: "hsl(var(--chart-1))",
+    label: 'Productos',
+    color: 'hsl(var(--chart-1))',
   },
   service: {
-    label: "Servicios",
-    color: "hsl(var(--chart-2))",
+    label: 'Servicios',
+    color: 'hsl(var(--chart-2))',
   },
 };
 
 const revenueChartConfig = {
   value: {
-    label: "Ingresos",
-    color: "hsl(var(--chart-1))",
+    label: 'Ingresos',
+    color: 'hsl(var(--chart-1))',
   },
 };
 
 // Define an additional chart config for the interactive invoice chart
 const invoiceInteractiveChartConfig = {
   invoices: {
-    label: "Facturas",
+    label: 'Facturas',
   },
   pending: {
-    label: "Pendiente",
-    color: "hsl(var(--chart-2))",
+    label: 'Pendiente',
+    color: 'hsl(var(--chart-2))',
   },
   paid: {
-    label: "Pagada",
-    color: "hsl(var(--chart-1))",
+    label: 'Pagada',
+    color: 'hsl(var(--chart-1))',
   },
   cancelled: {
-    label: "Cancelada",
-    color: "hsl(var(--chart-3))",
+    label: 'Cancelada',
+    color: 'hsl(var(--chart-3))',
   },
   total: {
-    label: "Total",
-    color: "hsl(var(--chart-4))",
+    label: 'Total',
+    color: 'hsl(var(--chart-4))',
   },
 };
 
-const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
-  const [dateRange, setDateRange] = useState<{ start: Date | undefined; end: Date | undefined }>({
-    start: startOfMonth(new Date()),
-    end: endOfMonth(new Date()),
-  });
+const InvoiceDashboardChartsV2 = ({
+  invoices = [],
+  dateRange,
+  isLoading,
+  setDateRange,
+  setSelectedStatuses,
+}: {
+  invoices: Invoice[];
+  isLoading: boolean;
+  dateRange: {
+    start: Date | undefined;
+    end: Date | undefined;
+  };
+  setDateRange: (dateRange: {
+    start: Date | undefined;
+    end: Date | undefined;
+  }) => void;
+  setSelectedStatuses: (selectedStatuses: string[]) => void;
+}) => {
+  const [isTransitioning, startTransition] = useTransition();
 
   // New state for the interactive chart
-  const [activeInvoiceType, setActiveInvoiceType] =
-    React.useState<'paid' | 'pending' | 'cancelled' | 'total'>('total');
+  const [activeInvoiceType, _setActiveInvoiceType] =
+    React.useState<ActiveInvoiceType>('total');
 
-  // Filter invoices based on date range
-  const getFilteredInvoices = () => {
-    if (!dateRange.start || !dateRange.end) return invoices;
-
-    return invoices.filter(invoice => {
-      const invoiceDate = new Date(invoice.date);
-      return invoiceDate >= dateRange.start! && invoiceDate <= dateRange.end!;
-    });
-  };
-
-  const filteredInvoices = getFilteredInvoices();
+  const setActiveInvoiceType = useCallback(
+    (newActiveInvoiceType: ActiveInvoiceType) => {
+      // Calculate the selected statuses based on the activeInvoiceType
+      const selectedStatuses =
+        newActiveInvoiceType === 'total' ? [] : [newActiveInvoiceType];
+      // Update the state
+      startTransition(() => {
+        setSelectedStatuses(selectedStatuses);
+        _setActiveInvoiceType(newActiveInvoiceType);
+      });
+    },
+    [setSelectedStatuses]
+  );
 
   // New function to get daily invoice data for the interactive chart
   const getDailyInvoiceData = () => {
     // Create a map to store invoice counts by date
-    const dailyData: Record<string, { paid: number; pending: number; cancelled: number; total: number }> = {};
+    const dailyData: Record<
+      string,
+      { paid: number; pending: number; cancelled: number; total: number }
+    > = {};
 
     // Get date range to ensure we have entries for all days
     const start = dateRange.start || new Date();
@@ -156,7 +178,7 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
     }
 
     // Fill with actual data
-    filteredInvoices.forEach(invoice => {
+    invoices.forEach((invoice) => {
       const dateKey = format(new Date(invoice.date), 'yyyy-MM-dd');
       if (dailyData[dateKey]) {
         dailyData[dateKey][invoice.status]++;
@@ -173,7 +195,7 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
       paid: counts.paid,
       pending: counts.pending,
       cancelled: counts.cancelled,
-      total: counts.total
+      total: counts.total,
     }));
   };
 
@@ -181,34 +203,42 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
   const invoiceTotals = React.useMemo(() => {
     const totals = {
       paid: {
-        count: filteredInvoices.filter(inv => inv.status === 'paid').length,
-        amount: filteredInvoices.filter(inv => inv.status === 'paid').reduce((acc, inv) => acc + inv.total, 0)
+        count: invoices.filter((inv) => inv.status === 'paid').length,
+        amount: invoices
+          .filter((inv) => inv.status === 'paid')
+          .reduce((acc, inv) => acc + inv.total, 0),
       },
       pending: {
-        count: filteredInvoices.filter(inv => inv.status === 'pending').length,
-        amount: filteredInvoices.filter(inv => inv.status === 'pending').reduce((acc, inv) => acc + inv.total, 0)
+        count: invoices.filter((inv) => inv.status === 'pending').length,
+        amount: invoices
+          .filter((inv) => inv.status === 'pending')
+          .reduce((acc, inv) => acc + inv.total, 0),
       },
       cancelled: {
-        count: filteredInvoices.filter(inv => inv.status === 'cancelled').length,
-        amount: filteredInvoices.filter(inv => inv.status === 'cancelled').reduce((acc, inv) => acc + inv.total, 0)
+        count: invoices.filter((inv) => inv.status === 'cancelled').length,
+        amount: invoices
+          .filter((inv) => inv.status === 'cancelled')
+          .reduce((acc, inv) => acc + inv.total, 0),
       },
       total: {
-        count: filteredInvoices.filter(inv => inv.status !== 'cancelled').length,
-        amount: filteredInvoices.filter(inv => inv.status !== 'cancelled').reduce((acc, inv) => acc + inv.total, 0)
-      }
+        count: invoices.filter((inv) => inv.status !== 'cancelled').length,
+        amount: invoices
+          .filter((inv) => inv.status !== 'cancelled')
+          .reduce((acc, inv) => acc + inv.total, 0),
+      },
     };
     return totals;
-  }, [filteredInvoices]);
+  }, [invoices]);
 
-  // Helper functions 
+  // Helper functions
   const getInvoicesByStatus = () => {
     const statusCounts = {
       pending: 0,
       paid: 0,
-      cancelled: 0
+      cancelled: 0,
     };
 
-    filteredInvoices.forEach((invoice) => {
+    invoices.forEach((invoice) => {
       if (statusCounts[invoice.status] !== undefined) {
         statusCounts[invoice.status]++;
       }
@@ -217,7 +247,11 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
     return [
       { name: 'Pendiente', value: statusCounts.pending, fill: COLORS.pending },
       { name: 'Pagada', value: statusCounts.paid, fill: COLORS.paid },
-      { name: 'Cancelada', value: statusCounts.cancelled, fill: COLORS.cancelled }
+      {
+        name: 'Cancelada',
+        value: statusCounts.cancelled,
+        fill: COLORS.cancelled,
+      },
     ];
   };
 
@@ -225,16 +259,19 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
   const getSalesByProductType = () => {
     const salesByType = { product: 0, service: 0 };
 
-    filteredInvoices.forEach(invoice => {
-      invoice.invoice_items.forEach(item => {
+    console.log({ invoices });
+
+    invoices.forEach((invoice) => {
+      invoice.invoice_items.forEach((item) => {
         const type = item.is_service ? 'service' : 'product';
+        console.log({ item });
         salesByType[type] += item.quantity * item.unit_cost;
       });
     });
 
     return [
       { name: 'Productos', value: salesByType.product, fill: COLORS.product },
-      { name: 'Servicios', value: salesByType.service, fill: COLORS.service }
+      { name: 'Servicios', value: salesByType.service, fill: COLORS.service },
     ];
   };
 
@@ -251,7 +288,7 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
     }
 
     // Fill in actual revenue data
-    filteredInvoices.forEach(invoice => {
+    invoices.forEach((invoice) => {
       const date = new Date(invoice.date);
       const monthName = format(date, 'MMM', { locale: es });
       if (monthlyRevenue[monthName] !== undefined) {
@@ -261,7 +298,7 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
 
     return Object.entries(monthlyRevenue).map(([month, revenue]) => ({
       name: month,
-      value: revenue
+      value: revenue,
     }));
   };
 
@@ -279,7 +316,7 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
     }
 
     // Fill in actual revenue data
-    filteredInvoices.forEach(invoice => {
+    invoices.forEach((invoice) => {
       const date = new Date(invoice.date);
       const dayName = format(date, 'EEE', { locale: es });
       const formattedDate = format(date, 'dd/MM');
@@ -292,7 +329,7 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
 
     return Object.entries(dailyRevenue).map(([day, revenue]) => ({
       name: day,
-      value: revenue
+      value: revenue,
     }));
   };
 
@@ -304,7 +341,7 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
       cancelled: { amount: 0, qty: 0 },
     };
 
-    filteredInvoices.forEach((invoice) => {
+    invoices.forEach((invoice) => {
       if (invoice.status !== 'cancelled') {
         data.total.amount += invoice.total;
         data.total.qty += 1;
@@ -336,7 +373,7 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
     const percentage = ((currentMonth - previousMonth) / previousMonth) * 100;
     return {
       percentage: Math.abs(percentage).toFixed(1),
-      isUp: percentage >= 0
+      isUp: percentage >= 0,
     };
   };
 
@@ -348,24 +385,28 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
       <Card className='flex-grow basis-full'>
         <CardHeader className='flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row'>
           <div className='flex flex-1 flex-col justify-center gap-1 p-4 sm:py-5 sm:max-w-[40%]'>
-            <CardTitle className="text-base sm:text-lg">Resumen de Facturas</CardTitle>
+            <CardTitle className='text-base sm:text-lg'>
+              Resumen de Facturas
+            </CardTitle>
             <div className='flex flex-col items-start gap-1 text-xs'>
-              <div className="flex gap-2 flex-wrap">
+              <div className='flex gap-2 flex-wrap'>
                 <DatePicker
                   value={dateRange.start}
-                  onChange={(date) => setDateRange({ ...dateRange, start: date })}
-                  className="w-[120px] text-xs"
+                  onChange={(date) =>
+                    setDateRange({ ...dateRange, start: date })
+                  }
+                  className='w-[120px] text-xs'
                 />
                 <DatePicker
                   value={dateRange.end}
                   onChange={(date) => setDateRange({ ...dateRange, end: date })}
-                  className="w-[120px] text-xs"
+                  className='w-[120px] text-xs'
                 />
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant='outline'
+                  size='sm'
                   onClick={setCurrentMonth}
-                  className="text-xs"
+                  className='text-xs'
                 >
                   Mes actual
                 </Button>
@@ -376,16 +417,22 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
             {['total', 'paid', 'pending', 'cancelled'].map((key) => {
               const statusKey = key as keyof typeof invoiceTotals;
               const statusColorClass =
-                statusKey === 'paid' ? 'bg-green-50 border-green-100' :
-                  statusKey === 'pending' ? 'bg-yellow-50 border-yellow-100' :
-                    statusKey === 'cancelled' ? 'bg-red-50 border-red-100' :
-                      'bg-gray-50 border-gray-100';
+                statusKey === 'paid'
+                  ? 'bg-green-50 border-green-100'
+                  : statusKey === 'pending'
+                  ? 'bg-yellow-50 border-yellow-100'
+                  : statusKey === 'cancelled'
+                  ? 'bg-red-50 border-red-100'
+                  : 'bg-gray-50 border-gray-100';
 
               const textColorClass =
-                statusKey === 'paid' ? 'text-green-700' :
-                  statusKey === 'pending' ? 'text-yellow-700' :
-                    statusKey === 'cancelled' ? 'text-red-700' :
-                      'text-gray-700';
+                statusKey === 'paid'
+                  ? 'text-green-700'
+                  : statusKey === 'pending'
+                  ? 'text-yellow-700'
+                  : statusKey === 'cancelled'
+                  ? 'text-red-700'
+                  : 'text-gray-700';
 
               return (
                 <button
@@ -400,17 +447,26 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
                     transition-all duration-150`}
                   onClick={() => setActiveInvoiceType(statusKey)}
                 >
-                  <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">
+                  <span className='text-[10px] sm:text-xs text-muted-foreground font-medium'>
                     {invoiceInteractiveChartConfig[statusKey].label}
                   </span>
-                  <div className="flex flex-col">
-                    <span data-active={activeInvoiceType === statusKey} className={`text-base sm:text-lg font-semibold leading-none sm:text-2xl 
-                    data-[active=true]:text-xl sm:data-[active=true]:text-3xl data-[active=true]:font-extrabold ${textColorClass}`}>
+                  <div className='flex flex-col'>
+                    <span
+                      data-active={activeInvoiceType === statusKey}
+                      className={`text-base sm:text-lg font-semibold leading-none sm:text-2xl 
+                    data-[active=true]:text-xl sm:data-[active=true]:text-3xl data-[active=true]:font-extrabold ${textColorClass}`}
+                    >
                       {invoiceTotals[statusKey].count.toLocaleString()}
                     </span>
-                    <span data-active={activeInvoiceType === statusKey} className={`text-xs sm:text-sm font-medium mt-1 
-                    data-[active=true]:text-sm sm:data-[active=true]:text-lg data-[active=true]:font-bold ${textColorClass}`}>
-                      L. {invoiceTotals[statusKey].amount.toLocaleString('es-HN', { minimumFractionDigits: 2 })}
+                    <span
+                      data-active={activeInvoiceType === statusKey}
+                      className={`text-xs sm:text-sm font-medium mt-1 
+                    data-[active=true]:text-sm sm:data-[active=true]:text-lg data-[active=true]:font-bold ${textColorClass}`}
+                    >
+                      L.{' '}
+                      {invoiceTotals[statusKey].amount.toLocaleString('es-HN', {
+                        minimumFractionDigits: 2,
+                      })}
                     </span>
                   </div>
                 </button>
@@ -418,54 +474,76 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
             })}
           </div>
         </CardHeader>
-        <CardContent className="p-2 sm:p-6">
-          <ChartContainer
-            config={invoiceInteractiveChartConfig}
-            className="aspect-auto h-[400px] sm:h-[250px] w-full"
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                accessibilityLayer
-                data={getDailyInvoiceData()}
-                margin={{
-                  top: 10,
-                  left: 0,
-                  right: 0,
-                  bottom: 20
-                }}
-              >
-                <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  minTickGap={10}
-                  tick={{ fontSize: 10 }}
-                  tickFormatter={(value) => {
-                    const date = new Date(value);
-                    return format(date, 'dd MMM', { locale: es });
+        <CardContent className='p-2 sm:p-6'>
+          {isLoading && (
+            <div className='flex justify-center items-top min-h-screen'>
+              <div className='animate-pulse flex flex-col flex-1 items-center space-y-2 p-4'>
+                <div className='h-12 w-32 bg-gray-200 rounded'></div>
+                <div className='h-64 w-full bg-gray-200 rounded'></div>
+                <div className='h-12 w-64 bg-gray-200 rounded'></div>
+              </div>
+            </div>
+          )}
+          {invoices?.length === 0 && !isLoading && (
+            <div className='w-full items-center'>
+              <GenericEmptyState
+                icon={FileText}
+                title='No tienes facturas aún'
+                description='Comienza a crear facturas para tus clientes y visualiza tu progreso.'
+              />
+            </div>
+          )}
+          {!isLoading && invoices?.length > 0 && (
+            <ChartContainer
+              config={invoiceInteractiveChartConfig}
+              className='aspect-auto h-[400px] sm:h-[250px] w-full'
+            >
+              <ResponsiveContainer width='100%' height='100%'>
+                <BarChart
+                  accessibilityLayer
+                  data={getDailyInvoiceData()}
+                  margin={{
+                    top: 10,
+                    left: 0,
+                    right: 0,
+                    bottom: 20,
                   }}
-                />
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      className="w-[150px]"
-                      nameKey="invoices"
-                      labelFormatter={(value) => {
-                        return format(new Date(value), 'dd MMM yyyy', { locale: es });
-                      }}
-                    />
-                  }
-                />
-                <Bar
-                  dataKey={activeInvoiceType}
-                  fill={`var(--color-${activeInvoiceType})`}
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartContainer>
+                >
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey='date'
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    minTickGap={10}
+                    tick={{ fontSize: 10 }}
+                    tickFormatter={(value) => {
+                      const date = new Date(value);
+                      return format(date, 'dd MMM', { locale: es });
+                    }}
+                  />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        className='w-[150px]'
+                        nameKey='invoices'
+                        labelFormatter={(value) => {
+                          return format(new Date(value), 'dd MMM yyyy', {
+                            locale: es,
+                          });
+                        }}
+                      />
+                    }
+                  />
+                  <Bar
+                    dataKey={activeInvoiceType}
+                    fill={`var(--color-${activeInvoiceType})`}
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          )}
         </CardContent>
       </Card>
 
@@ -474,15 +552,17 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
         <Card className='flex-grow basis-full sm:basis-[calc(33.333%-1rem)]'>
           <CardHeader>
             <CardTitle>Estado de Facturas</CardTitle>
-            <CardDescription>Distribución de estados de facturas</CardDescription>
+            <CardDescription>
+              Distribución de estados de facturas
+            </CardDescription>
           </CardHeader>
-          <CardContent className="h-[320px] px-2 sm:px-6">
-            {filteredInvoices.length > 0 ? (
-              <div className="flex flex-col h-full">
-                <div className="flex-1 flex items-center justify-center">
+          <CardContent className='h-[320px] px-2 sm:px-6'>
+            {invoices.length > 0 ? (
+              <div className='flex flex-col h-full'>
+                <div className='flex-1 flex items-center justify-center'>
                   <ChartContainer
                     config={invoiceStatusChartConfig}
-                    className="mx-auto w-full max-w-[180px] sm:max-w-[220px] aspect-square [&_.recharts-text]:fill-background"
+                    className='mx-auto w-full max-w-[180px] sm:max-w-[220px] aspect-square [&_.recharts-text]:fill-background'
                   >
                     <PieChart>
                       <ChartTooltip
@@ -490,12 +570,12 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
                       />
                       <Pie
                         data={getInvoicesByStatus()}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius="80%"
-                        label={({ name, percent }) => 
+                        dataKey='value'
+                        nameKey='name'
+                        cx='50%'
+                        cy='50%'
+                        outerRadius='80%'
+                        label={({ name, percent }) =>
                           percent > 0.05 ? `${name}` : ''
                         }
                         labelLine={false}
@@ -507,16 +587,20 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
                     </PieChart>
                   </ChartContainer>
                 </div>
-                <div className="mt-4 grid grid-cols-3 gap-2">
+                <div className='mt-4 grid grid-cols-3 gap-2'>
                   {getInvoicesByStatus().map((entry, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <div 
-                        className="h-3 w-3 rounded-sm flex-shrink-0" 
+                    <div key={index} className='flex items-center gap-2'>
+                      <div
+                        className='h-3 w-3 rounded-sm flex-shrink-0'
                         style={{ backgroundColor: entry.fill }}
                       ></div>
-                      <div className="flex flex-col">
-                        <span className="text-xs sm:text-sm font-medium">{entry.name}</span>
-                        <span className="text-[10px] sm:text-xs text-muted-foreground">{entry.value} facturas</span>
+                      <div className='flex flex-col'>
+                        <span className='text-xs sm:text-sm font-medium'>
+                          {entry.name}
+                        </span>
+                        <span className='text-[10px] sm:text-xs text-muted-foreground'>
+                          {entry.value} facturas
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -534,13 +618,13 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
             <CardTitle>Ventas por Tipo</CardTitle>
             <CardDescription>Productos vs Servicios</CardDescription>
           </CardHeader>
-          <CardContent className="h-[320px] px-2 sm:px-6">
-            {filteredInvoices.length > 0 ? (
-              <div className="flex flex-col h-full">
-                <div className="flex-1 flex items-center justify-center">
+          <CardContent className='h-[320px] px-2 sm:px-6'>
+            {invoices.length > 0 ? (
+              <div className='flex flex-col h-full'>
+                <div className='flex-1 flex items-center justify-center'>
                   <ChartContainer
                     config={productServiceChartConfig}
-                    className="mx-auto w-full max-w-[180px] sm:max-w-[220px] aspect-square [&_.recharts-text]:fill-background"
+                    className='mx-auto w-full max-w-[180px] sm:max-w-[220px] aspect-square [&_.recharts-text]:fill-background'
                   >
                     <PieChart>
                       <ChartTooltip
@@ -548,12 +632,12 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
                       />
                       <Pie
                         data={getSalesByProductType()}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius="80%"
-                        label={({ name, percent }) => 
+                        dataKey='value'
+                        nameKey='name'
+                        cx='50%'
+                        cy='50%'
+                        outerRadius='80%'
+                        label={({ name, percent }) =>
                           percent > 0.05 ? `${name}` : ''
                         }
                         labelLine={false}
@@ -565,17 +649,22 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
                     </PieChart>
                   </ChartContainer>
                 </div>
-                <div className="mt-4 grid grid-cols-2 gap-4">
+                <div className='mt-4 grid grid-cols-2 gap-4'>
                   {getSalesByProductType().map((entry, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <div 
-                        className="h-3 w-3 rounded-sm flex-shrink-0" 
+                    <div key={index} className='flex items-center gap-2'>
+                      <div
+                        className='h-3 w-3 rounded-sm flex-shrink-0'
                         style={{ backgroundColor: entry.fill }}
                       ></div>
-                      <div className="flex flex-col">
-                        <span className="text-xs sm:text-sm font-medium">{entry.name}</span>
-                        <span className="text-[10px] sm:text-xs text-muted-foreground">
-                          L. {entry.value.toLocaleString('es-HN', { minimumFractionDigits: 2 })}
+                      <div className='flex flex-col'>
+                        <span className='text-xs sm:text-sm font-medium'>
+                          {entry.name}
+                        </span>
+                        <span className='text-[10px] sm:text-xs text-muted-foreground'>
+                          L.{' '}
+                          {entry.value.toLocaleString('es-HN', {
+                            minimumFractionDigits: 2,
+                          })}
                         </span>
                       </div>
                     </div>
@@ -597,13 +686,13 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
             <CardTitle>Ingresos Mensuales</CardTitle>
             <CardDescription>Últimos 3 meses</CardDescription>
           </CardHeader>
-          <CardContent className="p-2 sm:p-6">
-            {filteredInvoices.length > 0 ? (
+          <CardContent className='p-2 sm:p-6'>
+            {invoices.length > 0 ? (
               <ChartContainer
                 config={revenueChartConfig}
-                className="h-[400px] sm:h-[250px] w-full"
+                className='h-[400px] sm:h-[250px] w-full'
               >
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width='100%' height='100%'>
                   <BarChart
                     accessibilityLayer
                     data={getMonthlyRevenue()}
@@ -611,7 +700,7 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
                   >
                     <CartesianGrid vertical={false} />
                     <XAxis
-                      dataKey="name"
+                      dataKey='name'
                       tickLine={false}
                       tickMargin={10}
                       axisLine={false}
@@ -632,9 +721,9 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
                       content={<ChartTooltipContent hideLabel />}
                     />
                     <Bar
-                      dataKey="value"
-                      name="Ingresos"
-                      fill="var(--color-value)"
+                      dataKey='value'
+                      name='Ingresos'
+                      fill='var(--color-value)'
                       radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
@@ -644,19 +733,21 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
               <ChartSkeleton />
             )}
           </CardContent>
-          <CardFooter className="flex-col items-start gap-2 text-xs sm:text-sm p-4">
-            <div className="flex gap-2 font-medium leading-none">
+          <CardFooter className='flex-col items-start gap-2 text-xs sm:text-sm p-4'>
+            <div className='flex gap-2 font-medium leading-none'>
               {trend.isUp ? (
                 <>
-                  Tendencia al alza por {trend.percentage}% este mes <TrendingUp className="h-4 w-4 text-green-500" />
+                  Tendencia al alza por {trend.percentage}% este mes{' '}
+                  <TrendingUp className='h-4 w-4 text-green-500' />
                 </>
               ) : (
                 <>
-                  Tendencia a la baja por {trend.percentage}% este mes <TrendingDown className="h-4 w-4 text-red-500" />
+                  Tendencia a la baja por {trend.percentage}% este mes{' '}
+                  <TrendingDown className='h-4 w-4 text-red-500' />
                 </>
               )}
             </div>
-            <div className="leading-none text-muted-foreground">
+            <div className='leading-none text-muted-foreground'>
               Mostrando ingresos totales de los últimos 3 meses
             </div>
           </CardFooter>
@@ -668,13 +759,13 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
             <CardTitle>Ingresos Diarios</CardTitle>
             <CardDescription>Últimos 7 días</CardDescription>
           </CardHeader>
-          <CardContent className="p-2 sm:p-6">
-            {filteredInvoices.length > 0 ? (
+          <CardContent className='p-2 sm:p-6'>
+            {invoices.length > 0 ? (
               <ChartContainer
                 config={revenueChartConfig}
-                className="h-[400px] sm:h-[250px] w-full"
+                className='h-[400px] sm:h-[250px] w-full'
               >
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width='100%' height='100%'>
                   <LineChart
                     accessibilityLayer
                     data={getDailyRevenue()}
@@ -682,7 +773,7 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
                   >
                     <CartesianGrid vertical={false} />
                     <XAxis
-                      dataKey="name"
+                      dataKey='name'
                       tickLine={false}
                       axisLine={false}
                       tickMargin={10}
@@ -699,14 +790,12 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
                       axisLine={false}
                       tick={{ fontSize: 10 }}
                     />
-                    <ChartTooltip
-                      content={<ChartTooltipContent />}
-                    />
+                    <ChartTooltip content={<ChartTooltipContent />} />
                     <Line
-                      type="monotone"
-                      dataKey="value"
-                      name="Ingresos"
-                      stroke="var(--color-value)"
+                      type='monotone'
+                      dataKey='value'
+                      name='Ingresos'
+                      stroke='var(--color-value)'
                       strokeWidth={2}
                       dot={{ r: 3 }}
                       activeDot={{ r: 5 }}
@@ -718,8 +807,8 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
               <ChartSkeleton />
             )}
           </CardContent>
-          <CardFooter className="flex-col items-start gap-2 text-xs sm:text-sm p-4">
-            <div className="leading-none text-muted-foreground">
+          <CardFooter className='flex-col items-start gap-2 text-xs sm:text-sm p-4'>
+            <div className='leading-none text-muted-foreground'>
               Mostrando ingresos diarios de los últimos 7 días
             </div>
           </CardFooter>
@@ -729,4 +818,4 @@ const InvoiceDashboardChartsV2 = ({ invoices }: { invoices: Invoice[] }) => {
   );
 };
 
-export default InvoiceDashboardChartsV2; 
+export default InvoiceDashboardChartsV2;
