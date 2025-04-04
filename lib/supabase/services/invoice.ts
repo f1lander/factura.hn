@@ -592,16 +592,7 @@ class InvoiceService extends BaseService {
         `
         *,
         customers (rtn, name, email),
-        invoice_items (
-          id,
-          product_id,
-          description,
-          quantity,
-          unit_cost,
-          discount,
-          created_at,
-          updated_at
-        )
+        invoice_items (*)
       `
       )
       .eq('company_id', companyId);
