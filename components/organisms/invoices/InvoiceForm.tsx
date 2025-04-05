@@ -191,15 +191,27 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
       const today = new Date();
       const daysUntilExpiration = differenceInCalendarDays(limitDate, today);
 
+      const severity = daysUntilExpiration <= 1 ? 'destructive' : 'default';
+
+      const title =
+        daysUntilExpiration <= 1 ? 'CAI Vencido' : 'CAI Vence pronto';
+      const message =
+        daysUntilExpiration <= 1
+          ? 'Su CAI está vencido. Por favor, actualice su CAI.'
+          : daysUntilExpiration <= 30
+          ? `Su CAI actual vencerá en ${daysUntilExpiration} días.`
+          : '';
+
       if (daysUntilExpiration <= 30) {
         toast({
-          title: 'CAI próximo a vencer',
-          description: `Su CAI actual vencerá en ${daysUntilExpiration} días. Por favor, gestione un nuevo CAI.`,
+          title,
+          description: message,
           duration: 10000,
+          variant: severity,
         });
       }
     }
-  }, [latestSarCai, toast]);
+  }, [latestSarCai]);
 
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] =
     useState<boolean>(false);
