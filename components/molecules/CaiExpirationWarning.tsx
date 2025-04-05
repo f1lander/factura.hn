@@ -35,18 +35,32 @@ export default function CaiExpirationWarning() {
   }
 
   const severity =
-    daysUntilExpiration <= 7
+    daysUntilExpiration <= 1
+      ? 'default'
+      : daysUntilExpiration <= 7
       ? 'destructive'
       : daysUntilExpiration <= 15
       ? 'warning'
       : 'default';
 
+  const title = daysUntilExpiration <= 1 ? 'CAI Vencido' : 'CAI Vence pronto';
+  const message =
+    daysUntilExpiration <= 1
+      ? 'Su CAI está vencido. Por favor, actualice su CAI.'
+      : daysUntilExpiration <= 30
+      ? `Su CAI actual vencerá en ${daysUntilExpiration} días.`
+      : '';
+
   return (
-    <Alert variant={severity}>
+    <Alert
+      variant={severity}
+      className={daysUntilExpiration < 1 ? 'bg-destructive text-white' : ''}
+    >
       <AlertCircle className='h-4 w-4' />
-      <AlertTitle>CAI próximo a vencer</AlertTitle>
+      <AlertTitle>{title}</AlertTitle>
       <AlertDescription>
-        Su CAI actual vencerá en {daysUntilExpiration} días.
+        {/* Su CAI actual vencerá en {daysUntilExpiration} días. */}
+        {message}
         {daysUntilExpiration <= 7
           ? ' ¡Actualice su CAI inmediatamente!'
           : ' Por favor, gestione un nuevo CAI pronto.'}

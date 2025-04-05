@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/use-toast";
-import CompanyDataForm from "@/components/molecules/CompanyDataForm";
-import { getAuthAndCompanyDataClient } from "@/lib/supabase/client-utils";
-import { Company } from "@/lib/supabase/services/company";
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/use-toast';
+import CompanyDataForm from '@/components/molecules/CompanyDataForm';
+import { getAuthAndCompanyDataClient } from '@/lib/supabase/client-utils';
+import { Company } from '@/lib/supabase/services/company';
 
 export default function Settings() {
   const [isLoading, setIsLoading] = useState(true);
@@ -21,32 +21,32 @@ export default function Settings() {
           await getAuthAndCompanyDataClient();
 
         if (!isAuthenticated || !user) {
-          router.push("/auth/login");
+          router.push('/auth/login');
           return;
         }
 
         if (error) {
-          throw new Error("Failed to load user or company data");
+          throw new Error('Failed to load user or company data');
         }
 
         setCompany(company);
 
         if (!company) {
           toast({
-            title: "Se requiere información de la compañía",
+            title: 'Se requiere información de la compañía',
             description:
-              "Por favor, añada información sobre su compañía para continuar.",
+              'Por favor, añada información sobre su compañía para continuar.',
             duration: 5000,
           });
         }
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "An unexpected error occurred",
+          err instanceof Error ? err.message : 'An unexpected error occurred'
         );
         toast({
-          title: "Error",
-          description: "Failed to load user or company data. Please try again.",
-          variant: "destructive",
+          title: 'Error',
+          description: 'Failed to load user or company data. Please try again.',
+          variant: 'destructive',
         });
       } finally {
         setIsLoading(false);
@@ -65,7 +65,7 @@ export default function Settings() {
   }
 
   return (
-    <main className="container mx-auto">
+    <main className='container mx-auto'>
       <CompanyDataForm initialCompany={company} />
     </main>
   );
