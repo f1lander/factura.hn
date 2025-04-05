@@ -50,12 +50,8 @@ const convertInvoicesToCSV = (invoices: Invoice[]) => {
 
     // Calculate ISV by rate
     const isv15Total = invoice.tax_gravado_15 || 0;
-    // .filter((item) => item. === 15)
-    // .reduce((sum, item) => sum + item.unit_cost * item.quantity * 0.15, 0);
 
     const isv18Total = invoice.tax_gravado_18 || 0;
-    // .filter((item) => item.tax_rate === 18)
-    // .reduce((sum, item) => sum + item.unit_cost * item.quantity * 0.18, 0);
 
     return [
       invoice.proforma_number || invoice.invoice_number,
@@ -132,52 +128,12 @@ export default function Invoices() {
     initializeData();
   }, [allInvoices]);
 
-  // const applyFilters = useCallback(() => {
-  //   let filtered: Invoice[] = [];
-  //   if (!areInvoicesLoading && allInvoices) filtered = allInvoices;
-
-  //   if (debouncedSearchTerm) {
-  //     const lowerSearchTerm = debouncedSearchTerm.toLowerCase();
-  //     filtered = filtered.filter(
-  //       (invoice) =>
-  //         invoice.invoice_number.toLowerCase().includes(lowerSearchTerm) ||
-  //         invoice.customers.name.toLowerCase().includes(lowerSearchTerm) ||
-  //         invoice.total.toString().includes(lowerSearchTerm) ||
-  //         invoice.invoice_items.some((item) =>
-  //           item.description.toLowerCase().includes(lowerSearchTerm)
-  //         )
-  //     );
-  //   }
-
-  //   if (selectedStatuses.length > 0) {
-  //     filtered = filtered.filter((invoice) => {
-  //       const invoiceStatus = invoice.status?.toLowerCase() || 'pending'; // Default to 'pending' if status is undefined
-  //       return selectedStatuses.some(
-  //         (status) => status.toLowerCase() === invoiceStatus
-  //       );
-  //     });
-  //   }
-
-  //   setFilteredInvoices(filtered);
-  // }, [allInvoices, debouncedSearchTerm, selectedStatuses, areInvoicesLoading]);
-
-  // useEffect(() => {
-  //   applyFilters();
-  // }, [
-  //   allInvoices,
-  //   debouncedSearchTerm,
-  //   selectedStatuses,
-  //   dateRange,
-  //   applyFilters,
-  // ]);
-
   // STARTS HERE
 
   const fetchRevenue = async () => {
     const weeklyRev = await invoiceService.getTotalRevenue('week');
     const monthlyRev = await invoiceService.getTotalRevenue('month');
-    console.log('Weekly Revenue:', weeklyRev);
-    console.log('Monthly Revenue:', monthlyRev);
+
     setWeeklyRevenue(weeklyRev);
     setMonthlyRevenue(monthlyRev);
   };
@@ -371,7 +327,8 @@ export default function Invoices() {
         console.error('Error updating invoice statuses:', error);
         toast({
           title: 'Error',
-          description: 'No se pudieron actualizar los estados de las facturas. Por favor, inténtalo de nuevo.',
+          description:
+            'No se pudieron actualizar los estados de las facturas. Por favor, inténtalo de nuevo.',
           variant: 'destructive',
         });
       }
