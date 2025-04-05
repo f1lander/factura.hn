@@ -544,7 +544,6 @@ const InvoiceDashboardChartsV2 = ({
                   <Bar
                     dataKey={activeInvoiceType}
                     fill={COLORS[activeInvoiceType as keyof typeof COLORS]}
-                    // fill={'var(--color-paid)'}
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
@@ -686,9 +685,9 @@ const InvoiceDashboardChartsV2 = ({
       </div>
 
       {/* Row 2 */}
-      <div className='flex flex-wrap gap-4'>
+      <div className='flex flex-wrap gap-4 w-full'>
         {/* Ingresos Mensuales (Bar - Quarterly-rolling) */}
-        <Card className='flex-grow basis-full sm:basis-[calc(50%-0.5rem)]'>
+        <Card className='flex-grow basis-full sm:basis-[calc(50%-0.5rem)] min-w-0'>
           <CardHeader>
             <CardTitle>Ingresos Mensuales</CardTitle>
             <CardDescription>Últimos 3 meses</CardDescription>
@@ -761,7 +760,7 @@ const InvoiceDashboardChartsV2 = ({
         </Card>
 
         {/* Ingresos Diarios (Line - Last 7 days) */}
-        <Card className='flex-grow basis-full sm:basis-[calc(50%-0.5rem)] w-[395px] lg:w-full'>
+        <Card className='flex-grow basis-full sm:basis-[calc(50%-0.5rem)] min-w-0'>
           <CardHeader>
             <CardTitle>Ingresos Diarios</CardTitle>
             <CardDescription>Últimos 7 días</CardDescription>
