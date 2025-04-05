@@ -35,6 +35,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../ui/tooltip';
+import { omit } from 'ramda';
 /** The fact that initialCompany can be null is extremely important:
  *
  * If the initialCompany is null, then it means that we have a new user and it'll
@@ -59,7 +60,6 @@ export default function CompanyDataForm({
   // In case there's already a company, then get the logo_url with a presigned url
   useEffect(() => {
     if (initialCompany !== null && initialCompany.logo_url !== null) {
-      console.log('The value of initialCompany is: ', initialCompany.logo_url);
       supabase()
         .storage.from('company-logos')
         .createSignedUrl(initialCompany.logo_url!, 600)
@@ -79,35 +79,24 @@ export default function CompanyDataForm({
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<CompanyFormData>({
-    defaultValues: initialCompany
-      ? {
-          ...initialCompany,
-          limit_date:
-            initialCompany.limit_date &&
-            format(new Date(initialCompany.limit_date), 'yyyy-MM-dd'),
-        }
-      : undefined,
+    defaultValues: initialCompany ? initialCompany : undefined,
   });
 
   const { data: sarCaiData } = useQuery({
     queryKey: ['sar_cai', initialCompany?.id],
     queryFn: () =>
       sarCaiService.getActiveSarCaiByCompanyId(initialCompany!.id!),
-    enabled: !!initialCompany,
-    onSuccess: (data) => {
-      setValue('sarCaiData', {
-        cai: data?.cai || '',
-        limit_date: data?.limit_date
-          ? format(new Date(data?.limit_date), 'yyyy-MM-dd')
-          : '',
-        range_invoice1: data?.range_invoice1 || '',
-        range_invoice2: data?.range_invoice2 || '',
-        company_id: initialCompany?.id || '',
-        created_at: data?.created_at || new Date().toISOString(),
-        updated_at: data?.updated_at || new Date().toISOString(),
-      });
-    },
+    enabled: !!initialCompany?.id,
   });
+
+  useEffect(() => {
+    if (sarCaiData) {
+      setValue('sarCaiData', {
+        ...omit(['id'], sarCaiData),
+        limit_date: format(new Date(sarCaiData.limit_date), 'yyyy-MM-dd'),
+      });
+    }
+  }, [sarCaiData, setValue]);
 
   const handleLogoUpload = async (
     companyId: string,

@@ -144,11 +144,6 @@ const InvoiceDashboardChartsV2 = ({
   const [activeInvoiceType, _setActiveInvoiceType] =
     React.useState<ActiveInvoiceType>('total');
 
-  console.log({
-    activeInvoiceType,
-    color: COLORS[activeInvoiceType as keyof typeof COLORS],
-  });
-
   const setActiveInvoiceType = useCallback(
     (newActiveInvoiceType: ActiveInvoiceType) => {
       // Calculate the selected statuses based on the activeInvoiceType
