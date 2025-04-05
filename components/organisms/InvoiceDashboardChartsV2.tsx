@@ -53,9 +53,10 @@ const ChartSkeleton = () => (
 
 // Define chart colors using CSS variables
 const COLORS = {
-  paid: 'var(--color-paid)', // Primary blue
-  pending: 'var(--color-pending)', // Light blue
-  cancelled: 'var(--color-cancelled)', // Medium blue
+  total: 'var(--color-invoice-total)', // Primary blue
+  paid: 'var(--color-invoice-paid)', // Primary blue
+  pending: 'var(--color-invoice-pending)', // Light blue
+  cancelled: 'var(--color-invoice-cancelled)', // Medium blue
   product: 'var(--color-product)', // Primary blue
   service: 'var(--color-service)', // Light blue
   revenue: 'var(--color-revenue)', // Primary blue
@@ -142,6 +143,11 @@ const InvoiceDashboardChartsV2 = ({
   // New state for the interactive chart
   const [activeInvoiceType, _setActiveInvoiceType] =
     React.useState<ActiveInvoiceType>('total');
+
+  console.log({
+    activeInvoiceType,
+    color: COLORS[activeInvoiceType as keyof typeof COLORS],
+  });
 
   const setActiveInvoiceType = useCallback(
     (newActiveInvoiceType: ActiveInvoiceType) => {
@@ -537,7 +543,7 @@ const InvoiceDashboardChartsV2 = ({
                   />
                   <Bar
                     dataKey={activeInvoiceType}
-                    fill={`var(--color-${activeInvoiceType})`}
+                    fill={COLORS[activeInvoiceType as keyof typeof COLORS]}
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
@@ -679,9 +685,9 @@ const InvoiceDashboardChartsV2 = ({
       </div>
 
       {/* Row 2 */}
-      <div className='flex flex-wrap gap-4'>
+      <div className='flex flex-wrap gap-4 w-full'>
         {/* Ingresos Mensuales (Bar - Quarterly-rolling) */}
-        <Card className='flex-grow basis-full sm:basis-[calc(50%-0.5rem)]'>
+        <Card className='flex-grow basis-full sm:basis-[calc(50%-0.5rem)] min-w-0'>
           <CardHeader>
             <CardTitle>Ingresos Mensuales</CardTitle>
             <CardDescription>Últimos 3 meses</CardDescription>
@@ -754,7 +760,7 @@ const InvoiceDashboardChartsV2 = ({
         </Card>
 
         {/* Ingresos Diarios (Line - Last 7 days) */}
-        <Card className='flex-grow basis-full sm:basis-[calc(50%-0.5rem)] w-[395px] lg:w-full'>
+        <Card className='flex-grow basis-full sm:basis-[calc(50%-0.5rem)] min-w-0'>
           <CardHeader>
             <CardTitle>Ingresos Diarios</CardTitle>
             <CardDescription>Últimos 7 días</CardDescription>
