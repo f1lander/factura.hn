@@ -2,6 +2,7 @@ import { BaseService, Table } from './BaseService';
 import { PostgrestError } from '@supabase/supabase-js';
 import { PaymentMethod } from './paymentMethod';
 import { TaxType } from './product';
+import { startOfMonth, startOfWeek } from 'date-fns';
 
 export interface Invoice {
   id: string;
@@ -706,21 +707,7 @@ class InvoiceService extends BaseService {
     if (!companyId) return 0;
 
     const now = new Date();
-    let startDate: Date;
-
-    if (period === 'week') {
-      startDate = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() - 7
-      );
-    } else {
-      startDate = new Date(
-        now.getFullYear(),
-        now.getMonth() - 1,
-        now.getDate()
-      );
-    }
+    const startDate = period === 'week' ? startOfWeek(now) : startOfMonth(now);
 
     const { data, error } = await this.supabase
       .from(this.tableName)
