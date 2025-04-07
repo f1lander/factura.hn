@@ -383,7 +383,7 @@ export default function MainLayout({
   const { title, icon } = getPageInfo(pathname);
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen>
       <div className='flex h-screen w-full overflow-hidden'>
         <MainContent pageTitle={title} pageIcon={icon}>
           {children}

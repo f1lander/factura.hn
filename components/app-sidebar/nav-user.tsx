@@ -75,7 +75,7 @@ export function NavUser({ className = '', triggerClassName = '' }) {
               )}
             </Avatar>
             {state !== 'collapsed' && (
-              <span className='truncate max-w-[140px]'>
+              <span className='truncate max-w-[140px] hidden md:inline'>
                 {isLoading ? 'Cargando...' : displayName}
               </span>
             )}
