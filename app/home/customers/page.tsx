@@ -254,6 +254,7 @@ export default function CustomersPage() {
                   onCreateNew={handleCreateCustomer}
                   onSelectionChange={setSelectedCustomers}
                   onDelete={handleDeleteClick}
+                  canSelect={(rowItem) => !rowItem.is_universal}
                   handleOnUpdateRows={handleOnUpdateRows}
                   pageSize={10}
                   pageSizeOptions={[5, 10, 20, 50]}

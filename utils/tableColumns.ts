@@ -1,7 +1,13 @@
-import { Customer } from "@/lib/supabase/services/customer";
-import { Product, TaxType } from "@/lib/supabase/services/product";
-import { ColDef, EditableCallback, ICellEditorParams } from "ag-grid-community";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Customer } from '@/lib/supabase/services/customer';
+import { Product, TaxType } from '@/lib/supabase/services/product';
+import { ColDef, EditableCallback, ICellEditorParams } from 'ag-grid-community';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 // Custom cell editor for tax type
 class TaxTypeCellEditor {
@@ -13,7 +19,7 @@ class TaxTypeCellEditor {
     this.props = props || {};
     // Initialize with default value first
     this.value = TaxType.GRAVADO_15;
-    
+
     // Only try to validate and set value if props exists and has a value
     if (props && 'value' in props) {
       const validatedValue = this.validateTaxType(props.value);
@@ -29,12 +35,12 @@ class TaxTypeCellEditor {
 
   private validateTaxType(value: any): TaxType | null {
     if (!value) return null;
-    
+
     // Check if the value is a valid TaxType
     if (Object.values(TaxType).includes(value)) {
       return value as TaxType;
     }
-    
+
     // If it's a string, try to match it with TaxType values
     if (typeof value === 'string') {
       const normalizedValue = value.toUpperCase();
@@ -42,14 +48,14 @@ class TaxTypeCellEditor {
         return normalizedValue as TaxType;
       }
     }
-    
+
     return null;
   }
 
   private render() {
     const select = document.createElement('select');
     select.className = 'w-full h-full border rounded px-2 py-1';
-    
+
     // Add options
     Object.values(TaxType).forEach((type) => {
       const option = document.createElement('option');
@@ -77,12 +83,17 @@ class TaxTypeCellEditor {
   }
 
   private getTaxTypeLabel(type: TaxType): string {
-    switch(type) {
-      case TaxType.EXENTO: return '0% (Exento)';
-      case TaxType.EXONERADO: return '0% (Exonerado)';
-      case TaxType.GRAVADO_15: return '15%';
-      case TaxType.GRAVADO_18: return '18%';
-      default: return type;
+    switch (type) {
+      case TaxType.EXENTO:
+        return '0% (Exento)';
+      case TaxType.EXONERADO:
+        return '0% (Exonerado)';
+      case TaxType.GRAVADO_15:
+        return '15%';
+      case TaxType.GRAVADO_18:
+        return '18%';
+      default:
+        return type;
     }
   }
 
@@ -123,50 +134,56 @@ class TaxTypeCellEditor {
 
 export const productColumns: ColDef<Product>[] = [
   {
-    field: "sku",
-    headerName: "SKU",
+    field: 'sku',
+    headerName: 'SKU',
     checkboxSelection: true,
     headerCheckboxSelection: true,
     editable: true,
   },
-  { field: "description", headerName: "Descripción", minWidth:500 },
+  { field: 'description', headerName: 'Descripción', minWidth: 500 },
   {
-    field: "unit_cost",
-    headerName: "Precio Unitario",
+    field: 'unit_cost',
+    headerName: 'Precio Unitario',
     valueFormatter: (params) => `Lps. ${params.value.toLocaleString('en')}`,
     editable: true,
   },
   {
-    field: "tax_type",
-    headerName: "Tipo de Impuesto",
+    field: 'tax_type',
+    headerName: 'Tipo de Impuesto',
     editable: true,
     cellEditor: TaxTypeCellEditor,
     valueFormatter: (params) => {
-      switch(params.value) {
-        case TaxType.EXENTO: return '0% (Exento)';
-        case TaxType.EXONERADO: return '0% (Exonerado)';
-        case TaxType.GRAVADO_15: return '15%';
-        case TaxType.GRAVADO_18: return '18%';
-        default: return params.value;
+      switch (params.value) {
+        case TaxType.EXENTO:
+          return '0% (Exento)';
+        case TaxType.EXONERADO:
+          return '0% (Exonerado)';
+        case TaxType.GRAVADO_15:
+          return '15%';
+        case TaxType.GRAVADO_18:
+          return '18%';
+        default:
+          return params.value;
       }
-    }
+    },
   },
   // {
   //   field: "is_service",
-  //   headerName: "Inventario indefinido", 
-  
+  //   headerName: "Inventario indefinido",
+
   //   valueFormatter: (params) => (params.value ? "Servicio" : "Producto"),
   // },
   {
-    field: "quantity_in_stock",
-    headerName: "Inventario",
+    field: 'quantity_in_stock',
+    headerName: 'Inventario',
     editable: false,
     valueFormatter: (params) =>
-      params.data?.is_service ? "N/A (Servicio)" : params.value,
+      params.data?.is_service ? 'N/A (Servicio)' : params.value,
   },
 ];
 
-const validateEditableCustomer: EditableCallback<Customer, any> = (params) => !params.data?.is_universal;
+const validateEditableCustomer: EditableCallback<Customer, any> = (params) =>
+  !params.data?.is_universal;
 
 export class CustomButtonComponent {
   eGui!: HTMLDivElement;
@@ -174,58 +191,58 @@ export class CustomButtonComponent {
   eventListener!: () => void;
 
   init(props: any) {
-      console.log(props);
-      this.eGui = document.createElement('div');
-      const eButton = document.createElement('button');
-      eButton.className = 'btn-simple';
-      eButton.textContent = 'Editar';
-      this.eventListener = () => {
-        props.context.onEditContact(props.data);
-      };
-      eButton.addEventListener('click', this.eventListener);
+    console.log(props);
+    this.eGui = document.createElement('div');
+    const eButton = document.createElement('button');
+    eButton.className = 'btn-simple';
+    eButton.textContent = 'Editar';
+    this.eventListener = () => {
+      props.context.onEditContact(props.data);
+    };
+    eButton.addEventListener('click', this.eventListener);
 
-      if(validateEditableCustomer(props)) {
-        this.eGui.appendChild(eButton);
-      }
+    if (validateEditableCustomer(props)) {
+      this.eGui.appendChild(eButton);
+    }
   }
 
   getGui() {
-      return this.eGui;
+    return this.eGui;
   }
 
   refresh() {
-      return true;
+    return true;
   }
 
   destroy() {
-      if (this.eButton) {
-          this.eButton.removeEventListener('click', this.eventListener);
-      }
+    if (this.eButton) {
+      this.eButton.removeEventListener('click', this.eventListener);
+    }
   }
 }
 
 export const customerColumns: ColDef<Customer>[] = [
   {
-    field: "name",
-    headerName: "Nombre",
-    checkboxSelection: true,
+    field: 'name',
+    headerName: 'Nombre',
+    checkboxSelection: validateEditableCustomer,
     headerCheckboxSelection: true,
     editable: validateEditableCustomer,
   },
-  { field: "rtn", headerName: "RTN", editable: validateEditableCustomer, },
+  { field: 'rtn', headerName: 'RTN', editable: validateEditableCustomer },
   {
-    field: "email",
-    headerName: "Email",
+    field: 'email',
+    headerName: 'Email',
     editable: validateEditableCustomer,
   },
   {
-    field: "contacts",
-    headerName: "Contactos",
+    field: 'contacts',
+    headerName: 'Contactos',
     editable: false,
     valueFormatter: (params) => (params.value ? params.value.length : 0),
   },
   {
-    headerName: "Acciones",
+    headerName: 'Acciones',
     editable: false,
     cellRenderer: CustomButtonComponent,
   },

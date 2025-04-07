@@ -60,6 +60,7 @@ interface DataGridProps<T> {
   context?: any;
   onRowUpdate?: (index: number, newData: T) => Promise<void>;
   onRowDelete?: (index: number, data: T) => Promise<void>;
+  canSelect?: (row: T) => Boolean;
   autoUpdate?: boolean;
 }
 
@@ -103,6 +104,7 @@ export function DataGrid<T>({
   context,
   onRowUpdate,
   onRowDelete,
+  canSelect = () => true,
   autoUpdate,
 }: DataGridProps<T>) {
   const gridRef = useRef<AgGridReact>(null);
@@ -254,9 +256,11 @@ export function DataGrid<T>({
 
   const handleSelectionChange = useCallback(() => {
     if (gridApi) {
-      const selected = gridApi
-        .getSelectedRows()
+      const selectedRow = gridApi.getSelectedRows();
+      const selected = selectedRow
+        .filter((row) => canSelect?.(row))
         .map((row) => row[idField] as string);
+
       setSelectedRows(selected);
       onSelectionChange?.(selected);
     }
