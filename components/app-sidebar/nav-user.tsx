@@ -55,17 +55,17 @@ export function NavUser({ className = '', triggerClassName = '' }) {
   };
 
   return (
-    <div className={cn('p-4', className)}>
+    <div className={className}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
             className={cn(
-              'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted',
+              'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
               state === 'collapsed' && 'justify-center',
               triggerClassName
             )}
           >
-            <Avatar className='h-8 w-8'>
+            <Avatar className='h-8 w-8 hover:scale-110 hover:shadow-md transition-all'>
               {user?.user_metadata?.avatar_url ? (
                 <AvatarImage src={user.user_metadata.avatar_url} alt='User' />
               ) : (
