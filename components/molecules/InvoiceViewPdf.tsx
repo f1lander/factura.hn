@@ -329,7 +329,7 @@ export const InvoicePDF = ({
         {isProforma && (
           <View>
             <Text style={styles.title}>
-              FACTURA PROFORMA # {invoice.invoice_number}
+              FACTURA PROFORMA # {invoice.proforma_number}
             </Text>
           </View>
         )}
