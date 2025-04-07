@@ -260,7 +260,7 @@ export const InvoicePDF = ({
   pdfTitle: string;
 }) => {
   // Get current date
-  const currentDate = format(new Date(), 'dd/MM/yyyy');
+  const currentDate = format(invoice.date, 'dd/MM/yyyy');
 
   // Check if it's a proforma invoice
   const isProforma = invoice.is_proforma;
