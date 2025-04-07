@@ -256,8 +256,8 @@ export function DataGrid<T>({
 
   const handleSelectionChange = useCallback(() => {
     if (gridApi) {
-      const selectedRow = gridApi.getSelectedRows();
-      const selected = selectedRow
+      const selected = gridApi
+        .getSelectedRows()
         .filter((row) => canSelect?.(row))
         .map((row) => row[idField] as string);
 
