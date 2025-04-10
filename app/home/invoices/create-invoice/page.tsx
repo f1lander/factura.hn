@@ -149,7 +149,10 @@ const invoiceSchema = yup.object().shape({
           .min(0, 'El descuento debe ser positivo')
           .default(0),
         is_service: yup.boolean().optional(),
-        tax_type: yup.string().oneOf(['EXENTO', 'EXONERADO', 'GRAVADO_15', 'GRAVADO_18']).optional(),
+        tax_type: yup
+          .string()
+          .oneOf(['EXENTO', 'EXONERADO', 'GRAVADO_15', 'GRAVADO_18'])
+          .optional(),
         created_at: yup.string().optional(),
         updated_at: yup.string().optional(),
       })
@@ -242,6 +245,12 @@ export default function CreateInvoicePage() {
       sar_cai_id: null,
     },
   });
+
+  useEffect(() => {
+    if (!latestSarCai && !isLoading) {
+      methods.setValue('is_proforma', true);
+    }
+  }, [isLoading, latestSarCai]);
 
   useEffect(() => {
     const fetchInvoice = async () => {

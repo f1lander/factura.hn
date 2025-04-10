@@ -69,6 +69,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import * as R from 'ramda';
+import { NewInvoiceLoadingSkeleton } from './NewInvoiceLoadingSkeleton';
 
 interface InvoiceFormProps {
   onSave: (invoice: Invoice) => void;
@@ -186,6 +187,18 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
   // Example check that could be added to a dashboard component
   useEffect(() => {
+    if (!latestSarCai && !isLoading) {
+      toast({
+        title: 'No tiene CAI configurado',
+        description:
+          'Por favor, configure un CAI para poder cumplir con las regulaciones del SAR.',
+        duration: 10000,
+        className: 'border-border border-red-500 text-red-700',
+        variant: 'default',
+      });
+      return;
+    }
+
     if (latestSarCai) {
       const limitDate = new Date(latestSarCai.limit_date);
       const today = new Date();
@@ -211,7 +224,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
         });
       }
     }
-  }, [latestSarCai]);
+  }, [latestSarCai, isLoading]);
 
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] =
     useState<boolean>(false);
@@ -222,7 +235,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   });
 
   const customerId = watch('customer_id');
-  const isExento = watch('exento');
 
   const {
     data: selectedCustomer,
@@ -310,6 +322,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   });
 
   const watchClient = watch('customers');
+  const isInvoiceModeOnly = !latestSarCai && !isLoading;
 
   const isGenerateInvoiceButtonDisabled =
     invoiceService.generateInvoiceButtonShouldBeDisabled(
@@ -799,7 +812,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   );
 
   if (areProductsLoading) {
-    return <div>Cargando productos...</div>;
+    return <NewInvoiceLoadingSkeleton />;
   }
 
   return (
@@ -809,12 +822,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
           <div className='grid gap-0.5'>
             <CardTitle className='hidden lg:flex group items-center gap-2 text-lg'>
               {isEditing ? 'Editar Factura' : 'Crear Factura'}
-              {/* {(isProforma || isExento) && (
-                <div className='hidden sm:flex flex-1 items-end gap-2'>
-                  {isProforma && <Badge variant='default'>Proforsma s</Badge>}
-                  {isExento && <Badge className='bg-rose-700'>Exenta</Badge>}
-                </div>
-              )} */}
             </CardTitle>
             <CardDescription className='text-base font-semibold'>
               {isEditing
@@ -832,7 +839,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     id='is_proforma'
                     checked={field.value}
                     onCheckedChange={field.onChange}
-                    disabled={isEditing}
+                    disabled={isEditing || isInvoiceModeOnly}
                   />
                 )}
               />
@@ -843,33 +850,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 Factura Proforma
               </label>
             </div>
-            {/* <div className='flex items-center space-x-2'>
-              <Controller
-                name='exento'
-                control={control}
-                render={({ field }) => (
-                  <Checkbox
-                    id='is_exento'
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                )}
-              />
-              <label
-                htmlFor='is_exento'
-                className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
-              >
-                Exenta
-              </label>
-            </div> */}
           </div>
         </div>
-        {/* {(isProforma || isExento) && (
-          <div className='flex sm:hidden flex-1 items-end gap-2'>
-            {isProforma && <Badge variant='default'>Proforma</Badge>}
-            {isExento && <Badge className='bg-rose-700'>Exenta</Badge>}
-          </div>
-        )} */}
       </CardHeader>
       <CardContent className='p-6 text-sm flex-1'>
         {renderEditableContent()}

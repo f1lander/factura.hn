@@ -14,7 +14,7 @@ export default function CaiExpirationWarning() {
     null
   );
 
-  const { data: sarCaiData } = useQuery({
+  const { data: sarCaiData, isLoading } = useQuery({
     queryKey: ['sar_cai', company?.id],
     queryFn: () => sarCaiService.getActiveSarCaiByCompanyId(company?.id || ''),
     refetchOnMount: true,
@@ -29,6 +29,19 @@ export default function CaiExpirationWarning() {
       setDaysUntilExpiration(diffDays);
     }
   }, [sarCaiData]);
+
+  if (!isLoading && !sarCaiData) {
+    return (
+      <Alert variant='destructive'>
+        <AlertCircle className='h-4 w-4' />
+        <AlertTitle>No tiene CAI configurado</AlertTitle>
+        <AlertDescription>
+          Por favor, configure un CAI para poder cumplir con las regulaciones
+          del SAR.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   if (!daysUntilExpiration || daysUntilExpiration > 30) {
     return null;

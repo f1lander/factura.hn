@@ -36,6 +36,7 @@ import {
   TooltipTrigger,
 } from '../ui/tooltip';
 import { omit } from 'ramda';
+import CaiExpirationWarning from './CaiExpirationWarning';
 /** The fact that initialCompany can be null is extremely important:
  *
  * If the initialCompany is null, then it means that we have a new user and it'll
@@ -474,6 +475,7 @@ export default function CompanyDataForm({
               Ingrese la información relacionada con la facturación de su
               compañía.
             </CardDescription>
+            <CaiExpirationWarning />
           </CardHeader>
           <CardContent className='space-y-4'>
             <div>
