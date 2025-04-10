@@ -186,6 +186,18 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
   // Example check that could be added to a dashboard component
   useEffect(() => {
+    if (!latestSarCai && !isLoading) {
+      toast({
+        title: 'No tiene CAI configurado',
+        description:
+          'Por favor, configure un CAI para poder cumplir con las regulaciones del SAR.',
+        duration: 10000,
+        className: 'border-border border-red-500 text-red-700',
+        variant: 'default',
+      });
+      return;
+    }
+
     if (latestSarCai) {
       const limitDate = new Date(latestSarCai.limit_date);
       const today = new Date();
@@ -211,7 +223,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
         });
       }
     }
-  }, [latestSarCai]);
+  }, [latestSarCai, isLoading]);
 
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] =
     useState<boolean>(false);
