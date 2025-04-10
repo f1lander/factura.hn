@@ -20,6 +20,7 @@ class SarCaiService extends BaseService {
     queryClient.invalidateQueries(['latestSarCai', companyId]);
     queryClient.invalidateQueries(['sar_cai', companyId]);
     queryClient.invalidateQueries(['latestInvoiceNumberInRange', companyId]);
+    queryClient.invalidateQueries(['sar-cai-data', companyId]);
   }
 
   /**
