@@ -69,6 +69,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import * as R from 'ramda';
+import { NewInvoiceLoadingSkeleton } from './NewInvoiceLoadingSkeleton';
 
 interface InvoiceFormProps {
   onSave: (invoice: Invoice) => void;
@@ -811,7 +812,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   );
 
   if (areProductsLoading) {
-    return <div>Cargando productos...</div>;
+    return <NewInvoiceLoadingSkeleton />;
   }
 
   return (
