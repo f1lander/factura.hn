@@ -22,6 +22,8 @@ export interface Product {
   quantity_in_stock?: number;
   created_at?: string;
   updated_at?: string;
+  image_url?: string;
+  image_base64?: string;
 }
 
 export interface ProductToOrder {

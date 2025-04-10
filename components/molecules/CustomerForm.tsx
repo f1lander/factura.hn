@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Customer, Contact } from '@/lib/supabase/services/customer';
+import { Check, X, Trash2, Plus, Minus, Save, ListCollapse, ListEnd } from 'lucide-react';
 
 const defaultCustomer: Partial<Customer> = { contacts: [] };
 
@@ -57,19 +58,35 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
   };
 
   return (
-    <Card className='w-full'>
-      <CardHeader>
-        <CardTitle>
-          {customer ? 'Editar Cliente' : 'Crear Nuevo Cliente'}
-        </CardTitle>
-        <CardDescription>
-          {customer
-            ? 'Modifica los datos del cliente.'
-            : 'Ingresa los datos del nuevo cliente.'}
-        </CardDescription>
-      </CardHeader>
+    <Card className='w-full border-none shadow-none'>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className='space-y-4'>
+        <CardHeader className='flex flex-row items-center justify-between space-y-0 p-0 md:p-6'>
+          <div className='hidden md:flex flex-1 flex-col gap-2'>
+            <CardTitle>
+              {customer ? 'Editar Cliente' : 'Crear Nuevo Cliente'}
+            </CardTitle>
+            <CardDescription>
+              {customer
+                ? 'Modifica los datos del cliente.'
+                : 'Ingresa los datos del nuevo cliente.'}
+            </CardDescription>
+
+          </div>
+          <div className="flex flex-1 w-full justify-end gap-2 px-2">
+            <Button
+              variant='save'
+              type='submit'
+              size="icon"
+              className="h-8 w-auto p-2"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Guardar
+            </Button>
+
+          </div>
+
+        </CardHeader>
+        <CardContent className='space-y-2 p-0 md:p-6 md:space-y-3'>
           <div>
             <Label htmlFor='name'>Nombre</Label>
             <Input
@@ -113,8 +130,13 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
             <div className='flex justify-between items-center'>
               <Label className='text-lg font-semibold'>Contactos</Label>
               {!isAddingContact && (
-                <Button type='button' onClick={() => setIsAddingContact(true)}>
-                  Agregar Contacto
+                <Button
+                  variant='add'
+                  type='button'
+                  onClick={() => setIsAddingContact(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nuevo
                 </Button>
               )}
             </div>
@@ -128,11 +150,6 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
                   >
                     <div
                       className='flex justify-between items-center cursor-pointer'
-                      onClick={() =>
-                        setExpandedContact(
-                          expandedContact === index ? null : index
-                        )
-                      }
                     >
                       <div className='flex flex-col'>
                         <span className='font-medium'>
@@ -142,13 +159,37 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
                           {field.position || 'Sin posición'}
                         </span>
                       </div>
-                      <Button variant='ghost' size='sm' className='h-8 w-8 p-0'>
-                        {expandedContact === index ? '−' : '+'}
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type='button'
+                          variant='ghost'
+                          size='icon'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            remove(index);
+                            setExpandedContact(null);
+                          }}
+                          className='h-8 w-8 text-destructive hover:text-destructive/90'
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          className='h-8 w-8 p-0'
+                          type='button'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedContact(expandedContact === index ? null : index);
+                          }}
+                        >
+                          {expandedContact === index ? <ListCollapse className="h-4 w-4" /> : <ListEnd className="h-4 w-4" />}
+                        </Button>
+                      </div>
                     </div>
 
                     {expandedContact === index ? (
-                      <div className='space-y-3 pt-2'>
+                      <div className='space-y-2 pt-2'>
                         <div className='space-y-2'>
                           <Label htmlFor={`contacts.${index}.name`}>
                             Nombre
@@ -184,13 +225,14 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
                         <div className='pt-2'>
                           <Button
                             type='button'
-                            variant='destructive'
+                            variant='delete'
                             onClick={() => {
                               remove(index);
                               setExpandedContact(null);
                             }}
                             className='w-full'
                           >
+                            <Trash2 className="h-4 w-4 mr-2" />
                             Eliminar
                           </Button>
                         </div>
@@ -217,39 +259,13 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
                             {field.phone || 'No disponible'}
                           </a>
                         </div>
-                        <div className='absolute right-0'>
-                          <Button
-                            type='button'
-                            variant='ghost'
-                            size='icon'
-                            onClick={() => {
-                              remove(index);
-                              setExpandedContact(null);
-                            }}
-                            className='h-8 w-8 text-destructive hover:text-destructive/90'
-                          >
-                            <svg
-                              xmlns='http://www.w3.org/2000/svg'
-                              viewBox='0 0 24 24'
-                              fill='none'
-                              stroke='currentColor'
-                              strokeWidth='2'
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              className='h-4 w-4'
-                            >
-                              <path d='M3 6h18' />
-                              <path d='M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6' />
-                              <path d='M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2' />
-                            </svg>
-                          </Button>
-                        </div>
+                      
                       </div>
                     )}
                   </div>
                 ))}
                 {isAddingContact && (
-                  <div className='bg-white rounded-lg shadow-md p-4 space-y-3 border border-primary'>
+                  <div className='bg-white rounded-lg shadow-md p-2 space-y-2 border border-primary'>
                     <div className='space-y-2'>
                       <Label htmlFor='new-contact-name'>Nombre</Label>
                       <Input
@@ -278,6 +294,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
                     <div className='space-y-2'>
                       <Label htmlFor='new-contact-email'>Email</Label>
                       <Input
+                        type='email'
                         id='new-contact-email'
                         value={newContact.email}
                         onChange={(e) =>
@@ -306,10 +323,12 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
                     <div className='pt-2'>
                       <Button
                         type='button'
+                        variant='default'
                         onClick={handleAddContact}
                         className='w-full'
                       >
-                        Guardar
+                        <Plus className="h-4 w-4 mr-2" />
+                        Agregar
                       </Button>
                     </div>
                   </div>
@@ -318,14 +337,6 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
             </div>
           </div>
         </CardContent>
-        <CardFooter className='flex justify-between'>
-          <Button type='button' variant='outline' onClick={onCancel}>
-            Cancelar
-          </Button>
-          <Button type='submit'>
-            {customer ? 'Guardar Cambios' : 'Crear Cliente'}
-          </Button>
-        </CardFooter>
       </form>
     </Card>
   );
