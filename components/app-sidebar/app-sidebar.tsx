@@ -8,8 +8,9 @@ import { useRouter } from 'next/navigation';
 
 import { NavMain } from '@/components/app-sidebar/nav-main';
 import { NavUser } from '@/components/app-sidebar/nav-user';
-import { CircleHelpIcon, ExternalLinkIcon } from 'lucide-react';
+import { BookOpenIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import clsx from 'clsx';
 export function AppSidebar() {
   const { state } = useSidebar();
   return (
@@ -29,14 +30,26 @@ export function AppSidebar() {
           <NavMain />
         </div>
         <div className='flex items-center p-2'>
-          <Button onClick={() => window.open('https://app.storylane.io/share/envmjzgsqlgi', '_blank')} size='sm' className='w-full rounded-ld border bg-transparent border-purple-400 hover:bg-purple-600 text-foreground hover:text-white font-semibold'>
-
-            ¿Como funciona?
-            <ExternalLinkIcon className='w-4 h-4 ml-2' />
+          <Button
+            onClick={() =>
+              window.open(
+                'https://app.storylane.io/share/envmjzgsqlgi',
+                '_blank'
+              )
+            }
+            size='sm'
+            className={clsx(
+              'w-full rounded-ld border bg-transparent border-purple-400 hover:bg-purple-600 text-foreground hover:text-white font-semibold',
+              state === 'collapsed' && 'px-0'
+            )}
+          >
+            {state === 'collapsed' ? '' : '¿Como funciona?'}
+            <BookOpenIcon
+              className={clsx('w-4 h-4', state !== 'collapsed' && 'ml-2')}
+            />
           </Button>
         </div>
         <div className='border-t py-4'>
-
           <NavUser />
         </div>
       </div>

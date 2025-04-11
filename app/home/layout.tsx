@@ -21,7 +21,7 @@ import {
   FilePlus,
   FileEdit,
   PlusIcon,
-  ExternalLinkIcon,
+  BookOpenIcon,
 } from 'lucide-react';
 import { NavUser } from '@/components/app-sidebar/nav-user';
 import { Button } from '@/components/ui/button';
@@ -198,10 +198,11 @@ function MobileBottomNav() {
                   className='flex flex-col items-center justify-center'
                 >
                   <div
-                    className={`absolute -top-6 flex items-center justify-center w-14 h-14 rounded-full shadow-lg ${isButtonDisabled || isSubmitting
-                      ? 'bg-gray-400'
-                      : 'bg-green-600'
-                      } text-white`}
+                    className={`absolute -top-6 flex items-center justify-center w-14 h-14 rounded-full shadow-lg ${
+                      isButtonDisabled || isSubmitting
+                        ? 'bg-gray-400'
+                        : 'bg-green-600'
+                    } text-white`}
                   >
                     {isSubmitting ? (
                       <svg
@@ -273,14 +274,16 @@ function MobileBottomNav() {
               className='flex flex-col items-center justify-center px-1'
             >
               <Icon
-                className={`w-6 h-6 mb-1 ${isActive ? 'text-primary' : 'text-muted-foreground'
-                  }`}
+                className={`w-6 h-6 mb-1 ${
+                  isActive ? 'text-primary' : 'text-muted-foreground'
+                }`}
               />
               <span
-                className={`text-xs ${isActive
-                  ? 'text-primary font-medium'
-                  : 'text-muted-foreground'
-                  }`}
+                className={`text-xs ${
+                  isActive
+                    ? 'text-primary font-medium'
+                    : 'text-muted-foreground'
+                }`}
               >
                 {item.title}
               </span>
@@ -331,7 +334,10 @@ function MainContent({
                 />
               </div>
               <div className='flex items-center gap-2'>
-                <PageIcon className='block md:hidden h-5 w-5 text-primary' aria-hidden='true' />
+                <PageIcon
+                  className='block md:hidden h-5 w-5 text-primary'
+                  aria-hidden='true'
+                />
                 <h1 className='text-lg font-semibold'>{pageTitle}</h1>
               </div>
             </div>
@@ -341,15 +347,24 @@ function MainContent({
                 href='/home/invoices/create-invoice'
                 className='hidden md:flex items-center gap-2 px-4 py-2 border-2 border-facturaBlue text-foreground rounded-md shadow-lg'
               >
-                <PlusIcon className="h-4 w-4" />
+                <PlusIcon className='h-4 w-4' />
                 <span className='text-sm'>Crear Factura</span>
               </Link>
             )}
           </div>
           <div className='flex items-center md:hidden'>
-            <Button onClick={() => window.open('https://app.storylane.io/share/envmjzgsqlgi', '_blank')} size='sm' className='w-full rounded-ld border bg-transparent border-purple-400 hover:bg-purple-600 text-foreground hover:text-white font-semibold'>
-              Ayuda
-              <ExternalLinkIcon className='w-4 h-4 ml-2' />
+            <Button
+              onClick={() =>
+                window.open(
+                  'https://app.storylane.io/share/envmjzgsqlgi',
+                  '_blank'
+                )
+              }
+              size='sm'
+              className='w-full rounded-ld border bg-transparent border-purple-400 hover:bg-purple-600 text-foreground hover:text-white font-semibold'
+            >
+              {/* Ayuda */}
+              <BookOpenIcon className='w-4 h-4' />
             </Button>
           </div>
           <div id='right-items' className='md:hidden'>
@@ -359,8 +374,9 @@ function MainContent({
 
         {/* Adjust padding bottom on mobile to accommodate the bottom nav */}
         <div
-          className={`flex-1 w-full overflow-y-auto ${isMobile ? 'pb-24 p-1' : ''
-            }`}
+          className={`flex-1 w-full overflow-y-auto ${
+            isMobile ? 'pb-24 p-1' : ''
+          }`}
         >
           {children}
         </div>
