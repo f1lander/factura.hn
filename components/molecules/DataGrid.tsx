@@ -289,8 +289,32 @@ export function DataGrid<T>({
     gridApi?.redoCellEditing();
   };
 
+  // Update the CSS to target just the pagination label
+  const customPaginationClassName = useMemo(() => `
+    @media (max-width: 768px) {
+      .ag-paging-row-summary-panel {
+        display: none !important;
+      }
+      .ag-picker-field .ag-label {
+        display: none !important;
+      }
+    }
+  `, []);
+
+  useEffect(() => {
+    // Add the custom styles when component mounts
+    const styleElement = document.createElement('style');
+    styleElement.innerHTML = customPaginationClassName;
+    document.head.appendChild(styleElement);
+
+    // Clean up when component unmounts
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, [customPaginationClassName]);
+
   return (
-    <div className='w-full bg-white p-4'>
+    <div className='w-full bg-white p-0 md:p-4'>
       <div className='space-y-4 mb-4'>
         <div className='flex flex-col md:flex-row justify-between items-center'>
           <div>
@@ -409,6 +433,7 @@ export function DataGrid<T>({
           onCellValueChanged={onCellValueChanged}
           onRowValueChanged={onRowValueChanged}
           context={context}
+          
         />
       </div>
 

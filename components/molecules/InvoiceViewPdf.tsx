@@ -560,7 +560,7 @@ const InvoiceViewPdf: React.FC<InvoiceViewPdfProps> = ({
     isFetching,
   } = useQuery(
     ['companyLogo', company?.logo_url],
-    () => getSignedLogoUrl(company?.logo_url),
+    () => getSignedLogoUrl({ logoUrl: company?.logo_url }),
     {
       enabled: !!company?.logo_url,
     }

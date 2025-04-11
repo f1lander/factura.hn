@@ -17,14 +17,14 @@ import {
   Users,
   Package,
   Settings,
-  FileText,
   BarChart4,
-  PlusCircle,
   FilePlus,
   FileEdit,
   PlusIcon,
+  BookOpenIcon,
 } from 'lucide-react';
 import { NavUser } from '@/components/app-sidebar/nav-user';
+import { Button } from '@/components/ui/button';
 
 // Enhanced function to get page title and corresponding icon
 const getPageInfo = (pathname: string) => {
@@ -325,33 +325,47 @@ function MainContent({
       <SidebarInset className='flex w-full flex-col overflow-hidden'>
         <header className='flex h-[56px] shrink-0 items-center justify-between gap-4 border-b px-4'>
           {/* Only show sidebar trigger on desktop */}
-          <div className='flex flex-row gap-4'>
-            <div id='left-items' className='hidden md:block'>
-              <SidebarTrigger
-                className='-ml-1'
-                onClick={() => toggleSidebar()}
-              />
-            </div>
+          <div className='flex flex-row gap-4 w-full items-center justify-between'>
             <div className='flex items-center gap-2'>
-              <PageIcon className='h-5 w-5 text-primary' aria-hidden='true' />
-              <h1 className='text-lg font-semibold'>{pageTitle}</h1>
+              <div id='left-items' className='hidden md:block'>
+                <SidebarTrigger
+                  className='-ml-1'
+                  onClick={() => toggleSidebar()}
+                />
+              </div>
+              <div className='flex items-center gap-2'>
+                <PageIcon
+                  className='block md:hidden h-5 w-5 text-primary'
+                  aria-hidden='true'
+                />
+                <h1 className='text-lg font-semibold'>{pageTitle}</h1>
+              </div>
             </div>
             {pathname !== '/home/invoices/create-invoice' && (
               <Link
                 key='/home/invoices/create-invoice'
                 href='/home/invoices/create-invoice'
-                className='hidden md:flex flex-row items-center justify-center'
+                className='hidden md:flex items-center gap-2 px-4 py-2 border-2 border-facturaBlue text-foreground rounded-md shadow-lg'
               >
-                <div className='flex items-center justify-center w-7 h-7 z-10 bg-facturaBlue text-primary-foreground rounded-full shadow-lg'>
-                  <span className='text-2xl font-bold'>
-                    <PlusIcon />
-                  </span>
-                </div>
-                <span className='relative text-xs pl-5 pr-4 -left-4 text-muted-foreground bg-facturaBlue text-primary-foreground rounded-full shadow-lg'>
-                  Crear Factura
-                </span>
+                <PlusIcon className='h-4 w-4' />
+                <span className='text-sm'>Crear Factura</span>
               </Link>
             )}
+          </div>
+          <div className='flex items-center md:hidden'>
+            <Button
+              onClick={() =>
+                window.open(
+                  'https://app.storylane.io/share/envmjzgsqlgi',
+                  '_blank'
+                )
+              }
+              size='sm'
+              className='w-full rounded-ld border bg-transparent border-purple-400 hover:bg-purple-600 text-foreground hover:text-white font-semibold'
+            >
+              {/* Ayuda */}
+              <BookOpenIcon className='w-4 h-4' />
+            </Button>
           </div>
           <div id='right-items' className='md:hidden'>
             <NavUser className='p-0' triggerClassName='pr-0' />

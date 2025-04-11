@@ -36,7 +36,7 @@ const InvoicePreview: React.FC = () => {
 
   useEffect(() => {
     if (company?.logo_url) {
-      getSignedLogoUrl(company?.logo_url).then((base64image) => {
+      getSignedLogoUrl({ logoUrl: company?.logo_url }).then((base64image) => {
         setCompanyLogo(base64image);
       });
     }

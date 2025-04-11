@@ -19,6 +19,11 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        save: "border border-green-500 text-green-600 bg-background shadow-sm hover:bg-green-100 hover:text-green-700",
+        cancel: "border border-gray-400 text-gray-600 bg-background shadow-sm hover:bg-gray-100 hover:text-gray-700",
+        add: "border border-facturaBlue text-facturaBlue bg-background shadow-sm hover:bg-facturaBlue/10 hover:text-facturaBlue",
+        add2: "border border-green-600 text-green-600 bg-background shadow-sm hover:bg-green-600/10 hover:text-green-600",
+        delete: "border border-red-500 text-red-600 bg-background shadow-sm hover:bg-red-100 hover:text-red-700",
       },
       size: {
         default: "h-9 px-4 py-2",

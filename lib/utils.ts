@@ -138,14 +138,18 @@ export function numberToCurrency(number: number): string {
   return number.toLocaleString('en');
 }
 
-export async function getSignedLogoUrl(
-  logoUrl: string | null | undefined
-): Promise<string | null> {
+export async function getSignedLogoUrl({
+  logoUrl,
+  bucketName = 'company-logos',
+}: {
+  logoUrl: string | null | undefined;
+  bucketName?: string;
+}): Promise<string | null> {
   if (!logoUrl) return null;
 
   try {
     const { data, error } = await supabase()
-      .storage.from('company-logos')
+      .storage.from(bucketName)
       .createSignedUrl(logoUrl, 600);
 
     if (error || !data) {
@@ -197,3 +201,48 @@ export const formatDate = (dateStr: string | undefined | null): string => {
   const [year, month, day] = dateStr.split('-');
   return `${day}/${month}/${year}`;
 };
+
+export async function getSignedImageUrl(
+  bucketName: string,
+  imagePath: string | null | undefined
+): Promise<string | null> {
+  if (!imagePath) return null;
+
+  try {
+    const { data, error } = await supabase()
+      .storage.from(bucketName)
+      .createSignedUrl(imagePath, 600);
+
+    if (error || !data) {
+      console.error(`Error fetching signed URL from ${bucketName}:`, error);
+      return null;
+    }
+    const base64Image = await convertSignedUrlToBase64(data.signedUrl);
+    return base64Image;
+  } catch (error) {
+    console.error(`Error in getSignedImageUrl for ${bucketName}:`, error);
+    return null;
+  }
+}
+
+export async function getSignedProductImageUrl(
+  imagePath: string | null | undefined
+): Promise<string | null> {
+  if (!imagePath) return null;
+
+  try {
+    const { data, error } = await supabase()
+      .storage.from('products-bucket')  // Your existing bucket
+      .createSignedUrl(imagePath, 600);
+
+    if (error || !data) {
+      console.error('Error fetching signed URL for product image:', error);
+      return null;
+    }
+    const base64Image = await convertSignedUrlToBase64(data.signedUrl);
+    return base64Image;
+  } catch (error) {
+    console.error('Error in getSignedProductImageUrl:', error);
+    return null;
+  }
+}

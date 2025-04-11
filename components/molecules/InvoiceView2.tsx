@@ -148,7 +148,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
     isFetching,
   } = useQuery(
     ['companyLogo', company?.logo_url],
-    () => getSignedLogoUrl(company?.logo_url),
+    () => getSignedLogoUrl({ logoUrl: company?.logo_url }),
     {
       enabled: !!company?.logo_url,
     }
@@ -215,7 +215,7 @@ const InvoiceView2: React.FC<InvoiceViewProps> = ({
           throw new Error('No se pudo obtener la información de la empresa');
         }
 
-        const logoUrl = await getSignedLogoUrl(company?.logo_url);
+        const logoUrl = await getSignedLogoUrl({ logoUrl: company?.logo_url });
 
         console.log('Generating PDF for invoice:', invoice);
         console.log('logoUrl:', logoUrl);

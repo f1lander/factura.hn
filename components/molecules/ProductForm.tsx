@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,15 +19,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Product, TaxType } from "@/lib/supabase/services/product";
+import Image from "next/image";
+import { ImageIcon, Upload, Package } from "lucide-react";
+import supabase from '@/lib/supabase/client';
+import { getSignedLogoUrl } from "@/lib/utils";
 
 interface ProductFormProps {
   product?: Product;
+  productImageUrl?: string | null;
   onSubmit: (data: Partial<Product>) => void;
   onCancel: () => void;
 }
 
 export const ProductForm: React.FC<ProductFormProps> = ({
   product,
+  productImageUrl,
   onSubmit,
   onCancel,
 }) => {
@@ -46,12 +52,86 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   });
 
   const isService = watch("is_service");
+  const [productImage, setProductImage] = useState<string | null>(null);
+  const [isImageLoading, setIsImageLoading] = useState(false);
 
-  const onSubmitForm = (data: Product) => {
+  // Load the product image when component mounts
+  useEffect(() => {
+    const loadProductImage = async () => {
+      if (product?.image_url) {
+        setIsImageLoading(true);
+        try {
+          const imageUrl = await getSignedLogoUrl({ logoUrl: product.image_url, bucketName: 'products-bucket' });
+          setProductImage(imageUrl);
+        } catch (error) {
+          console.error("Error loading product image:", error);
+        } finally {
+          setIsImageLoading(false);
+        }
+      }
+    };
+
+    loadProductImage();
+  }, [product]);
+
+  const handleImageUpload = async (productId: string, photoBase64: string): Promise<string | null> => {
+    try {
+      const fileType = photoBase64.split(';')[0].split(':')[1];
+      const fileExtension = fileType.split('/')[1];
+      const imageData = photoBase64.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(imageData, 'base64');
+
+      const { data: uploadedPhoto, error: uploadPhotoError } = await supabase()
+        .storage.from('products-bucket')
+        .upload(`public/product_${productId}.${fileExtension}`, buffer, {
+          cacheControl: '3600',
+          contentType: fileType,
+          upsert: true, // Add this to update existing files
+        });
+
+      if (uploadPhotoError || !uploadedPhoto) {
+        console.error('Photo upload failed:', uploadPhotoError);
+        return null;
+      }
+
+      return uploadedPhoto.path;
+    } catch (error) {
+      console.error('Error uploading product image:', error);
+      return null;
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProductImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const onSubmitForm = async (data: Product) => {
     // If it's a service, we don't need quantity_in_stock
     if (data.is_service) {
       delete data.quantity_in_stock;
     }
+
+    // If we have a new image (base64 string starts with "data:image")
+    if (productImage && productImage.startsWith('data:image')) {
+      if (product?.id) {
+        // For existing products, upload image immediately
+        const imagePath = await handleImageUpload(product.id, productImage);
+        if (imagePath) {
+          data.image_url = imagePath;
+        }
+      } else {
+        // For new products, save the base64 image to handle after product creation
+        data.image_base64 = productImage;
+      }
+    }
+    
     onSubmit(data);
   };
 
@@ -70,7 +150,52 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-6">
+          {/* Product Image Section */}
+          <div className="space-y-2">
+            <label htmlFor="product-image">Imagen del Producto</label>
+            <div className="flex items-center space-x-4">
+              <div className="w-32 h-32 border rounded-md overflow-hidden flex items-center justify-center bg-gray-50">
+                {isImageLoading ? (
+                  <div className="animate-pulse w-full h-full bg-gray-200"></div>
+                ) : productImage ? (
+                  <Image
+                    src={productImage}
+                    alt="Imagen del producto"
+                    width={128}
+                    height={128}
+                    className="object-cover w-full h-full"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full bg-gray-100">
+                    <Package className="h-12 w-12 text-gray-400" />
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex flex-col space-y-2">
+                <label 
+                  htmlFor="image-upload"
+                  className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Subir imagen
+                </label>
+                <input
+                  id="image-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+                <p className="text-xs text-gray-500">
+                  JPG, PNG o GIF. Máximo 2MB.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Rest of your form remains the same */}
           <div className="space-y-2">
             <label htmlFor="sku">SKU *</label>
             <Input
@@ -162,37 +287,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             />
             <label htmlFor="is_service">Es un Servicio</label>
           </div>
-
-          {/* <div className="space-y-2">
-            <label htmlFor="quantity_in_stock">
-              Cantidad en Stock {!isService && "*"}
-            </label>
-            <Input
-              id="quantity_in_stock"
-              {...register("quantity_in_stock", {
-                valueAsNumber: true,
-                required: !isService
-                  ? "Cantidad en Stock es requerida para productos"
-                  : false,
-                min: {
-                  value: 0,
-                  message: "La cantidad debe ser mayor o igual a 0",
-                },
-                validate: (value) =>
-                  isService ||
-                  !!value ||
-                  "La cantidad debe ser mayor que 0 para productos",
-              })}
-              type="number"
-              placeholder="Cantidad en Stock"
-              disabled={isService}
-            />
-            {errors.quantity_in_stock && (
-              <p className="text-red-500 text-sm">
-                {errors.quantity_in_stock.message}
-              </p>
-            )}
-          </div> */}
         </form>
       </CardContent>
       <CardFooter className="flex justify-between">
