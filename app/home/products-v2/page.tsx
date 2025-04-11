@@ -1,6 +1,15 @@
 'use client';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { BookOpenCheck, Package, Filter, SheetIcon, Search, Plus, FileSpreadsheet, PlusIcon } from 'lucide-react';
+import {
+  BookOpenCheck,
+  Package,
+  Filter,
+  SheetIcon,
+  Search,
+  Plus,
+  FileSpreadsheet,
+  PlusIcon,
+} from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Product, productService } from '@/lib/supabase/services/product';
 import GenericEmptyState from '@/components/molecules/GenericEmptyState';
@@ -24,6 +33,7 @@ import { ProductImportStepper } from '@/components/organisms/products/ProductImp
 import { TaxType } from '@/lib/supabase/services/product';
 import { Input } from '@/components/ui/input';
 import supabase from '@/lib/supabase/client';
+
 export default function ProductsPage() {
   const { push } = useRouter();
   const excelFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -67,8 +77,12 @@ export default function ProductsPage() {
   const { toast } = useToast();
   const [isMobile, setIsMobile] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [productImageUrls, setProductImageUrls] = useState<Record<string, string>>({});
-  const [selectedProductImageUrl, setSelectedProductImageUrl] = useState<string | null>(null);
+  const [productImageUrls, setProductImageUrls] = useState<
+    Record<string, string>
+  >({});
+  const [selectedProductImageUrl, setSelectedProductImageUrl] = useState<
+    string | null
+  >(null);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     handleXlsFileUpload(event);
@@ -144,20 +158,23 @@ export default function ProductsPage() {
       } else {
         // Create new product
         const result = await productService.createProduct(productData);
-        
+
         // If we have a base64 image and the product was created successfully
         if (imageBase64 && result && result.id) {
           // Upload the image
-          const imagePath = await handleProductImageUpload(result.id, imageBase64);
+          const imagePath = await handleProductImageUpload(
+            result.id,
+            imageBase64
+          );
           if (imagePath) {
             // Update the product with the image path
             await productService.updateProduct(result.id, {
-              image_url: imagePath
+              image_url: imagePath,
             });
           }
         }
       }
-      
+
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setIsFormVisible(false);
       toast({
@@ -229,31 +246,34 @@ export default function ProductsPage() {
   useEffect(() => {
     const fetchProductImages = async () => {
       if (!products) return;
-      
+
       const imageUrls: Record<string, string> = {};
-      
+
       for (const product of products) {
         if (product.image_url) {
           try {
             const { data, error } = await supabase()
               .storage.from('products-bucket')
               .createSignedUrl(product.image_url, 3600);
-            
+
             if (error || !data) {
-              console.error('Error fetching signed URL for product image:', error);
+              console.error(
+                'Error fetching signed URL for product image:',
+                error
+              );
               continue;
             }
-            
+
             imageUrls[product.id] = data.signedUrl;
           } catch (error) {
             console.error('Error generating signed URL:', error);
           }
         }
       }
-      
+
       setProductImageUrls(imageUrls);
     };
-    
+
     fetchProductImages();
   }, [products]);
 
@@ -263,79 +283,85 @@ export default function ProductsPage() {
         setSelectedProductImageUrl(null);
         return;
       }
-      
+
       try {
         const { data, error } = await supabase()
           .storage.from('products-bucket')
           .createSignedUrl(selectedProduct.image_url, 3600);
-          
+
         if (error || !data) {
-          console.error('Error fetching signed URL for selected product image:', error);
+          console.error(
+            'Error fetching signed URL for selected product image:',
+            error
+          );
           setSelectedProductImageUrl(null);
           return;
         }
-        
+
         setSelectedProductImageUrl(data.signedUrl);
       } catch (error) {
-        console.error('Error generating signed URL for selected product:', error);
+        console.error(
+          'Error generating signed URL for selected product:',
+          error
+        );
         setSelectedProductImageUrl(null);
       }
     };
-    
+
     fetchSelectedProductImage();
   }, [selectedProduct]);
 
   if (areProductsFromDBLoading) {
     return (
-      <div className="w-full p-4 space-y-6">
+      <div className='w-full p-4 space-y-6'>
         {/* Skeleton for header section */}
-        <div className="bg-white rounded-lg shadow p-4 mb-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-            <div className="h-5 w-64 bg-gray-200 animate-pulse rounded-md mb-2"></div>
-            <div className="flex gap-2 mt-3 sm:mt-0">
-              <div className="h-10 w-40 bg-gray-200 animate-pulse rounded-md"></div>
-              <div className="h-10 w-40 bg-gray-200 animate-pulse rounded-md"></div>
-              <div className="h-10 w-40 bg-gray-200 animate-pulse rounded-md"></div>
+        <div className='bg-white rounded-lg shadow p-4 mb-4'>
+          <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center'>
+            <div className='h-5 w-64 bg-gray-200 animate-pulse rounded-md mb-2'></div>
+            <div className='flex gap-2 mt-3 sm:mt-0'>
+              <div className='h-10 w-40 bg-gray-200 animate-pulse rounded-md'></div>
+              <div className='h-10 w-40 bg-gray-200 animate-pulse rounded-md'></div>
+              <div className='h-10 w-40 bg-gray-200 animate-pulse rounded-md'></div>
             </div>
           </div>
         </div>
 
         {/* Main content skeleton */}
-        <div className="flex flex-col-reverse xl:flex-row gap-4">
+        <div className='flex flex-col-reverse xl:flex-row gap-4'>
           {/* Products grid skeleton */}
-          <div className="w-full xl:w-2/3 bg-white rounded-lg border shadow-sm p-4">
+          <div className='w-full xl:w-2/3 bg-white rounded-lg border shadow-sm p-4'>
             {/* Mobile header skeleton */}
-            <div className="md:hidden mb-4">
-              <div className="flex justify-between items-center">
-                <div className="h-5 w-24 bg-gray-200 animate-pulse rounded-md"></div>
-                <div className="flex gap-2">
-                  <div className="h-9 w-24 bg-gray-200 animate-pulse rounded-md"></div>
-                  <div className="h-9 w-24 bg-gray-200 animate-pulse rounded-md"></div>
+            <div className='md:hidden mb-4'>
+              <div className='flex justify-between items-center'>
+                <div className='h-5 w-24 bg-gray-200 animate-pulse rounded-md'></div>
+                <div className='flex gap-2'>
+                  <div className='h-9 w-24 bg-gray-200 animate-pulse rounded-md'></div>
+                  <div className='h-9 w-24 bg-gray-200 animate-pulse rounded-md'></div>
                 </div>
               </div>
-              
+
               {/* Search bar skeleton */}
-              <div className="mt-3">
-                <div className="h-10 w-full bg-gray-200 animate-pulse rounded-md"></div>
+              <div className='mt-3'>
+                <div className='h-10 w-full bg-gray-200 animate-pulse rounded-md'></div>
               </div>
             </div>
 
             {/* Table header skeleton */}
-            <div className="hidden md:flex border-b py-3">
+            <div className='hidden md:flex border-b py-3'>
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex-1 p-2">
-                  <div className="h-6 bg-gray-200 animate-pulse rounded-md"></div>
+                <div key={i} className='flex-1 p-2'>
+                  <div className='h-6 bg-gray-200 animate-pulse rounded-md'></div>
                 </div>
               ))}
             </div>
 
             {/* Table rows skeleton */}
-            <div className="hidden md:block">
+            <div className='hidden md:block'>
               {[...Array(7)].map((_, i) => (
-                <div key={i} className="flex border-b py-4">
+                <div key={i} className='flex border-b py-4'>
                   {[...Array(5)].map((_, j) => (
-                    <div key={j} className="flex-1 p-2">
-                      <div className="h-5 bg-gray-200 animate-pulse rounded-md"></div>
+                    <div key={j} className='flex-1 p-2'>
+                      <div className='h-5 bg-gray-200 animate-pulse rounded-md'></div>
                     </div>
                   ))}
                 </div>
@@ -343,16 +369,16 @@ export default function ProductsPage() {
             </div>
 
             {/* Mobile product list skeleton */}
-            <div className="md:hidden divide-y">
+            <div className='md:hidden divide-y'>
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="py-4 flex items-center gap-3">
-                  <div className="w-16 h-16 bg-gray-200 rounded-md animate-pulse"></div>
-                  <div className="flex-1 space-y-2">
-                    <div className="h-5 w-4/5 bg-gray-200 animate-pulse rounded-md"></div>
-                    <div className="h-4 w-1/2 bg-gray-200 animate-pulse rounded-md"></div>
-                    <div className="flex justify-between">
-                      <div className="h-4 w-16 bg-gray-200 animate-pulse rounded-md"></div>
-                      <div className="h-4 w-20 bg-gray-200 animate-pulse rounded-md"></div>
+                <div key={i} className='py-4 flex items-center gap-3'>
+                  <div className='w-16 h-16 bg-gray-200 rounded-md animate-pulse'></div>
+                  <div className='flex-1 space-y-2'>
+                    <div className='h-5 w-4/5 bg-gray-200 animate-pulse rounded-md'></div>
+                    <div className='h-4 w-1/2 bg-gray-200 animate-pulse rounded-md'></div>
+                    <div className='flex justify-between'>
+                      <div className='h-4 w-16 bg-gray-200 animate-pulse rounded-md'></div>
+                      <div className='h-4 w-20 bg-gray-200 animate-pulse rounded-md'></div>
                     </div>
                   </div>
                 </div>
@@ -360,8 +386,8 @@ export default function ProductsPage() {
             </div>
 
             {/* Pagination skeleton */}
-            <div className="hidden md:flex justify-end mt-4">
-              <div className="h-8 w-64 bg-gray-200 animate-pulse rounded-md"></div>
+            <div className='hidden md:flex justify-end mt-4'>
+              <div className='h-8 w-64 bg-gray-200 animate-pulse rounded-md'></div>
             </div>
           </div>
         </div>
@@ -423,27 +449,28 @@ export default function ProductsPage() {
   }
 
   // Add a filter function for the products based on search term
-  const filteredProducts = products?.filter(product =>
-    product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProducts = products?.filter(
+    (product) =>
+      product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // This function will handle product selection and properly reset the image
   const handleProductSelect = (product: Product) => {
     setSelectedProduct(product);
     setIsFormVisible(true);
-    
+
     // Explicitly reset any image URLs when selecting a new product
     // This ensures we don't keep showing the previous product's image
     if (!product.image_url) {
       // If using productImageUrls state
-      const updatedImageUrls = {...productImageUrls};
+      const updatedImageUrls = { ...productImageUrls };
       // Remove any previous URL for this product ID
       if (product.id in updatedImageUrls) {
         delete updatedImageUrls[product.id];
         setProductImageUrls(updatedImageUrls);
       }
-      
+
       // If using selectedProductImageUrl state
       setSelectedProductImageUrl(null);
     }
@@ -455,15 +482,13 @@ export default function ProductsPage() {
         <main className='p-4 sm:px-6 sm:py-4'>
           {/* Header with title and action buttons */}
           <div className='flex  bg-white rounded-lg shadow p-4 flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3'>
-
             <p className='text-sm text-muted-foreground'>
               Gestiona tus productos y servicios aquí
             </p>
             <div className='flex flex-col sm:flex-row w-full sm:w-auto gap-2'>
               {isMobile ? (
                 // Mobile layout: 2 columns grid
-                <div className="flex flex-col w-full items-center justify-between gap-2">
-
+                <div className='flex flex-col w-full items-center justify-between gap-2'>
                   <Button
                     onClick={() => push('/home/products-v2/register-order')}
                     variant='outline'
@@ -472,8 +497,6 @@ export default function ProductsPage() {
                     <BookOpenCheck className='h-4 w-4 mr-2' />
                     Actualizar inventario
                   </Button>
-
-
                 </div>
               ) : (
                 <>
@@ -494,10 +517,7 @@ export default function ProductsPage() {
                     Importar desde excel
                   </Button>
 
-                  <Button
-                    onClick={handleCreateProduct}
-                    variant='add2'
-                  >
+                  <Button onClick={handleCreateProduct} variant='add2'>
                     <PlusIcon className='h-4 w-4 mr-2' />
                     Agregar Producto
                   </Button>
@@ -509,8 +529,9 @@ export default function ProductsPage() {
           {/* Main content area */}
           <div className='flex flex-col-reverse xl:flex-row items-start gap-4'>
             <div
-              className={`w-full ${isFormVisible ? 'xl:w-1/2' : 'xl:w-full'
-                } transition-all duration-300 ease-in-out`}
+              className={`w-full ${
+                isFormVisible ? 'xl:w-1/2' : 'xl:w-full'
+              } transition-all duration-300 ease-in-out`}
             >
               {products!.length === 0 ? (
                 <GenericEmptyState
@@ -524,23 +545,21 @@ export default function ProductsPage() {
               ) : (
                 <div className='bg-white rounded-lg border shadow-sm'>
                   {isMobile ? (
-                    <div className="flex flex-col">
+                    <div className='flex flex-col'>
                       {/* Mobile Filter Button */}
-                      <div className="p-4 border-b flex justify-between items-center">
-
+                      <div className='p-4 border-b flex justify-between items-center'>
                         {products && (
                           <p className='text-sm text-muted-foreground'>
                             Total ({products.length})
                           </p>
                         )}
-                        <div className="flex gap-2">
+                        <div className='flex gap-2'>
                           <Button
                             onClick={() => setIsImporting(true)}
                             variant='outline'
                             className='flex gap-2 items-center border-green-600 text-gray-900 hover:bg-green-50 hover:text-green-700'
                           >
                             <FileSpreadsheet className='h-4 w-4' />
-
                             Excel
                           </Button>
                           <Button
@@ -549,7 +568,6 @@ export default function ProductsPage() {
                             className='border-blue-600 text-blue-600 hover:bg-blue-50 hover:text-blue-700 flex items-center'
                           >
                             <PlusIcon className='h-4 w-4 mr-2' />
-
                             Nuevo
                           </Button>
                         </div>
@@ -577,12 +595,12 @@ export default function ProductsPage() {
                       </div>
 
                       {/* Add search input for mobile */}
-                      <div className="px-4 py-2 border-b">
-                        <div className="relative">
-                          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <div className='px-4 py-2 border-b'>
+                        <div className='relative'>
+                          <Search className='absolute left-2 top-2.5 h-4 w-4 text-muted-foreground' />
                           <Input
-                            placeholder="Buscar productos..."
-                            className="pl-8"
+                            placeholder='Buscar productos...'
+                            className='pl-8'
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                           />
@@ -590,50 +608,65 @@ export default function ProductsPage() {
                       </div>
 
                       {/* Mobile Product List - update to use filteredProducts */}
-                      <div className="flex flex-col divide-y">
+                      <div className='flex flex-col divide-y'>
                         {filteredProducts?.length === 0 ? (
-                          <div className="p-6 text-center text-muted-foreground">
-                            No se encontraron productos que coincidan con la búsqueda
+                          <div className='p-6 text-center text-muted-foreground'>
+                            No se encontraron productos que coincidan con la
+                            búsqueda
                           </div>
                         ) : (
                           filteredProducts?.map((product) => (
                             <div
                               key={product.id}
-                              className="p-4 flex items-center gap-3 hover:bg-muted/20 cursor-pointer"
+                              className='p-4 flex items-center gap-3 hover:bg-muted/20 cursor-pointer'
                               onClick={() => handleProductSelect(product)}
                               title={product.description}
                             >
-                              <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-md overflow-hidden flex items-center justify-center">
+                              <div className='flex-shrink-0 w-16 h-16 bg-gray-100 rounded-md overflow-hidden flex items-center justify-center'>
                                 {product.image_url ? (
-                                  <img 
-                                    src={productImageUrls[product.id] || '/placeholder-product.jpg'}
-                                    alt={product.description || "Product"}
-                                    className="object-cover w-full h-full"
+                                  <img
+                                    src={
+                                      productImageUrls[product.id] ||
+                                      '/placeholder-product.jpg'
+                                    }
+                                    alt={product.description || 'Product'}
+                                    className='object-cover w-full h-full'
                                     onError={(e) => {
-                                      const target = e.target as HTMLImageElement;
+                                      const target =
+                                        e.target as HTMLImageElement;
                                       target.onerror = null;
                                       target.src = '/placeholder-product.jpg';
                                     }}
                                   />
                                 ) : (
-                                  <Package className="h-8 w-8 text-gray-400" />
+                                  <Package className='h-8 w-8 text-gray-400' />
                                 )}
                               </div>
 
-                              <div className="flex-grow">
-                                <div className="font-medium truncate" style={{ maxWidth: '200px' }}>
+                              <div className='flex-grow overflow-auto'>
+                                <div
+                                  className='font-medium truncate'
+                                  style={{ maxWidth: '200px' }}
+                                >
                                   {product.description}
                                 </div>
-                                <div className="text-sm text-muted-foreground">SKU: {product.sku}</div>
-                                <div className="flex items-center justify-between mt-1">
-                                  <span className="text-sm">L. {product.unit_cost?.toFixed(2) || '0.00'}</span>
-                                  <div className="flex items-center gap-1">
-                                    <span className={`text-xs px-2 py-0.5 rounded-full ${(product.quantity_in_stock || 0) > 10
-                                      ? 'bg-green-100 text-green-800'
-                                      : (product.quantity_in_stock || 0) > 0
-                                        ? 'bg-yellow-100 text-yellow-800'
-                                        : 'bg-red-100 text-red-800'
-                                      }`}>
+                                <div className='text-sm text-muted-foreground'>
+                                  SKU: {product.sku}
+                                </div>
+                                <div className='flex items-center justify-between mt-1'>
+                                  <span className='text-sm'>
+                                    L. {product.unit_cost?.toFixed(2) || '0.00'}
+                                  </span>
+                                  <div className='flex items-center gap-1'>
+                                    <span
+                                      className={`text-xs px-2 py-0.5 rounded-full ${
+                                        (product.quantity_in_stock || 0) > 10
+                                          ? 'bg-green-100 text-green-800'
+                                          : (product.quantity_in_stock || 0) > 0
+                                          ? 'bg-yellow-100 text-yellow-800'
+                                          : 'bg-red-100 text-red-800'
+                                      }`}
+                                    >
                                       Stock: {product.quantity_in_stock || 0}
                                     </span>
                                   </div>
@@ -655,7 +688,9 @@ export default function ProductsPage() {
                       pageSize={pageSize}
                       pageSizeOptions={[5, 10, 20, 50]}
                       handleOnUpdateRows={handleOnUpdateRows}
-                      onRowClick={(rowData) => handleProductSelect(rowData as Product)}
+                      onRowClick={(rowData) =>
+                        handleProductSelect(rowData as Product)
+                      }
                     />
                   )}
                 </div>
